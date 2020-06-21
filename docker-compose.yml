@@ -17,7 +17,7 @@ services:
     restart: unless-stopped
     tty: true
     ports:
-      - "4306:3306"
+      - "3349:3306"
     networks:
       - portfolio
 
