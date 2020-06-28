@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Model\Stock\Stock;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
-class StockController extends Controller
+class StocksController extends Controller
 {
 
     public function index(): Response
@@ -16,8 +17,17 @@ class StockController extends Controller
     {
     }
 
-    public function store(Request $request): Response
+    public function store(Request $request)
     {
+        $this->validate($request,[
+            'symbol' => 'required',
+        ]);
+
+        $stock = new Stock();
+        $stock->symbol = $request->input('symbol');
+        $stock->save();
+
+        return redirect('/stocks')->with('success', "$stock->symbol Registered");
     }
 
     public function show(int $id): Response
