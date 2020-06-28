@@ -21,4 +21,17 @@ class StocksPagesController extends Controller
     public function create(): View {
         return view(self::DEFAULT_DIR . ".create");
     }
+
+    public function show(int $id) {
+        /** @var Stock $stock */
+        $stock = Stock::find($id);
+
+        $data = [
+            'stock' => $stock,
+            'stock_infos' => $stock->getStockInfos(),
+        ];
+
+        return view(self::DEFAULT_DIR . ".show")
+            ->with($data);
+    }
 }
