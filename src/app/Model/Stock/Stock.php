@@ -2,6 +2,7 @@
 
 namespace App\Model\Stock;
 
+use App\Portfolio\API\AlphaVantageAPI;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -14,4 +15,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class Stock extends Model {
 
+    public function store(string $symbol): void {
+        $this->symbol = $symbol;
+        $this->name = AlphaVantageAPI::getStockNameForSymbol($symbol);
+        $this->save();
+    }
 }
