@@ -9,7 +9,10 @@
     <body>
         <script src="{{asset('site/jquery.js')}}"></script>
         <script src="{{asset('site/bootstrap.js')}}"></script>
-        <h1>Portfolio</h1>
-        @yield('content')
+        <div class="container">
+            <h1>Portfolio</h1>
+            @include('inc.messages')
+            @yield('content')
+        </div>
     </body>
 </html>
