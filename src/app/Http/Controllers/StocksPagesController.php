@@ -41,19 +41,17 @@ class StocksPagesController extends Controller
         $controller = new StocksController();
         /** @var JsonResponse $response */
         $response = $controller->store($request);
+        $response = json_decode($response->getContent());
 
-        $message = json_decode($response->getContent())->message;
-
-        return redirect('/stocks')->with('success', $message);
+        return redirect('/stocks')->with($response->status, $response->message);
     }
 
     public function apiRouteLoadInfoForDate(Request $request) {
         $controller = new StocksController();
         /** @var JsonResponse $response */
         $response = $controller->loadInfoForDate($request);
+        $response = json_decode($response->getContent());
 
-        $message = json_decode($response->getContent())->message;
-
-        return redirect('/stocks/' . $request->input('stock_id'))->with('success', $message);
+        return redirect('/stocks/' . $request->input('stock_id'))->with($response->status, $response->message);
     }
 }
