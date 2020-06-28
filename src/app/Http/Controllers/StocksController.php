@@ -17,10 +17,14 @@ class StocksController extends Controller
             'symbol' => 'required',
         ]);
 
-        $stock = new Stock();
-        $stock->store($request->input('symbol'));
+        try {
+            $stock = new Stock();
+            $stock->store($request->input('symbol'));
 
-        return new JsonResponse(['status' => 'ok', 'message' => "$stock->symbol Registered"], Response::HTTP_OK);
+            return new JsonResponse(['status' => 'ok', 'message' => "$stock->symbol Registered"], Response::HTTP_OK);
+        } catch (\Exception $exception) {
+            return new JsonResponse(['status' => 'error', 'message' => $exception], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
    public function loadInfoForDate(Request $request)
@@ -30,11 +34,15 @@ class StocksController extends Controller
            'stock_id' => 'required',
        ]);
 
-       $date = Carbon::createFromFormat('Y-m-d', $request->input('date'));
-       /** @var Stock $stock */
-       $stock = Stock::find($request->input('stock_id'));
-       $stock->loadStockInfoForDate($date);
+       try {
+           $date = Carbon::createFromFormat('Y-m-d', $request->input('date'));
+           /** @var Stock $stock */
+           $stock = Stock::find($request->input('stock_id'));
+           $stock->loadStockInfoForDate($date);
 
-       return new JsonResponse(['status' => 'ok', 'message' => $date->toDateString() . " price for $stock->symbol was loaded."], Response::HTTP_OK);
+           return new JsonResponse(['status' => 'ok', 'message' => $date->toDateString() . " price for $stock->symbol was loaded."], Response::HTTP_OK);
+       } catch (\Exception $exception) {
+           return new JsonResponse(['status' => 'error', 'message' => $exception], Response::HTTP_INTERNAL_SERVER_ERROR);
+       }
    }
 }
