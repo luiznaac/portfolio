@@ -18,5 +18,5 @@ Route::get('/stocks', 'StocksPagesController@index');
 Route::get('/stocks/create', 'StocksPagesController@create');
 Route::get('/stocks/{id}', 'StocksPagesController@show');
 
-Route::post('/stock-store', ['uses' => 'StocksController@store']);
-Route::post('/stock-load-info', ['uses' => 'StocksController@loadInfoForDate']);
+Route::post('/stocks/store', 'StocksPagesController@apiRouteStore');
+Route::post('/stocks/load-info-for-date', 'StocksPagesController@apiRouteLoadInfoForDate');
