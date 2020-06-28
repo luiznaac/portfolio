@@ -24,8 +24,7 @@ class StocksController extends Controller
         ]);
 
         $stock = new Stock();
-        $stock->symbol = $request->input('symbol');
-        $stock->save();
+        $stock->store($request->input('symbol'));
 
         return redirect('/stocks')->with('success', "$stock->symbol Registered");
     }
