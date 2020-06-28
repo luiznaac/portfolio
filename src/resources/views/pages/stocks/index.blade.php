@@ -3,7 +3,7 @@
 @section('content')
     <h2>Stocks</h2>
     @foreach($stocks as $stock)
-        {{"$stock->symbol - $stock->name"}}<br>
+        <a href="/stocks/{{$stock->id}}">{{$stock->symbol}}</a>{{" - $stock->name"}}<br>
     @endforeach
 
     @if(count($stocks) == 0)
