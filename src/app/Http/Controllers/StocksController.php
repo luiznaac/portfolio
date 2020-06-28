@@ -23,7 +23,7 @@ class StocksController extends Controller
 
             return new JsonResponse(['status' => 'ok', 'message' => "$stock->symbol Registered"], Response::HTTP_OK);
         } catch (\Exception $exception) {
-            return new JsonResponse(['status' => 'error', 'message' => $exception], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return new JsonResponse(['status' => 'error', 'message' => $exception->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -42,7 +42,7 @@ class StocksController extends Controller
 
            return new JsonResponse(['status' => 'ok', 'message' => $date->toDateString() . " price for $stock->symbol was loaded."], Response::HTTP_OK);
        } catch (\Exception $exception) {
-           return new JsonResponse(['status' => 'error', 'message' => $exception], Response::HTTP_INTERNAL_SERVER_ERROR);
+           return new JsonResponse(['status' => 'error', 'message' => $exception->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
        }
    }
 }
