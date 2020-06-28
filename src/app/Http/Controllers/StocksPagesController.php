@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Model\Stock\Stock;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 class StocksPagesController extends Controller
 {
@@ -33,5 +35,25 @@ class StocksPagesController extends Controller
 
         return view(self::DEFAULT_DIR . ".show")
             ->with($data);
+    }
+
+    public function apiRouteStore(Request $request) {
+        $controller = new StocksController();
+        /** @var JsonResponse $response */
+        $response = $controller->store($request);
+
+        $message = json_decode($response->getContent())->message;
+
+        return redirect('/stocks')->with('success', $message);
+    }
+
+    public function apiRouteLoadInfoForDate(Request $request) {
+        $controller = new StocksController();
+        /** @var JsonResponse $response */
+        $response = $controller->loadInfoForDate($request);
+
+        $message = json_decode($response->getContent())->message;
+
+        return redirect('/stocks/' . $request->input('stock_id'))->with('success', $message);
     }
 }

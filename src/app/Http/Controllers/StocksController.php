@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Model\Stock\Stock;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 class StocksController extends Controller
 {
@@ -18,7 +20,7 @@ class StocksController extends Controller
         $stock = new Stock();
         $stock->store($request->input('symbol'));
 
-        return redirect('/stocks')->with('success', "$stock->symbol Registered");
+        return new JsonResponse(['status' => 'ok', 'message' => "$stock->symbol Registered"], Response::HTTP_OK);
     }
 
    public function loadInfoForDate(Request $request)
@@ -33,6 +35,6 @@ class StocksController extends Controller
        $stock = Stock::find($request->input('stock_id'));
        $stock->loadStockInfoForDate($date);
 
-       return redirect("/stocks/$stock->id")->with('success', $date->toDateString() . " price for $stock->symbol was loaded.");
+       return new JsonResponse(['status' => 'ok', 'message' => $date->toDateString() . " price for $stock->symbol was loaded."], Response::HTTP_OK);
    }
 }
