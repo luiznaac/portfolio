@@ -10,16 +10,20 @@ class AlphaVantageAPI {
     private const KEY = '9LX170KU6457PN56';
     private const SYMBOL_SEARCH_FUNCTION = 'function=SYMBOL_SEARCH&keywords=:keyword&apikey=:api_key';
 
-    public static function getStockNameForSymbol(string $symbol): string {
-        return self::getSymbolSearch($symbol)['2. name'];
+    public static function getStockNameForSymbol(string $symbol): ?string {
+        $best_match = self::getSymbolSearch($symbol);
+
+        return $best_match ? $best_match['2. name'] : null;
     }
 
-    private static function getSymbolSearch(string $symbol): array {
+    private static function getSymbolSearch(string $symbol): ?array {
         $endpoint_path = self::buildSymbolSearchEndpointPath($symbol);
 
         $response = Http::get(self::API . $endpoint_path);
 
-        return $response->json()['bestMatches'][0];
+        $best_matches = $response->json()['bestMatches'];
+
+        return $best_matches ? $response->json()['bestMatches'][0] : null;
     }
 
     private static function buildSymbolSearchEndpointPath(string $symbol): string {

@@ -7,6 +7,12 @@ use Tests\TestCase;
 
 class AlphaVantageAPITest extends TestCase {
 
+    public function testGetSymbolName_InvalidSymbol_ShouldReturnNull(): void {
+        $name = AlphaVantageAPI::getStockNameForSymbol('x1faf3');
+
+        $this->assertNull($name);
+    }
+
     public function testGetSymbolName(): void {
         $name = AlphaVantageAPI::getStockNameForSymbol('XPML11');
 
