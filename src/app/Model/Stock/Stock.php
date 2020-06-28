@@ -6,7 +6,7 @@ use App\Portfolio\API\AlphaVantageAPI;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * App\Portfolio\Stock
+ * App\Model\Stock\Stock
  *
  * @property int $id
  * @property string $symbol
