@@ -14,4 +14,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', 'PagesController@index');
-Route::get('/stocks', 'PagesController@stocks');
+Route::get('/stocks', 'StocksPagesController@index');
+Route::get('/stocks/create', 'StocksPagesController@create');
+
+Route::post('/store-stock', ['uses' => 'StocksController@store']);
