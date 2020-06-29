@@ -32,4 +32,13 @@ class OrdersPagesController extends Controller
 
         return redirect('/orders')->with($response->status, $response->message);
     }
+
+    public function apiRouteDelete(Request $request) {
+        $controller = new OrdersController();
+        /** @var JsonResponse $response */
+        $response = $controller->delete($request);
+        $response = json_decode($response->getContent());
+
+        return redirect('/orders')->with($response->status, $response->message);
+    }
 }

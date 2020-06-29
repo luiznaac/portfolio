@@ -42,4 +42,20 @@ class OrdersController extends Controller
             return new JsonResponse(['status' => 'error', 'message' => $exception->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
+    public function delete(Request $request) {
+        $this->validate($request,[
+            'id' => 'required',
+        ]);
+
+        try {
+            /** @var Order $order */
+            $order = Order::find($request->input('id'));
+            $order->delete();
+
+            return new JsonResponse(['status' => 'ok', 'message' => "Order Deleted"], Response::HTTP_OK);
+        } catch (\Exception $exception) {
+            return new JsonResponse(['status' => 'error', 'message' => $exception->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 }

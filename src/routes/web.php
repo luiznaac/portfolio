@@ -30,3 +30,4 @@ Route::get('/orders', 'OrdersPagesController@index');
 Route::get('/orders/create', 'OrdersPagesController@create');
 
 Route::post('/orders/store', 'OrdersPagesController@apiRouteStore');
+Route::post('/orders/delete', 'OrdersPagesController@apiRouteDelete');
