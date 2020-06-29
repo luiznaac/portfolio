@@ -50,18 +50,35 @@ class Order extends Model {
         return $this->calculateTotal();
     }
 
+    public static function consolidateQuantityForStock(Stock $stock): int {
+        $orders = self::where('stock_id', $stock->id)->get();
+
+        $quantity = 0;
+        /** @var Order $order */
+        foreach ($orders as $order) {
+            $type_modifier = self::getTypeModifier($order->type);
+            $quantity += $order->quantity * $type_modifier;
+        }
+
+        return $quantity;
+    }
+
     private function calculateAveragePrice(): float {
         return $this->getTotal() / $this->quantity;
     }
 
     private function calculateTotal(): float {
-        $type_modifier = 1;
-
-        if($this->type == 'sell') {
-            $type_modifier = -1;
-        }
+        $type_modifier = self::getTypeModifier($this->type);
 
         return (($this->quantity * $this->price) + ($this->cost * $type_modifier));
+    }
+
+    private static function getTypeModifier(string $type): int {
+        if($type == 'sell') {
+            return -1;
+        }
+
+        return 1;
     }
 
     public function save(array $options = []) {
