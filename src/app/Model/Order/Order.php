@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
  * App\Model\Order\Order
  *
  * @property int $id
+ * @property int $sequence
  * @property int $stock_id
  * @property string $date
  * @property string $type
@@ -36,7 +37,7 @@ class Order extends Model {
         $this->price = $price;
         $this->cost = $cost;
         $this->average_price = $this->calculateAveragePrice();
-        $this->save();
+        $this->save(['should_increment_sequence' => true]);
     }
 
     private function calculateAveragePrice(): float {
@@ -47,5 +48,29 @@ class Order extends Model {
         }
 
         return (($this->quantity * $this->price) + ($this->cost * $type_modifier)) / $this->quantity;
+    }
+
+    public function save(array $options = []) {
+        if(isset($options['should_increment_sequence'])) {
+            $this->sequence = (self::max('sequence') ?? 0) + 1;
+        }
+
+        return parent::save($options);
+    }
+
+    public function delete() {
+        parent::delete();
+
+        $this->updatePrecedingOrdersSequence();
+    }
+
+    private function updatePrecedingOrdersSequence() {
+        $preceding_orders = self::where('sequence', '>', $this->sequence)->orderBy('sequence')->get();
+
+        /** @var Order $order */
+        foreach ($preceding_orders as $order) {
+            $order->sequence = $order->sequence - 1;
+            $order->save();
+        }
     }
 }
