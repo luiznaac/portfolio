@@ -89,6 +89,51 @@ class OrderTest extends TestCase {
         $this->assertEquals(2, $order_3->sequence);
     }
 
+    public function testGetStockSymbol(): void {
+        $stock = $this->createStock();
+        $date = Carbon::createFromFormat('Y-m-d', '2020-06-26');
+
+        $order_1 = new Order();
+        $order_1->store(
+            $stock,
+            $date,
+            $type = 'buy',
+            $quantity = 10,
+            $price = 90.22,
+            $cost = 7.50
+        );
+
+        $this->assertEquals('BOVA11', $order_1->getStockSymbol());
+    }
+
+    public function testGetTotal(): void {
+        $stock = $this->createStock();
+        $date = Carbon::createFromFormat('Y-m-d', '2020-06-26');
+
+        $order_1 = new Order();
+        $order_1->store(
+            $stock,
+            $date,
+            $type = 'buy',
+            $quantity = 10,
+            $price = 90.22,
+            $cost = 7.50
+        );
+
+        $order_2 = new Order();
+        $order_2->store(
+            $stock,
+            $date,
+            $type = 'sell',
+            $quantity = 10,
+            $price = 90.22,
+            $cost = 7.50
+        );
+
+        $this->assertEquals(909.7, $order_1->getTotal());
+        $this->assertEquals(894.7, $order_2->getTotal());
+    }
+
     private function createStock(): Stock {
         $stock = new Stock();
         $stock->symbol = 'BOVA11';
