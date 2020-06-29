@@ -17,9 +17,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Stock extends Model {
 
+    protected $fillable = ['symbol'];
+
     public function store(string $symbol): void {
         $this->symbol = $symbol;
-        $this->name = AlphaVantageAPI::getStockNameForSymbol($symbol);
         $this->save();
     }
 
@@ -30,5 +31,11 @@ class Stock extends Model {
     public function loadStockInfoForDate(Carbon $date): void {
         $stock_info = new StockInfo();
         $stock_info->store($this, $date);
+    }
+
+    public function save(array $options = []) {
+        $this->name = AlphaVantageAPI::getStockNameForSymbol($this->symbol);
+
+        parent::save($options);
     }
 }
