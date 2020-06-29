@@ -40,14 +40,28 @@ class Order extends Model {
         $this->save(['should_increment_sequence' => true]);
     }
 
+    public function getStockSymbol(): string {
+        $stock = Stock::find($this->stock_id);
+
+        return $stock->symbol;
+    }
+
+    public function getTotal(): string {
+        return $this->calculateTotal();
+    }
+
     private function calculateAveragePrice(): float {
+        return $this->getTotal() / $this->quantity;
+    }
+
+    private function calculateTotal(): float {
         $type_modifier = 1;
 
         if($this->type == 'sell') {
             $type_modifier = -1;
         }
 
-        return (($this->quantity * $this->price) + ($this->cost * $type_modifier)) / $this->quantity;
+        return (($this->quantity * $this->price) + ($this->cost * $type_modifier));
     }
 
     public function save(array $options = []) {
