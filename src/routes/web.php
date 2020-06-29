@@ -20,3 +20,5 @@ Route::get('/stocks/{id}', 'StocksPagesController@show');
 
 Route::post('/stocks/store', 'StocksPagesController@apiRouteStore');
 Route::post('/stocks/load-info-for-date', 'StocksPagesController@apiRouteLoadInfoForDate');
+
+Route::get('/orders', 'OrdersPagesController@index');
