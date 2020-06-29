@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Model;
+namespace Tests\Model\Stock;
 
 use App\Model\Stock\Stock;
 use App\Model\Stock\StockInfo;
