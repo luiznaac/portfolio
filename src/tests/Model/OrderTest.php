@@ -134,10 +134,61 @@ class OrderTest extends TestCase {
         $this->assertEquals(894.7, $order_2->getTotal());
     }
 
-    private function createStock(): Stock {
+    public function testConsolidateQuantityForStock(): void {
+        $stock_1 = $this->createStock('FLRY3');
+        $stock_2 = $this->createStock('XPML11');
+        $date = Carbon::createFromFormat('Y-m-d', '2020-06-26');
+
+        $order_1 = new Order();
+        $order_1->store(
+            $stock_1,
+            $date,
+            $type = 'buy',
+            $quantity = 10,
+            $price = 90.22,
+            $cost = 7.50
+        );
+
+        $order_2 = new Order();
+        $order_2->store(
+            $stock_1,
+            $date,
+            $type = 'sell',
+            $quantity = 5,
+            $price = 90.22,
+            $cost = 7.50
+        );
+
+        $this->assertEquals(5, Order::consolidateQuantityForStock($stock_1));
+
+        $order_3 = new Order();
+        $order_3->store(
+            $stock_1,
+            $date,
+            $type = 'buy',
+            $quantity = 80,
+            $price = 90.22,
+            $cost = 7.50
+        );
+
+        $order_4 = new Order();
+        $order_4->store(
+            $stock_2,
+            $date,
+            $type = 'buy',
+            $quantity = 50,
+            $price = 90.22,
+            $cost = 7.50
+        );
+
+        $this->assertEquals(85, Order::consolidateQuantityForStock($stock_1));
+        $this->assertEquals(50, Order::consolidateQuantityForStock($stock_2));
+    }
+
+    private function createStock(string $symbol = 'BOVA11'): Stock {
         $stock = new Stock();
-        $stock->symbol = 'BOVA11';
-        $stock->save();
+        $stock->symbol = $symbol;
+        $stock->save(['avoid_name_loading' => true]);
 
         return $stock;
     }

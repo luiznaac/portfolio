@@ -34,7 +34,9 @@ class Stock extends Model {
     }
 
     public function save(array $options = []) {
-        $this->name = AlphaVantageAPI::getStockNameForSymbol($this->symbol);
+        if(!isset($options['avoid_name_loading'])) {
+            $this->name = AlphaVantageAPI::getStockNameForSymbol($this->symbol);
+        }
 
         parent::save($options);
     }
