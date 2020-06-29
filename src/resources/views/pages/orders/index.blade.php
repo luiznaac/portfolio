@@ -15,6 +15,7 @@
                 <th>Cost</th>
                 <th>Average Price</th>
                 <th>Total</th>
+                <th></th>
             </tr>
             </thead>
             <tbody>
@@ -29,6 +30,12 @@
                     <td>{{$order->cost}}</td>
                     <td>{{$order->average_price}}</td>
                     <td>{{$order->getTotal()}}</td>
+                    <td>
+                        {!! Form::open(['action' => 'OrdersPagesController@apiRouteDelete']) !!}
+                            {{Form::hidden('id', $order->id)}}
+                            {{Form::submit('X', ['class' => 'btn btn-danger btn-sm'])}}
+                        {!! Form::close() !!}
+                    </td>
                 </tr>
             @endforeach
 
