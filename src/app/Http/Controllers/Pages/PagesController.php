@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Pages;
 
-use App\Model\Stock\Stock;
+use App\Http\Controllers\Controller;
 use Illuminate\View\View;
 
 class PagesController extends Controller

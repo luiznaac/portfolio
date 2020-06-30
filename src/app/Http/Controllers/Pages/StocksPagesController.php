@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Pages;
 
+use App\Http\Controllers\Controller;
 use App\Model\Stock\Stock;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -37,16 +38,7 @@ class StocksPagesController extends Controller
             ->with($data);
     }
 
-    public function apiRouteStore(Request $request) {
-        $controller = new StocksController();
-        /** @var JsonResponse $response */
-        $response = $controller->store($request);
-        $response = json_decode($response->getContent());
-
-        return redirect('/stocks')->with($response->status, $response->message);
-    }
-
-    public function apiRouteLoadInfoForDate(Request $request) {
+    public function loadInfoForDate(Request $request) {
         $controller = new StocksController();
         /** @var JsonResponse $response */
         $response = $controller->loadInfoForDate($request);

@@ -6,8 +6,6 @@ use App\Model\Order\Order;
 use App\Model\Stock\Stock;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Symfony\Component\HttpFoundation\JsonResponse;
 
 class OrdersController extends Controller
 {
@@ -37,10 +35,14 @@ class OrdersController extends Controller
                 $request->input('cost')
             );
 
-            return new JsonResponse(['status' => 'ok', 'message' => "$order->sequence Registered"], Response::HTTP_OK);
+            $status = 'ok';
+            $message = "$order->sequence registered";
         } catch (\Exception $exception) {
-            return new JsonResponse(['status' => 'error', 'message' => $exception->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+            $status = 'error';
+            $message = $exception->getMessage();
         }
+
+        return redirect('/orders')->with($status, $message);
     }
 
     public function delete(Request $request) {
@@ -53,9 +55,13 @@ class OrdersController extends Controller
             $order = Order::find($request->input('id'));
             $order->delete();
 
-            return new JsonResponse(['status' => 'ok', 'message' => "Order Deleted"], Response::HTTP_OK);
+            $status = 'ok';
+            $message = 'Order deleted';
         } catch (\Exception $exception) {
-            return new JsonResponse(['status' => 'error', 'message' => $exception->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+            $status = 'error';
+            $message = $exception->getMessage();
         }
+
+        return redirect('/orders')->with($status, $message);
     }
 }

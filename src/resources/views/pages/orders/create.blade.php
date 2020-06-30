@@ -2,7 +2,7 @@
 
 @section('content')
     <h2>Register Order</h2>
-    {!! Form::open(['action' => 'OrdersPagesController@apiRouteStore']) !!}
+    {!! Form::open(['action' => 'OrdersController@store']) !!}
         <div class="container">
             <div class="form-group">
                 <div class="row">

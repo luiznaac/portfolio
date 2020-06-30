@@ -27,7 +27,7 @@
         </table>
     </div>
 
-    {!! Form::open(['action' => 'StocksPagesController@apiRouteLoadInfoForDate']) !!}
+    {!! Form::open(['action' => 'StocksController@loadInfoForDate']) !!}
         <div class="container">
             <div class="form-group">
                 <div class="row">
