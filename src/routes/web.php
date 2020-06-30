@@ -17,17 +17,17 @@ Route::get('/', 'PagesController@index');
 
 // STOCKS
 
-Route::get('/stocks', 'StocksPagesController@index');
-Route::get('/stocks/create', 'StocksPagesController@create');
-Route::get('/stocks/{id}', 'StocksPagesController@show');
+Route::get('/stocks', 'Pages\StocksPagesController@index');
+Route::get('/stocks/create', 'Pages\StocksPagesController@create');
+Route::get('/stocks/{id}', 'Pages\StocksPagesController@show');
 
-Route::post('/stocks/store', 'StocksPagesController@apiRouteStore');
-Route::post('/stocks/load-info-for-date', 'StocksPagesController@apiRouteLoadInfoForDate');
+Route::post('/stocks/store', 'StocksController@store');
+Route::post('/stocks/load-info-for-date', 'StocksController@loadInfoForDate');
 
 // ORDERS
 
-Route::get('/orders', 'OrdersPagesController@index');
-Route::get('/orders/create', 'OrdersPagesController@create');
+Route::get('/orders', 'Pages\OrdersPagesController@index');
+Route::get('/orders/create', 'Pages\OrdersPagesController@create');
 
-Route::post('/orders/store', 'OrdersPagesController@apiRouteStore');
-Route::post('/orders/delete', 'OrdersPagesController@apiRouteDelete');
+Route::post('/orders/store', 'OrdersController@store');
+Route::post('/orders/delete', 'OrdersController@delete');
