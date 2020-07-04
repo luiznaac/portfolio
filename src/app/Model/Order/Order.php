@@ -4,6 +4,7 @@ namespace App\Model\Order;
 
 use App\Model\Stock\Stock;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -63,6 +64,10 @@ class Order extends Model {
         return $quantity;
     }
 
+    public static function getAllOrdersForStock(Stock $stock): Collection {
+        return self::where('stock_id', $stock->id)->orderBy('sequence')->get();
+    }
+
     private function calculateAveragePrice(): float {
         return $this->getTotal() / $this->quantity;
     }
@@ -73,7 +78,7 @@ class Order extends Model {
         return (($this->quantity * $this->price) + ($this->cost * $type_modifier));
     }
 
-    private static function getTypeModifier(string $type): int {
+    public static function getTypeModifier(string $type): int {
         if($type == 'sell') {
             return -1;
         }
