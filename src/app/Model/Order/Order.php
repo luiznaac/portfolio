@@ -87,6 +87,19 @@ class Order extends Model {
         return $quantity;
     }
 
+    public static function getDateOfFirstContribution(Stock $stock = null): Carbon {
+        $query = self::query();
+
+        if($stock) {
+            $query->where('stock_id', $stock->id);
+        }
+
+        /** @var Order $order */
+        $order = $query->orderBy('date')->get()->first();
+
+        return Carbon::parse($order->date);
+    }
+
     public static function getAllOrdersForStock(Stock $stock): Collection {
         return self::where('stock_id', $stock->id)->orderBy('sequence')->get();
     }
