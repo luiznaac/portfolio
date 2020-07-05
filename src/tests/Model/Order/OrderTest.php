@@ -9,6 +9,51 @@ use Tests\TestCase;
 
 class OrderTest extends TestCase {
 
+    public function testGetAllStocksWithOrdersWhenThereIsNoOrders_ShouldReturnEmptyArray(): void {
+        $stocks = Order::getAllStocksWithOrders();
+
+        $this->assertEmpty($stocks);
+    }
+
+    public function testGetAllStocksWithOrders_ShouldReturnStocks(): void {
+        $date_1 = Carbon::parse('2020-06-03');
+
+        Order::createOrder(
+            'BOVA11',
+            $date_1,
+            $type = 'buy',
+            $quantity = 10,
+            $price = 90.22,
+            $cost = 7.50
+        );
+
+        Order::createOrder(
+            'MXRF11',
+            $date_1->addDay(),
+            $type = 'buy',
+            $quantity = 10,
+            $price = 90.22,
+            $cost = 7.50
+        );
+
+        $deleted_order = Order::createOrder(
+            'FLRY3',
+            $date_1->addDay(),
+            $type = 'buy',
+            $quantity = 10,
+            $price = 90.22,
+            $cost = 7.50
+        );
+        $deleted_order->delete();
+
+        $expected_stocks[] = Stock::getStockBySymbol('BOVA11');
+        $expected_stocks[] = Stock::getStockBySymbol('MXRF11');
+
+        $actual_stocks = Order::getAllStocksWithOrders();
+
+        $this->assertEquals($expected_stocks, $actual_stocks);
+    }
+
     public function testGetDateOfFirstContributionWithoutOrders_ShouldReturnNull(): void {
         $date = Order::getDateOfFirstContribution();
 

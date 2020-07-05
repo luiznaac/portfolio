@@ -74,6 +74,17 @@ class Order extends Model {
         return $this->calculateTotal();
     }
 
+    public static function getAllStocksWithOrders(): array {
+        $cursor = self::query()->select('stock_id')->distinct()->get();
+
+        $stocks = [];
+        foreach ($cursor as $data) {
+            $stocks[] = Stock::find($data->stock_id);
+        }
+
+        return $stocks;
+    }
+
     public static function consolidateQuantityForStock(Stock $stock): int {
         $orders = self::where('stock_id', $stock->id)->get();
 
