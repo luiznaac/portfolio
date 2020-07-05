@@ -11,10 +11,11 @@ use Illuminate\Database\Eloquent\Collection;
 class StockConsolidator {
 
     private static $stock;
-    private static $positions_buffer;
+    private static $positions_buffer = [];
 
     public static function consolidateFromBegin(Stock $stock, Carbon $end_date = null) {
         self::$stock = $stock;
+        self::deleteAllPositionsForStock();
         $orders = Order::getAllOrdersForStock($stock);
         $grouped_orders = self::groupOrdersByDate($orders);
         $dates = self::generateAllDates($end_date);
@@ -34,6 +35,12 @@ class StockConsolidator {
         self::savePositionsBuffer($stock->id);
     }
 
+    private static function deleteAllPositionsForStock(): void {
+        StockPosition::query()
+            ->where('stock_id', self::$stock->id)
+            ->delete();
+    }
+
     private static function groupOrdersByDate(Collection $orders): array {
         $grouped_orders = [];
 
@@ -47,6 +54,10 @@ class StockConsolidator {
 
     private static function generateAllDates(?Carbon $end_date): array {
         $date = Order::getDateOfFirstContribution(self::$stock);
+        if(!$date) {
+            return [];
+        }
+
         $last_date = $end_date ?: Carbon::today();
 
         $all_dates = [];

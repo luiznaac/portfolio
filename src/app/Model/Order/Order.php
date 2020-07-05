@@ -87,7 +87,7 @@ class Order extends Model {
         return $quantity;
     }
 
-    public static function getDateOfFirstContribution(Stock $stock = null): Carbon {
+    public static function getDateOfFirstContribution(Stock $stock = null): ?Carbon {
         $query = self::query();
 
         if($stock) {
@@ -97,7 +97,7 @@ class Order extends Model {
         /** @var Order $order */
         $order = $query->orderBy('date')->get()->first();
 
-        return Carbon::parse($order->date);
+        return $order ? Carbon::parse($order->date) : null;
     }
 
     public static function getAllOrdersForStock(Stock $stock): Collection {

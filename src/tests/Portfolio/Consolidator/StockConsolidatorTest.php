@@ -11,6 +11,16 @@ use Tests\TestCase;
 
 class StockConsolidatorTest extends TestCase {
 
+    public function testConsolidateFromBeginWithoutOrders_ShouldNotCreatePositions(): void {
+        $stock = $this->createStock();
+
+        StockConsolidator::consolidateFromBegin($stock);
+
+        $created_stock_positions = StockPosition::query()->orderBy('date')->get();
+
+        $this->assertEmpty($created_stock_positions);
+    }
+
     public function testConsolidateFromBegin(): void {
         $stock = $this->createStock();
         $date_1 = Carbon::parse('2020-06-26');

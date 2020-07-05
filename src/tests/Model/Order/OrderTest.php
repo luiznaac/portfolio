@@ -9,6 +9,12 @@ use Tests\TestCase;
 
 class OrderTest extends TestCase {
 
+    public function testGetDateOfFirstContributionWithoutOrders_ShouldReturnNull(): void {
+        $date = Order::getDateOfFirstContribution();
+
+        $this->assertNull($date);
+    }
+
     public function testGetDateOfFirstContributionWithStockAndWithoutStock(): void {
         $date_0 = Carbon::parse('2020-06-03');
 

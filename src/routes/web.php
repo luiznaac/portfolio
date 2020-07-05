@@ -31,3 +31,9 @@ Route::get('/orders/create', 'Pages\OrdersPagesController@create');
 
 Route::post('/orders/store', 'OrdersController@store');
 Route::post('/orders/delete', 'OrdersController@delete');
+
+// POSITIONS
+
+Route::get('/positions/stocks/{id}', 'Pages\PositionsPagesController@showStockDetailedPosition');
+
+Route::post('/positions/stocks/consolidate', 'StockConsolidatorController@consolidateForStock');
