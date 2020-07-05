@@ -1,14 +1,15 @@
 <?php
 
-namespace Tests\Model\Stock\Position;
+namespace Tests\Portfolio\Consolidator;
 
 use App\Model\Order\Order;
 use App\Model\Stock\Position\StockPosition;
 use App\Model\Stock\Stock;
+use App\Portfolio\Consolidator\StockConsolidator;
 use Carbon\Carbon;
 use Tests\TestCase;
 
-class StockPositionTest extends TestCase {
+class StockConsolidatorTest extends TestCase {
 
     public function testConsolidateFromBegin(): void {
         $stock = $this->createStock();
@@ -46,7 +47,7 @@ class StockPositionTest extends TestCase {
             $cost = 7.50
         );
 
-        StockPosition::consolidateFromBegin($stock->id);
+        StockConsolidator::consolidateFromBegin($stock);
 
         $stock_position_1 = $this->createStockPosition(
             $stock,
