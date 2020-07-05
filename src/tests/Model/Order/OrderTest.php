@@ -9,6 +9,65 @@ use Tests\TestCase;
 
 class OrderTest extends TestCase {
 
+    public function testGetDateOfFirstContributionWithoutOrders_ShouldReturnNull(): void {
+        $date = Order::getDateOfFirstContribution();
+
+        $this->assertNull($date);
+    }
+
+    public function testGetDateOfFirstContributionWithStockAndWithoutStock(): void {
+        $date_0 = Carbon::parse('2020-06-03');
+
+        Order::createOrder(
+            'BOVA11',
+            $date_0,
+            $type = 'buy',
+            $quantity = 10,
+            $price = 90.22,
+            $cost = 7.50
+        );
+
+        $date_1 = Carbon::parse('2020-06-10');
+
+        Order::createOrder(
+            'MXRF11',
+            $date_1,
+            $type = 'buy',
+            $quantity = 10,
+            $price = 90.22,
+            $cost = 7.50
+        );
+
+        $date_2 = Carbon::parse('2020-06-26');
+
+        Order::createOrder(
+            'MXRF11',
+            $date_2,
+            $type = 'buy',
+            $quantity = 10,
+            $price = 90.22,
+            $cost = 7.50
+        );
+
+        Order::createOrder(
+            'BOVA11',
+            $date_2,
+            $type = 'buy',
+            $quantity = 10,
+            $price = 90.22,
+            $cost = 7.50
+        );
+
+        $stock = Stock::getStockBySymbol('MXRF11');
+        $first_date = Order::getDateOfFirstContribution($stock);
+
+        $this->assertEquals($date_1, $first_date);
+
+        $first_date = Order::getDateOfFirstContribution();
+
+        $this->assertEquals($date_0, $first_date);
+    }
+
     public function testCreateOrderWithNewStock_ShouldCreateStockAndOrder(): void {
         $date = Carbon::createFromFormat('Y-m-d', '2020-06-26');
 

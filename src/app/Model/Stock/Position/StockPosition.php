@@ -2,6 +2,8 @@
 
 namespace App\Model\Stock\Position;
 
+use App\Model\Stock\Stock;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -17,4 +19,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class StockPosition extends Model {
 
+    public static function getPositionsForStock(Stock $stock): Collection {
+        return self::query()
+            ->where('stock_id', $stock->id)
+            ->orderByDesc('date')
+            ->get();
+    }
 }

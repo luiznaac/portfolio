@@ -6,56 +6,59 @@ use App\Model\Order\Order;
 use App\Model\Stock\Position\StockPosition;
 use App\Model\Stock\Stock;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
 
 class StockConsolidator {
 
-    private static $positions_buffer;
+    private static $stock;
+    private static $positions_buffer = [];
 
-    public static function consolidateFromBegin(Stock $stock) {
+    public static function consolidateFromBegin(Stock $stock, Carbon $end_date = null) {
+        self::$stock = $stock;
+        self::deleteAllPositionsForStock();
         $orders = Order::getAllOrdersForStock($stock);
+        $grouped_orders = self::groupOrdersByDate($orders);
+        $dates = self::generateAllDates($end_date);
 
-        /** @var Order $order */
-        foreach ($orders as $order) {
-            $actual_date = Carbon::parse($order->date);
+        foreach ($dates as $date) {
+            $position = isset($position) ? clone $position : new StockPosition();
+            $position->date = $date;
 
-            if (!isset($position) || (isset($previous_date) && $actual_date->notEqualTo($previous_date))) {
-                $position = isset($position) ? clone $position : new StockPosition();
-                self::$positions_buffer[$actual_date->toDateString()] = $position;
+            if(isset($grouped_orders[$date])) {
+                $orders_in_this_date = $grouped_orders[$date];
+                $position = self::sumOrdersToPosition($orders_in_this_date, $position);
             }
 
-            $position = self::sumOrderToPosition($order, $position);
-
-            $previous_date = $actual_date;
+            self::$positions_buffer[] = $position;
         }
 
-        self::fillInBetweenDates();
         self::savePositionsBuffer($stock->id);
     }
 
-    private static function sumOrderToPosition(Order $order, StockPosition $position): StockPosition {
-        $position->quantity = ($position->quantity ?: 0) + $order->quantity;
-        $position->amount = ($position->amount ?: 0) + $order->quantity * $order->price;
-        $position->average_price = ($position->average_price ?: 0) + $position->amount/$position->quantity;
-
-        return $position;
+    private static function deleteAllPositionsForStock(): void {
+        StockPosition::query()
+            ->where('stock_id', self::$stock->id)
+            ->delete();
     }
 
-    private static function fillInBetweenDates(): void {
-        $all_dates = self::generateAllDates();
+    private static function groupOrdersByDate(Collection $orders): array {
+        $grouped_orders = [];
 
-        foreach ($all_dates as $index => $date) {
-            if(!isset(self::$positions_buffer[$date])) {
-                $previous_date = $all_dates[$index-1];
-                $position_copy = clone self::$positions_buffer[$previous_date];
-
-                self::$positions_buffer[$date] = $position_copy;
-            }
+        /** @var Order $order */
+        foreach ($orders as $order) {
+            $grouped_orders[$order->date][] = $order;
         }
+
+        return $grouped_orders;
     }
 
-    private static function generateAllDates(): array {
-        $date = Carbon::parse(array_keys(self::$positions_buffer)[0]);
-        $last_date = Carbon::parse(array_keys(self::$positions_buffer)[sizeof(self::$positions_buffer)-1]);
+    private static function generateAllDates(?Carbon $end_date): array {
+        $date = Order::getDateOfFirstContribution(self::$stock);
+        if(!$date) {
+            return [];
+        }
+
+        $last_date = $end_date ?: Carbon::today();
 
         $all_dates = [];
         while($date->lte($last_date)) {
@@ -70,11 +73,20 @@ class StockConsolidator {
         return $all_dates;
     }
 
+    private static function sumOrdersToPosition(array $orders, StockPosition $position): StockPosition {
+        foreach ($orders as $order) {
+            $position->quantity = ($position->quantity ?: 0) + $order->quantity;
+            $position->amount = ($position->amount ?: 0) + $order->quantity * $order->price;
+            $position->average_price = ($position->average_price ?: 0) + $position->amount/$position->quantity;
+        }
+
+        return $position;
+    }
+
     private static function savePositionsBuffer(int $stock_id): void {
         /** @var StockPosition $position */
-        foreach (self::$positions_buffer as $date => $position) {
+        foreach (self::$positions_buffer as $position) {
             $position->stock_id = $stock_id;
-            $position->date = $date;
             $position->save();
         }
     }

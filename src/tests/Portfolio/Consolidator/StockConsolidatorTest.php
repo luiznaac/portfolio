@@ -11,6 +11,16 @@ use Tests\TestCase;
 
 class StockConsolidatorTest extends TestCase {
 
+    public function testConsolidateFromBeginWithoutOrders_ShouldNotCreatePositions(): void {
+        $stock = $this->createStock();
+
+        StockConsolidator::consolidateFromBegin($stock);
+
+        $created_stock_positions = StockPosition::query()->orderBy('date')->get();
+
+        $this->assertEmpty($created_stock_positions);
+    }
+
     public function testConsolidateFromBegin(): void {
         $stock = $this->createStock();
         $date_1 = Carbon::parse('2020-06-26');
@@ -47,7 +57,7 @@ class StockConsolidatorTest extends TestCase {
             $cost = 7.50
         );
 
-        StockConsolidator::consolidateFromBegin($stock);
+        StockConsolidator::consolidateFromBegin($stock, $date_2->addDay());
 
         $stock_position_1 = $this->createStockPosition(
             $stock,
@@ -56,7 +66,6 @@ class StockConsolidatorTest extends TestCase {
             $order_1->quantity * $order_1->price + $order_2->quantity * $order_2->price,
             ($order_1->quantity * $order_1->price + $order_2->quantity * $order_2->price)/($order_1->quantity + $order_2->quantity)
         );
-
         $stock_positions[] = $stock_position_1;
 
         $stock_position_2 = clone $stock_position_1;
@@ -69,13 +78,16 @@ class StockConsolidatorTest extends TestCase {
 
         $stock_position_4 = $this->createStockPosition(
             $stock,
-            $date_2,
+            $date_2->subDay(),
             $stock_positions[0]->quantity + $order_3->quantity,
             $stock_positions[0]->amount + $order_3->quantity * $order_3->price,
             ($stock_positions[0]->amount + $order_3->quantity * $order_3->price)/($stock_positions[0]->quantity + $order_3->quantity)
         );
-
         $stock_positions[] = $stock_position_4;
+
+        $stock_position_5 = clone $stock_position_4;
+        $stock_position_5->date = $date_2->addDay()->toDateString();
+        $stock_positions[] = $stock_position_5;
 
         $this->assertStockPositions($stock_positions);
     }
