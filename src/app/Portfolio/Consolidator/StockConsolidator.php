@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Collection;
 
 class StockConsolidator {
 
+    /** @var Stock $stock */
     private static $stock;
     private static $positions_buffer = [];
 
@@ -28,6 +29,8 @@ class StockConsolidator {
                 $orders_in_this_date = $grouped_orders[$date];
                 $position = self::sumOrdersToPosition($orders_in_this_date, $position);
             }
+
+            $position = self::calculateAmountAccordinglyPriceOnDate($date, $position);
 
             self::$positions_buffer[] = $position;
         }
@@ -76,9 +79,18 @@ class StockConsolidator {
     private static function sumOrdersToPosition(array $orders, StockPosition $position): StockPosition {
         foreach ($orders as $order) {
             $position->quantity = ($position->quantity ?: 0) + $order->quantity;
-            $position->amount = ($position->amount ?: 0) + $order->quantity * $order->price;
-            $position->average_price = ($position->average_price ?: 0) + $position->amount/$position->quantity;
+            $position->contributed_amount = ($position->contributed_amount ?: 0) + $order->quantity * $order->price;
+            $position->average_price = ($position->average_price ?: 0) + $position->contributed_amount/$position->quantity;
         }
+
+        return $position;
+    }
+
+    private static function calculateAmountAccordinglyPriceOnDate(string $date, StockPosition $position): StockPosition {
+        $date = Carbon::parse($date);
+        $price_on_date = self::$stock->getStockPriceForDate($date);
+
+        $position->amount = $price_on_date * $position->quantity;
 
         return $position;
     }

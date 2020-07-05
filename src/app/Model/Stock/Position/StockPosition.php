@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $date
  * @property int $quantity
  * @property float $amount
+ * @property float $contributed_amount
  * @property float $average_price
  */
 

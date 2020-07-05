@@ -32,13 +32,28 @@ class Stock extends Model {
         return StockInfo::where('stock_id', $this->id)->orderBy('date')->get();
     }
 
-    public function loadStockInfoForDate(Carbon $date): void {
-        $stock_info = new StockInfo();
-        $stock_info->store($this, $date);
+    public function getStockPriceForDate(Carbon $date): float {
+        $stock_info = StockInfo::query()
+            ->where('stock_id', $this->id)
+            ->where('date', $date->toDateString())
+            ->get()->first();
+
+        if(!$stock_info) {
+            $stock_info = $this->loadStockInfoForDate($date);
+        }
+
+        return $stock_info->price;
     }
 
     public function loadStockName(): void {
         $this->name = AlphaVantageAPI::getStockNameForSymbol($this->symbol);
         $this->save();
+    }
+
+    private function loadStockInfoForDate(Carbon $date): StockInfo {
+        $stock_info = new StockInfo();
+        $stock_info->store($this, $date);
+
+        return $stock_info;
     }
 }
