@@ -12,6 +12,35 @@ use Tests\TestCase;
 
 class StockConsolidatorTest extends TestCase {
 
+    public function testUpdatePosition_ShouldOnlyCreateLastWorkingDate(): void {
+        $stock = $this->createStock();
+        $prices = $this->createStockPrices($stock);
+        $date_weekend = Carbon::parse('2020-06-28');
+
+        $order_1 = new Order();
+        $order_1->store(
+            $stock,
+            Carbon::parse('2020-06-26'),
+            $type = 'buy',
+            $quantity = 10,
+            $price = 15.22,
+            $cost = 7.50
+        );
+
+        $stock_position_1 = $this->createStockPosition(
+            $stock,
+            $date_weekend->subDays(2),
+            $order_1->quantity,
+            $prices[0] * $order_1->quantity,
+            $order_1->quantity * $order_1->price,
+            $order_1->quantity * $order_1->price/$order_1->quantity
+        );
+
+        StockConsolidator::updatePosition($stock, $date_weekend);
+
+        $this->assertStockPositions([$stock_position_1]);
+    }
+
     public function testConsolidateFromBeginWithoutOrders_ShouldNotCreatePositions(): void {
         $stock = $this->createStock();
 
