@@ -37,4 +37,6 @@ Route::post('/orders/delete', 'OrdersController@delete');
 Route::get('/positions/stocks', 'Pages\PositionsPagesController@showStocks');
 Route::get('/positions/stocks/{id}', 'Pages\PositionsPagesController@showStockDetailedPosition');
 
+Route::post('/positions/stocks/update-position', 'StockConsolidatorController@updatePosition');
+Route::post('/positions/stocks/update-all-positions', 'StockConsolidatorController@updateAllPositions');
 Route::post('/positions/stocks/consolidate', 'StockConsolidatorController@consolidateForStock');

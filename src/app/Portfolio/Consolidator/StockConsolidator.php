@@ -14,6 +14,28 @@ class StockConsolidator {
     private static $stock;
     private static $positions_buffer = [];
 
+    public static function updatePositions(Carbon $date = null): void {
+        $stocks = Order::getAllStocksWithOrders();
+
+        foreach ($stocks as $stock) {
+            self::updatePositionForStock($stock, $date);
+        }
+    }
+
+    public static function updatePositionForStock(Stock $stock, Carbon $date = null) {
+        self::$stock = $stock;
+        $date = self::getLastWorkingDay($date);
+        $orders = Order::getAllOrdersForStock($stock);
+
+        $position = new StockPosition();
+        $position->date = $date;
+        $position = self::sumOrdersToPosition($orders->toArray(), $position);
+        $position = self::calculateAmountAccordinglyPriceOnDate($date, $position);
+
+        self::$positions_buffer[] = $position;
+        self::savePositionsBuffer();
+    }
+
     public static function consolidateFromBegin(Stock $stock, Carbon $end_date = null) {
         self::$stock = $stock;
         self::deleteAllPositionsForStock();
@@ -35,7 +57,7 @@ class StockConsolidator {
             self::$positions_buffer[] = $position;
         }
 
-        self::savePositionsBuffer($stock->id);
+        self::savePositionsBuffer();
     }
 
     private static function deleteAllPositionsForStock(): void {
@@ -76,10 +98,20 @@ class StockConsolidator {
         return $all_dates;
     }
 
+    private static function getLastWorkingDay(Carbon $date = null): Carbon {
+        $date = $date ?: Carbon::yesterday();
+
+        while($date->isWeekend()) {
+            $date->subDay();
+        }
+
+        return $date;
+    }
+
     private static function sumOrdersToPosition(array $orders, StockPosition $position): StockPosition {
         foreach ($orders as $order) {
-            $position->quantity = ($position->quantity ?: 0) + $order->quantity;
-            $position->contributed_amount = ($position->contributed_amount ?: 0) + $order->quantity * $order->price;
+            $position->quantity = ($position->quantity ?: 0) + $order['quantity'];
+            $position->contributed_amount = ($position->contributed_amount ?: 0) + $order['quantity'] * $order['price'];
         }
 
         $position->average_price = $position->contributed_amount/$position->quantity;
@@ -96,11 +128,13 @@ class StockConsolidator {
         return $position;
     }
 
-    private static function savePositionsBuffer(int $stock_id): void {
+    private static function savePositionsBuffer(): void {
         /** @var StockPosition $position */
         foreach (self::$positions_buffer as $position) {
-            $position->stock_id = $stock_id;
+            $position->stock_id = self::$stock->id;
             $position->save();
         }
+
+        self::$positions_buffer = [];
     }
 }

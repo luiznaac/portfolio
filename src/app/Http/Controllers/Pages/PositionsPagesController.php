@@ -14,10 +14,16 @@ class PositionsPagesController extends Controller
     const STOCKS_SUBDIR = '.stocks';
 
     public function showStocks() {
-        $stocks = Order::getAllStocksWithOrders();
+        $stock_positions = StockPosition::getLastStockPositions();
+
+        $stocks = [];
+        foreach ($stock_positions as $stock_position) {
+            $stocks[$stock_position->stock_id] = Stock::find($stock_position->stock_id);
+        }
 
         $data = [
             'stocks' => $stocks,
+            'stock_positions' => $stock_positions,
         ];
 
         return view(self::DEFAULT_DIR . self::STOCKS_SUBDIR . ".positions")
