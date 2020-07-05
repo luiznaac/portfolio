@@ -19,6 +19,7 @@ class UolAPI {
 
     public static function getStockPriceForDate(string $symbol, Carbon $date): float {
         $code = self::getCodeForSymbol($symbol);
+        $date = clone $date;
         $tries = 0;
 
         do {
