@@ -80,8 +80,9 @@ class StockConsolidator {
         foreach ($orders as $order) {
             $position->quantity = ($position->quantity ?: 0) + $order->quantity;
             $position->contributed_amount = ($position->contributed_amount ?: 0) + $order->quantity * $order->price;
-            $position->average_price = ($position->average_price ?: 0) + $position->contributed_amount/$position->quantity;
         }
+
+        $position->average_price = $position->contributed_amount/$position->quantity;
 
         return $position;
     }

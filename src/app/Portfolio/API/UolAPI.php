@@ -19,8 +19,15 @@ class UolAPI {
 
     public static function getStockPriceForDate(string $symbol, Carbon $date): float {
         $code = self::getCodeForSymbol($symbol);
+        $tries = 0;
 
-        return self::getCodePriceForDate($code, $date);
+        do {
+            $tries++;
+            $price = self::getCodePriceForDate($code, $date);
+            $date->subDay();
+        } while(is_null($price) && $tries < 5);
+
+        return $price;
     }
 
     private static function getCodeForSymbol(string $symbol): int {
@@ -29,12 +36,16 @@ class UolAPI {
         return $symbol_codes[$symbol];
     }
 
-    private static function getCodePriceForDate(int $code, Carbon $date): float {
+    private static function getCodePriceForDate(int $code, Carbon $date): ?float {
         $endpoint_path = self::buildGetPriceEndpointPath($code, $date);
 
         $response = Http::get(self::API . $endpoint_path);
 
-        return $response->json()['data'][0]['price'];
+        try {
+            return $response->json()['data'][0]['price'];
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     protected static function getAllSymbolCodes(): array {

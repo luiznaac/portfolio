@@ -14,7 +14,7 @@ class AlterStockPositionsTableCreateContributedAmountColumn extends Migration
     public function up()
     {
         Schema::table('stock_positions', function (Blueprint $table) {
-            $table->float('contributed_amount');
+            $table->float('contributed_amount')->after('amount');
         });
     }
 
