@@ -5,6 +5,7 @@ namespace Tests\Portfolio\Consolidator;
 use App\Model\Order\Order;
 use App\Model\Stock\Position\StockPosition;
 use App\Model\Stock\Stock;
+use App\Model\Stock\StockInfo;
 use App\Portfolio\Consolidator\StockConsolidator;
 use Carbon\Carbon;
 use Tests\TestCase;
@@ -23,6 +24,7 @@ class StockConsolidatorTest extends TestCase {
 
     public function testConsolidateFromBegin(): void {
         $stock = $this->createStock();
+        $prices = $this->createStockPrices($stock);
         $date_1 = Carbon::parse('2020-06-26');
 
         $order_1 = new Order();
@@ -63,6 +65,7 @@ class StockConsolidatorTest extends TestCase {
             $stock,
             $date_1,
             $order_1->quantity + $order_2->quantity,
+            $prices[0] * ($order_1->quantity + $order_2->quantity),
             $order_1->quantity * $order_1->price + $order_2->quantity * $order_2->price,
             ($order_1->quantity * $order_1->price + $order_2->quantity * $order_2->price)/($order_1->quantity + $order_2->quantity)
         );
@@ -70,23 +73,27 @@ class StockConsolidatorTest extends TestCase {
 
         $stock_position_2 = clone $stock_position_1;
         $stock_position_2->date = $date_1->addDays(3)->toDateString();
+        $stock_position_2->amount = $prices[1] * $stock_position_1->quantity;
         $stock_positions[] = $stock_position_2;
 
         $stock_position_3 = clone $stock_position_1;
         $stock_position_3->date = $date_1->addDay()->toDateString();
+        $stock_position_3->amount = $prices[2] * $stock_position_1->quantity;
         $stock_positions[] = $stock_position_3;
 
         $stock_position_4 = $this->createStockPosition(
             $stock,
             $date_2->subDay(),
             $stock_positions[0]->quantity + $order_3->quantity,
-            $stock_positions[0]->amount + $order_3->quantity * $order_3->price,
+            $prices[3] * ($stock_positions[0]->quantity + $order_3->quantity),
+            $stock_positions[0]->contributed_amount + $order_3->quantity * $order_3->price,
             ($stock_positions[0]->amount + $order_3->quantity * $order_3->price)/($stock_positions[0]->quantity + $order_3->quantity)
         );
         $stock_positions[] = $stock_position_4;
 
         $stock_position_5 = clone $stock_position_4;
         $stock_position_5->date = $date_2->addDay()->toDateString();
+        $stock_position_5->amount = $prices[4] * $stock_position_4->quantity;
         $stock_positions[] = $stock_position_5;
 
         $this->assertStockPositions($stock_positions);
@@ -100,12 +107,52 @@ class StockConsolidatorTest extends TestCase {
         return $stock;
     }
 
-    private function createStockPosition(Stock $stock, Carbon $date, int $quantity, float $amount, float $average_price): StockPosition {
+    private function createStockPrices(Stock $stock): array {
+        $stock_info = new StockInfo();
+        $stock_info->stock_id = $stock->id;
+        $stock_info->date = '2020-06-26';
+        $stock_info->price = 90;
+        $stock_info->save();
+        $stock_infos[] = $stock_info->price;
+
+        $stock_info = new StockInfo();
+        $stock_info->stock_id = $stock->id;
+        $stock_info->date = '2020-06-29';
+        $stock_info->price = 91;
+        $stock_info->save();
+        $stock_infos[] = $stock_info->price;
+
+        $stock_info = new StockInfo();
+        $stock_info->stock_id = $stock->id;
+        $stock_info->date = '2020-06-30';
+        $stock_info->price = 92;
+        $stock_info->save();
+        $stock_infos[] = $stock_info->price;
+
+        $stock_info = new StockInfo();
+        $stock_info->stock_id = $stock->id;
+        $stock_info->date = '2020-07-01';
+        $stock_info->price = 86;
+        $stock_info->save();
+        $stock_infos[] = $stock_info->price;
+
+        $stock_info = new StockInfo();
+        $stock_info->stock_id = $stock->id;
+        $stock_info->date = '2020-07-02';
+        $stock_info->price = 89;
+        $stock_info->save();
+        $stock_infos[] = $stock_info->price;
+
+        return $stock_infos;
+    }
+
+    private function createStockPosition(Stock $stock, Carbon $date, int $quantity, float $amount, float $contributed_amount, float $average_price): StockPosition {
         $position = new StockPosition();
         $position->stock_id = $stock->id;
         $position->date = $date->toDateString();
         $position->quantity = $quantity;
         $position->amount = $amount;
+        $position->contributed_amount = $contributed_amount;
         $position->average_price = $average_price;
 
         return $position;
@@ -123,6 +170,7 @@ class StockConsolidatorTest extends TestCase {
             $this->assertEquals($expected_stock_position->date, $created_stock_position->date);
             $this->assertEquals($expected_stock_position->quantity, $created_stock_position->quantity);
             $this->assertEquals($expected_stock_position->amount, $created_stock_position->amount);
+            $this->assertEquals($expected_stock_position->contributed_amount, $created_stock_position->contributed_amount, "$expected_stock_position->date, $expected_stock_position->quantity, $created_stock_position->quantity");
         }
     }
 }
