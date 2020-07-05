@@ -42,7 +42,7 @@ class StockConsolidatorTest extends TestCase {
             $stock,
             $date_1,
             $type = 'buy',
-            $quantity = 10,
+            $quantity = 5,
             $price = 90.22,
             $cost = 7.50
         );
@@ -54,7 +54,7 @@ class StockConsolidatorTest extends TestCase {
             $stock,
             $date_2->addDays(5),
             $type = 'buy',
-            $quantity = 10,
+            $quantity = 8,
             $price = 90.22,
             $cost = 7.50
         );
@@ -87,7 +87,7 @@ class StockConsolidatorTest extends TestCase {
             $stock_positions[0]->quantity + $order_3->quantity,
             $prices[3] * ($stock_positions[0]->quantity + $order_3->quantity),
             $stock_positions[0]->contributed_amount + $order_3->quantity * $order_3->price,
-            ($stock_positions[0]->amount + $order_3->quantity * $order_3->price)/($stock_positions[0]->quantity + $order_3->quantity)
+            ($stock_positions[0]->contributed_amount + $order_3->quantity * $order_3->price)/($stock_positions[0]->quantity + $order_3->quantity)
         );
         $stock_positions[] = $stock_position_4;
 
@@ -159,7 +159,7 @@ class StockConsolidatorTest extends TestCase {
     }
 
     private function assertStockPositions(array $expected_stock_positions): void {
-        $created_stock_positions = StockPosition::query()->orderBy('date')->get();
+        $created_stock_positions = StockPosition::query()->where('stock_id', $expected_stock_positions[0]->stock_id)->orderBy('date')->get();
 
         /** @var StockPosition $expected_stock_position */
         foreach (array_reverse($expected_stock_positions) as $expected_stock_position) {
@@ -170,7 +170,8 @@ class StockConsolidatorTest extends TestCase {
             $this->assertEquals($expected_stock_position->date, $created_stock_position->date);
             $this->assertEquals($expected_stock_position->quantity, $created_stock_position->quantity);
             $this->assertEquals($expected_stock_position->amount, $created_stock_position->amount);
-            $this->assertEquals($expected_stock_position->contributed_amount, $created_stock_position->contributed_amount, "$expected_stock_position->date, $expected_stock_position->quantity, $created_stock_position->quantity");
+            $this->assertEquals($expected_stock_position->contributed_amount, $created_stock_position->contributed_amount);
+            $this->assertEquals($expected_stock_position->average_price, $created_stock_position->average_price);
         }
     }
 }
