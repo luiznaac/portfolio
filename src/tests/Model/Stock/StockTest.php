@@ -23,16 +23,25 @@ class StockTest extends TestCase {
         $this->assertEquals(90.22, $stock_info->price);
     }
 
-    public function testStoreStock_StockNotFound_ShouldStoreNull(): void {
+    public function testStoreStock_ShouldNotLoadName(): void {
         $stock = new Stock();
-        $stock->store('XXXXXX');
+        $stock->store('BOVA11');
 
         $this->assertNull($stock->name);
     }
 
-    public function testStoreStock_ShouldLoadNameFromAlphaVantageAPI(): void {
+    public function testLoadStockName_StockNotFound_ShouldStoreNull(): void {
+        $stock = new Stock();
+        $stock->store('XXXXXX');
+        $stock->loadStockName();
+
+        $this->assertNull($stock->name);
+    }
+
+    public function testLoadStockName_ShouldLoadNameFromAlphaVantageAPI(): void {
         $stock = new Stock();
         $stock->store('ITSA4');
+        $stock->loadStockName();
 
         $this->assertEquals('Itausa - Investimentos Itau S.A.', $stock->name);
     }

@@ -83,7 +83,7 @@ class StockConsolidatorTest extends TestCase {
     private function createStock(string $symbol = 'BOVA11'): Stock {
         $stock = new Stock();
         $stock->symbol = $symbol;
-        $stock->save(['avoid_name_loading' => true]);
+        $stock->save();
 
         return $stock;
     }

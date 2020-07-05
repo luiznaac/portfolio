@@ -9,13 +9,28 @@ use Tests\TestCase;
 
 class OrderTest extends TestCase {
 
-    public function testStoreSellOrder_ShouldCalculateAveragePriceAndStore(): void {
-        $stock = $this->createStock();
+    public function testCreateOrderWithNewStock_ShouldCreateStockAndOrder(): void {
         $date = Carbon::createFromFormat('Y-m-d', '2020-06-26');
 
-        $order = new Order();
-        $order->store(
-            $stock,
+        Order::createOrder(
+            'MXRF11',
+            $date,
+            $type = 'buy',
+            $quantity = 10,
+            $price = 90.22,
+            $cost = 7.50
+        );
+
+        $stock = Stock::getStockBySymbol('MXRF11');
+
+        $this->assertNotNull($stock);
+    }
+
+    public function testStoreSellOrder_ShouldCalculateAveragePriceAndStore(): void {
+        $date = Carbon::createFromFormat('Y-m-d', '2020-06-26');
+
+        $order = Order::createOrder(
+            'BOVA11',
             $date,
             $type = 'sell',
             $quantity = 10,
@@ -27,12 +42,10 @@ class OrderTest extends TestCase {
     }
 
     public function testStoreBuyOrder_ShouldCalculateAveragePriceAndStore(): void {
-        $stock = $this->createStock();
         $date = Carbon::createFromFormat('Y-m-d', '2020-06-26');
 
-        $order = new Order();
-        $order->store(
-            $stock,
+        $order = Order::createOrder(
+            'BOVA11',
             $date,
             $type = 'buy',
             $quantity = 10,
@@ -44,12 +57,10 @@ class OrderTest extends TestCase {
     }
 
     public function testStoreAndDeleteOrder_ShouldCorrectCalculateSequence(): void {
-        $stock = $this->createStock();
         $date = Carbon::createFromFormat('Y-m-d', '2020-06-26');
 
-        $order_1 = new Order();
-        $order_1->store(
-            $stock,
+        $order_1 = Order::createOrder(
+            'BOVA11',
             $date,
             $type = 'buy',
             $quantity = 10,
@@ -57,9 +68,8 @@ class OrderTest extends TestCase {
             $cost = 7.50
         );
 
-        $order_2 = new Order();
-        $order_2->store(
-            $stock,
+        $order_2 = Order::createOrder(
+            'BOVA11',
             $date,
             $type = 'sell',
             $quantity = 10,
@@ -67,9 +77,8 @@ class OrderTest extends TestCase {
             $cost = 7.50
         );
 
-        $order_3 = new Order();
-        $order_3->store(
-            $stock,
+        $order_3 = Order::createOrder(
+            'BOVA11',
             $date,
             $type = 'buy',
             $quantity = 10,
@@ -90,12 +99,10 @@ class OrderTest extends TestCase {
     }
 
     public function testGetStockSymbol(): void {
-        $stock = $this->createStock();
         $date = Carbon::createFromFormat('Y-m-d', '2020-06-26');
 
-        $order_1 = new Order();
-        $order_1->store(
-            $stock,
+        $order_1 = Order::createOrder(
+            'BOVA11',
             $date,
             $type = 'buy',
             $quantity = 10,
@@ -107,12 +114,10 @@ class OrderTest extends TestCase {
     }
 
     public function testGetTotal(): void {
-        $stock = $this->createStock();
         $date = Carbon::createFromFormat('Y-m-d', '2020-06-26');
 
-        $order_1 = new Order();
-        $order_1->store(
-            $stock,
+        $order_1 = Order::createOrder(
+            'MXRF11',
             $date,
             $type = 'buy',
             $quantity = 10,
@@ -120,9 +125,8 @@ class OrderTest extends TestCase {
             $cost = 7.50
         );
 
-        $order_2 = new Order();
-        $order_2->store(
-            $stock,
+        $order_2 = Order::createOrder(
+            'MXRF11',
             $date,
             $type = 'sell',
             $quantity = 10,
@@ -135,13 +139,12 @@ class OrderTest extends TestCase {
     }
 
     public function testConsolidateQuantityForStock(): void {
-        $stock_1 = $this->createStock('FLRY3');
-        $stock_2 = $this->createStock('XPML11');
+        $stock_symbol_1 = 'FLRY3';
+        $stock_symbol_2 = 'XPML11';
         $date = Carbon::createFromFormat('Y-m-d', '2020-06-26');
 
-        $order_1 = new Order();
-        $order_1->store(
-            $stock_1,
+        Order::createOrder(
+            $stock_symbol_1,
             $date,
             $type = 'buy',
             $quantity = 10,
@@ -149,9 +152,8 @@ class OrderTest extends TestCase {
             $cost = 7.50
         );
 
-        $order_2 = new Order();
-        $order_2->store(
-            $stock_1,
+        Order::createOrder(
+            $stock_symbol_1,
             $date,
             $type = 'sell',
             $quantity = 5,
@@ -159,11 +161,12 @@ class OrderTest extends TestCase {
             $cost = 7.50
         );
 
+        $stock_1 = Stock::getStockBySymbol($stock_symbol_1);
+
         $this->assertEquals(5, Order::consolidateQuantityForStock($stock_1));
 
-        $order_3 = new Order();
-        $order_3->store(
-            $stock_1,
+        Order::createOrder(
+            $stock_symbol_1,
             $date,
             $type = 'buy',
             $quantity = 80,
@@ -171,9 +174,8 @@ class OrderTest extends TestCase {
             $cost = 7.50
         );
 
-        $order_4 = new Order();
-        $order_4->store(
-            $stock_2,
+        Order::createOrder(
+            $stock_symbol_2,
             $date,
             $type = 'buy',
             $quantity = 50,
@@ -181,15 +183,9 @@ class OrderTest extends TestCase {
             $cost = 7.50
         );
 
+        $stock_2 = Stock::getStockBySymbol($stock_symbol_2);
+
         $this->assertEquals(85, Order::consolidateQuantityForStock($stock_1));
         $this->assertEquals(50, Order::consolidateQuantityForStock($stock_2));
-    }
-
-    private function createStock(string $symbol = 'BOVA11'): Stock {
-        $stock = new Stock();
-        $stock->symbol = $symbol;
-        $stock->save(['avoid_name_loading' => true]);
-
-        return $stock;
     }
 }

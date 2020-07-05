@@ -7,8 +7,7 @@ use App\Model\Stock\Stock;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
-class OrdersController extends Controller
-{
+class OrdersController extends Controller {
 
     public function store(Request $request)
     {
@@ -22,12 +21,10 @@ class OrdersController extends Controller
         ]);
 
         try {
-            $stock = Stock::firstOrCreate(['symbol' => $request->input('symbol')]);
             $date = Carbon::createFromFormat('Y-m-d', $request->input('date'));
 
-            $order = new Order();
-            $order->store(
-                $stock,
+            $order = Order::createOrder(
+                $request->input('symbol'),
                 $date,
                 $request->input('type'),
                 $request->input('quantity'),
@@ -35,8 +32,10 @@ class OrdersController extends Controller
                 $request->input('cost')
             );
 
+            $stock = Stock::find($order->stock_id);
+
             $status = 'ok';
-            $message = "$order->sequence registered";
+            $message = "$order->sequence for $stock->symbol registered";
         } catch (\Exception $exception) {
             $status = 'error';
             $message = $exception->getMessage();
