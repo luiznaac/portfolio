@@ -12,7 +12,57 @@ use Tests\TestCase;
 
 class StockConsolidatorTest extends TestCase {
 
-    public function testUpdatePosition_ShouldOnlyCreateLastWorkingDate(): void {
+    public function testUpdatePositions_ShouldOnlyCreateLastWorkingDateForAllStocks(): void {
+        $stock_1 = $this->createStock('SQIA3');
+        $prices_1 = $this->createStockPrices($stock_1);
+        $stock_2 = $this->createStock('FLRY3');
+        $prices_2 = $this->createStockPrices($stock_2);
+        $date_weekend = Carbon::parse('2020-06-28');
+
+        $order_1 = new Order();
+        $order_1->store(
+            $stock_1,
+            Carbon::parse('2020-06-26'),
+            $type = 'buy',
+            $quantity = 10,
+            $price = 15.22,
+            $cost = 7.50
+        );
+
+        $stock_position_1 = $this->createStockPosition(
+            $stock_1,
+            $date_weekend->subDays(2),
+            $order_1->quantity,
+            $prices_1[0] * $order_1->quantity,
+            $order_1->quantity * $order_1->price,
+            $order_1->quantity * $order_1->price/$order_1->quantity
+        );
+
+        $order_2 = new Order();
+        $order_2->store(
+            $stock_2,
+            Carbon::parse('2020-06-26'),
+            $type = 'buy',
+            $quantity = 10,
+            $price = 15.22,
+            $cost = 7.50
+        );
+
+        $stock_position_2 = $this->createStockPosition(
+            $stock_2,
+            $date_weekend,
+            $order_2->quantity,
+            $prices_2[0] * $order_2->quantity,
+            $order_2->quantity * $order_2->price,
+            $order_2->quantity * $order_2->price/$order_2->quantity
+        );
+
+        StockConsolidator::updatePositions($date_weekend->addDays(2));
+
+        $this->assertStockPositions([$stock_position_1, $stock_position_2]);
+    }
+
+    public function testUpdatePositionForStock_ShouldOnlyCreateLastWorkingDate(): void {
         $stock = $this->createStock();
         $prices = $this->createStockPrices($stock);
         $date_weekend = Carbon::parse('2020-06-28');
@@ -36,7 +86,7 @@ class StockConsolidatorTest extends TestCase {
             $order_1->quantity * $order_1->price/$order_1->quantity
         );
 
-        StockConsolidator::updatePosition($stock, $date_weekend);
+        StockConsolidator::updatePositionForStock($stock, $date_weekend);
 
         $this->assertStockPositions([$stock_position_1]);
     }
@@ -188,7 +238,11 @@ class StockConsolidatorTest extends TestCase {
     }
 
     private function assertStockPositions(array $expected_stock_positions): void {
-        $created_stock_positions = StockPosition::query()->where('stock_id', $expected_stock_positions[0]->stock_id)->orderBy('date')->get();
+        $created_stock_positions = StockPosition::query()
+            ->whereIn('stock_id', array_map(function ($position) {
+                return $position->stock_id;
+            }, $expected_stock_positions))
+            ->orderBy('date')->get();
 
         /** @var StockPosition $expected_stock_position */
         foreach (array_reverse($expected_stock_positions) as $expected_stock_position) {

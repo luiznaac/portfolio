@@ -8,6 +8,20 @@ use Illuminate\Http\Request;
 
 class StockConsolidatorController extends Controller {
 
+    public function updateAllPositions(Request $request) {
+        try {
+            StockConsolidator::updatePositions();
+
+            $status = 'ok';
+            $message = "All positions were updated.";
+        } catch (\Exception $exception) {
+            $status = 'error';
+            $message = $exception->getMessage();
+        }
+
+        return redirect('/positions/stocks')->with($status, $message);
+    }
+
     public function updatePosition(Request $request) {
         $this->validate($request,[
             'stock_id' => 'required',
@@ -15,7 +29,7 @@ class StockConsolidatorController extends Controller {
 
         try {
             $stock = Stock::find($request->input('stock_id'));
-            StockConsolidator::updatePosition($stock);
+            StockConsolidator::updatePositionForStock($stock);
 
             $status = 'ok';
             $message = "Position $stock->symbol updated.";

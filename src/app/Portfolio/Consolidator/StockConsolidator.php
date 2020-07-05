@@ -14,7 +14,15 @@ class StockConsolidator {
     private static $stock;
     private static $positions_buffer = [];
 
-    public static function updatePosition(Stock $stock, Carbon $date = null) {
+    public static function updatePositions(Carbon $date = null): void {
+        $stocks = Order::getAllStocksWithOrders();
+
+        foreach ($stocks as $stock) {
+            self::updatePositionForStock($stock, $date);
+        }
+    }
+
+    public static function updatePositionForStock(Stock $stock, Carbon $date = null) {
         self::$stock = $stock;
         $date = self::getLastWorkingDay($date);
         $orders = Order::getAllOrdersForStock($stock);

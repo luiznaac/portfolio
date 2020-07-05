@@ -38,5 +38,16 @@
             @endif
             </tbody>
         </table>
+        {!! Form::open(['action' => 'StockConsolidatorController@updateAllPositions']) !!}
+        <div class="container">
+            <div class="form-group">
+                <div class="row">
+                    <div class="col">
+                        {{Form::submit('Consolidate', ['class' => 'btn btn-primary'])}}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {!! Form::close() !!}
     </div>
 @endsection
