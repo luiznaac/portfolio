@@ -41,6 +41,29 @@ class Order extends Model {
         $this->save(['should_increment_sequence' => true]);
     }
 
+    public static function createOrder(
+        string $stock_symbol,
+        Carbon $date,
+        string $type,
+        int $quantity,
+        float $price,
+        float $cost
+    ): self {
+        $stock = Stock::firstOrCreate(['symbol' => $stock_symbol]);
+
+        $order = new Order();
+        $order->store(
+            $stock,
+            $date,
+            $type,
+            $quantity,
+            $price,
+            $cost
+        );
+
+        return $order;
+    }
+
     public function getStockSymbol(): string {
         $stock = Stock::find($this->stock_id);
 

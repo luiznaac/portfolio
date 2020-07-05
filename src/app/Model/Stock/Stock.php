@@ -24,6 +24,10 @@ class Stock extends Model {
         $this->save();
     }
 
+    public static function getStockBySymbol(string $symbol): ?self {
+        return self::where('symbol', $symbol)->get()->first();
+    }
+
     public function getStockInfos(): Collection {
         return StockInfo::where('stock_id', $this->id)->orderBy('date')->get();
     }
