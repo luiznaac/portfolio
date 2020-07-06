@@ -22,6 +22,7 @@ class CreateStockPositionsTable extends Migration
             $table->float('average_price');
             $table->timestamps();
 
+            $table->unique(['stock_id', 'date']);
             $table->index(['stock_id', 'date']);
         });
     }

@@ -25,6 +25,7 @@ class StockConsolidator {
     public static function updatePositionForStock(Stock $stock, Carbon $date = null) {
         self::$stock = $stock;
         $date = self::getLastWorkingDay($date);
+        self::deletePositionsForStock($date);
         $orders = Order::getAllOrdersForStock($stock);
 
         $position = new StockPosition();
@@ -38,7 +39,7 @@ class StockConsolidator {
 
     public static function consolidateFromBegin(Stock $stock, Carbon $end_date = null) {
         self::$stock = $stock;
-        self::deleteAllPositionsForStock();
+        self::deletePositionsForStock();
         $orders = Order::getAllOrdersForStock($stock);
         $grouped_orders = self::groupOrdersByDate($orders);
         $dates = self::generateAllDates($end_date);
@@ -60,10 +61,15 @@ class StockConsolidator {
         self::savePositionsBuffer();
     }
 
-    private static function deleteAllPositionsForStock(): void {
-        StockPosition::query()
-            ->where('stock_id', self::$stock->id)
-            ->delete();
+    private static function deletePositionsForStock(Carbon $date = null): void {
+        $query = StockPosition::query()
+            ->where('stock_id', self::$stock->id);
+
+        if(isset($date)) {
+            $query->where('date', $date->toDateString());
+        }
+
+        $query->delete();
     }
 
     private static function groupOrdersByDate(Collection $orders): array {
