@@ -12,6 +12,52 @@ use Tests\TestCase;
 
 class StockConsolidatorTest extends TestCase {
 
+    public function testUpdatePositions_ShouldUpdatePosition(): void {
+        $stock_1 = $this->createStock('SQIA3');
+        $prices_1 = $this->createStockPrices($stock_1);
+        $date = Carbon::parse('2020-06-29');
+
+        $order_1 = new Order();
+        $order_1->store(
+            $stock_1,
+            $date,
+            $type = 'buy',
+            $quantity = 10,
+            $price = 15.22,
+            $cost = 7.50
+        );
+
+        $stock_position_1 = $this->createStockPosition(
+            $stock_1,
+            $date->addDay(),
+            $order_1->quantity,
+            $prices_1[1] * $order_1->quantity,
+            $order_1->quantity * $order_1->price,
+            $order_1->quantity * $order_1->price/$order_1->quantity
+        );
+
+        StockConsolidator::updatePositions($date);
+
+        $order_2 = new Order();
+        $order_2->store(
+            $stock_1,
+            $date,
+            $type = 'buy',
+            $quantity = 10,
+            $price = 15.22,
+            $cost = 7.50
+        );
+
+        $stock_position_1->quantity = $stock_position_1->quantity + $order_2->quantity;
+        $stock_position_1->amount = $prices_1[2] * $stock_position_1->quantity;
+        $stock_position_1->contributed_amount = $stock_position_1->contributed_amount + $order_2->quantity * $order_2->price;
+
+        StockConsolidator::updatePositions($date);
+
+        $this->assertStockPositions([$stock_position_1]);
+        $this->assertCount(1, StockPosition::all());
+    }
+
     public function testUpdatePositions_ShouldOnlyCreateLastWorkingDateForAllStocks(): void {
         $stock_1 = $this->createStock('SQIA3');
         $prices_1 = $this->createStockPrices($stock_1);
