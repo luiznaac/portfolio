@@ -2,39 +2,26 @@
 
 namespace App\Portfolio\API;
 
+use App\Model\Stock\Stock;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 
-class UolAPI {
+class UolAPI implements PriceAPI {
 
     private const API = 'http://cotacoes.economia.uol.com.br/ws/asset';
     private const LIST_SYMBOL_CODES_ENDPOINT = '/stock/list';
     private const PRICE_ENDPOINT = '/:code/interday?replicate=true&page=1&fields=date,price&begin=:start_date&end=:end_date';
 
-    public static function getStockPricesForRange(string $symbol, Carbon $start_date, Carbon $end_date): array {
-        $code = self::getCodeForSymbol($symbol);
+    public static function getPricesForRange(Stock $stock, Carbon $start_date, Carbon $end_date): array {
+        $code = self::getCodeForSymbol($stock->symbol);
 
         return self::getCodePriceForDateRange($code, $start_date, $end_date);
     }
 
-    public static function getStockLastPrice(string $symbol): float {
-        $date = Carbon::yesterday();
+    public static function getPriceForDate(Stock $stock, Carbon $date): float {
+        $price_for_date = self::getPricesForRange($stock, $date, $date);
 
-        return self::getStockPriceForDate($symbol, $date);
-    }
-
-    public static function getStockPriceForDate(string $symbol, Carbon $date): float {
-        $code = self::getCodeForSymbol($symbol);
-        $date = clone $date;
-        $tries = 0;
-
-        do {
-            $tries++;
-            $price = self::getCodePriceForDate($code, $date);
-            $date->subDay();
-        } while(is_null($price) && $tries < 5);
-
-        return $price;
+        return $price_for_date[$date->toDateString()];
     }
 
     private static function getCodeForSymbol(string $symbol): int {
@@ -43,29 +30,13 @@ class UolAPI {
         return $symbol_codes[$symbol];
     }
 
-    private static function getCodePriceForDate(int $code, Carbon $date): ?float {
-        $endpoint_path = self::buildGetPriceEndpointPath($code, $date);
-
-        $response = Http::get(self::API . $endpoint_path);
-
-        try {
-            return $response->json()['data'][0]['price'];
-        } catch (\Exception $e) {
-            return null;
-        }
-    }
-
-    private static function getCodePriceForDateRange(int $code, Carbon $start_date, Carbon $end_date): ?array {
+    private static function getCodePriceForDateRange(int $code, Carbon $start_date, Carbon $end_date): array {
         $endpoint_path = self::buildGetPriceEndpointPath($code, $start_date, $end_date);
 
-        try {
-            $response = Http::get(self::API . $endpoint_path);
-            $data = $response->json()['data'];
+        $response = Http::get(self::API . $endpoint_path);
+        $data = $response->json()['data'];
 
-            return self::buildDatePriceArray($data);
-        } catch (\Exception $e) {
-            return null;
-        }
+        return self::buildDatePriceArray($data);
     }
 
     protected static function getAllSymbolCodes(): array {
