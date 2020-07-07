@@ -43,6 +43,7 @@ class StockConsolidator {
         $orders = Order::getAllOrdersForStock($stock);
         $grouped_orders = self::groupOrdersByDate($orders);
         $dates = self::generateAllDates($end_date);
+        $stock->loadStockPrices(Carbon::parse($dates[0]), Carbon::parse($dates[sizeof($dates)-1]));
 
         foreach ($dates as $date) {
             $position = isset($position) ? clone $position : new StockPosition();
