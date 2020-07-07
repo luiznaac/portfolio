@@ -50,6 +50,10 @@ class Stock extends Model {
         $this->save();
     }
 
+    public function loadStockPrices(Carbon $start_date, Carbon $end_date): void {
+        StockInfo::storePricesForDates($this, $start_date, $end_date);
+    }
+
     private function loadStockInfoForDate(Carbon $date): StockInfo {
         $stock_info = new StockInfo();
         $stock_info->store($this, $date);
