@@ -29,7 +29,7 @@ class StocksPagesController extends Controller
 
         $data = [
             'stock' => $stock,
-            'stock_infos' => $stock->getStockInfos(),
+            'stock_prices' => $stock->getStockPrices(),
         ];
 
         return view(self::DEFAULT_DIR . ".show")

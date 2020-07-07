@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
             ['id' => 2, 'symbol' => 'SQIA3', 'name' => 'Sinqia SA'],
         ]);
 
-        DB::table('stock_infos')->insert([
+        DB::table('stock_prices')->insert([
             ['stock_id' => 1, 'date' => '2020-06-22', 'price' => 91.75],
             ['stock_id' => 1, 'date' => '2020-06-23', 'price' => 92.26],
             ['stock_id' => 1, 'date' => '2020-06-24', 'price' => 90.77],
