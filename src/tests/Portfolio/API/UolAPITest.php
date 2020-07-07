@@ -2,44 +2,35 @@
 
 namespace Tests\Portfolio\API;
 
+use App\Model\Stock\Stock;
 use App\Portfolio\API\UolAPI;
 use Carbon\Carbon;
 use Tests\TestCase;
 
 class UolAPITest extends TestCase {
 
-    public function testGetStockPriceForDateRange(): void {
-        $start_date = Carbon::parse('2020-06-22');
-        $end_date = Carbon::parse('2020-06-24');
-        $prices = UolAPI::getStockPricesForRange('FLRY3', $start_date, $end_date);
+    public function testGetPricesForRange(): void {
+        $stock = Stock::getStockBySymbol('SQIA3');
+        $start_date = Carbon::parse('2020-06-15');
+        $end_date = Carbon::parse('2020-06-19');
+        $prices = UolAPI::getPricesForRange($stock, $start_date, $end_date);
 
         $this->assertEquals(
             [
-                '2020-06-22' => 24.8,
-                '2020-06-23' => 25.15,
-                '2020-06-24' => 24.56,
+                '2020-06-19' => 19.5,
+                '2020-06-18' => 19.4,
+                '2020-06-17' => 19.15,
+                '2020-06-16' => 18.98,
+                '2020-06-15' => 19.38,
             ],
             $prices);
     }
 
-    public function testGetStockPriceForDateOnHoliday_ShouldGetLastAvailablePrice(): void {
-        $holiday_date = Carbon::createFromFormat('Y-m-d', '2018-07-09');
-        $price = UolAPI::getStockPriceForDate('XPML11', $holiday_date);
+    public function testGetPriceForDate(): void {
+        $stock = Stock::getStockBySymbol('BOVA11');
+        $date = Carbon::parse('2020-06-24');
+        $price = UolAPI::getPriceForDate($stock, $date);
 
-        $this->assertEquals(98.5, $price);
-    }
-
-    public function testGetSymbolTest(): void {
-        $date = Carbon::createFromFormat('Y-m-d', '2020-06-22');
-        $price = UolAPI::getStockPriceForDate('FLRY3', $date);
-
-        $this->assertEquals(24.8, $price);
-    }
-
-    public function testGetStockPriceForDateOnWeekend_ShouldGetFridayPrice(): void {
-        $weekend_date = Carbon::createFromFormat('Y-m-d', '2020-06-21');
-        $price = UolAPI::getStockPriceForDate('ITSA4', $weekend_date);
-
-        $this->assertEquals(10.41, $price);
+        $this->assertEquals(90.77, $price);
     }
 }
