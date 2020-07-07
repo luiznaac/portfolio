@@ -7,7 +7,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * App\Model\Stock\StockInfo
+ * App\Model\Stock\StockPrice
  *
  * @property int $id
  * @property int $stock_id
@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property float $price
  */
 
-class StockInfo extends Model {
+class StockPrice extends Model {
 
     public function store(Stock $stock, Carbon $date): void {
         $this->stock_id = $stock->id;
@@ -28,11 +28,11 @@ class StockInfo extends Model {
         $prices = UolAPI::getStockPricesForRange($stock->symbol, $start_date, $end_date);
 
         foreach ($prices as $date => $price) {
-            $stock_info = new self();
-            $stock_info->stock_id = $stock->id;
-            $stock_info->date = $date;
-            $stock_info->price = $price;
-            $stock_info->save();
+            $stock_price = new self();
+            $stock_price->stock_id = $stock->id;
+            $stock_price->date = $date;
+            $stock_price->price = $price;
+            $stock_price->save();
         }
     }
 }

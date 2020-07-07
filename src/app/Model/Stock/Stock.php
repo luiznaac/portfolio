@@ -28,21 +28,21 @@ class Stock extends Model {
         return self::where('symbol', $symbol)->get()->first();
     }
 
-    public function getStockInfos(): Collection {
-        return StockInfo::where('stock_id', $this->id)->orderBy('date')->get();
+    public function getStockPrices(): Collection {
+        return StockPrice::where('stock_id', $this->id)->orderBy('date')->get();
     }
 
     public function getStockPriceForDate(Carbon $date): float {
-        $stock_info = StockInfo::query()
+        $stock_price = StockPrice::query()
             ->where('stock_id', $this->id)
             ->where('date', $date->toDateString())
             ->get()->first();
 
-        if(!$stock_info) {
-            $stock_info = $this->loadStockInfoForDate($date);
+        if(!$stock_price) {
+            $stock_price = $this->loadStockPriceForDate($date);
         }
 
-        return $stock_info->price;
+        return $stock_price->price;
     }
 
     public function loadStockName(): void {
@@ -51,13 +51,13 @@ class Stock extends Model {
     }
 
     public function loadStockPrices(Carbon $start_date, Carbon $end_date): void {
-        StockInfo::storePricesForDates($this, $start_date, $end_date);
+        StockPrice::storePricesForDates($this, $start_date, $end_date);
     }
 
-    private function loadStockInfoForDate(Carbon $date): StockInfo {
-        $stock_info = new StockInfo();
-        $stock_info->store($this, $date);
+    private function loadStockPriceForDate(Carbon $date): StockPrice {
+        $stock_price = new StockPrice();
+        $stock_price->store($this, $date);
 
-        return $stock_info;
+        return $stock_price;
     }
 }

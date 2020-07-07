@@ -13,14 +13,14 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($stock_infos as $info)
+                @foreach($stock_prices as $info)
                 <tr>
                     <td>{{$info->date}}</td>
                     <td>{{$info->price}}</td>
                 </tr>
                 @endforeach
 
-                @if(count($stock_infos) == 0)
+                @if(count($stock_prices) == 0)
                     <td>No info.</td>
                 @endif
             </tbody>

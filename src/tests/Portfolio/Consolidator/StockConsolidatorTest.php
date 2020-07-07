@@ -5,7 +5,7 @@ namespace Tests\Portfolio\Consolidator;
 use App\Model\Order\Order;
 use App\Model\Stock\Position\StockPosition;
 use App\Model\Stock\Stock;
-use App\Model\Stock\StockInfo;
+use App\Model\Stock\StockPrice;
 use App\Portfolio\Consolidator\StockConsolidator;
 use Carbon\Carbon;
 use Tests\TestCase;
@@ -233,42 +233,42 @@ class StockConsolidatorTest extends TestCase {
     }
 
     private function createStockPrices(Stock $stock): array {
-        $stock_info = new StockInfo();
-        $stock_info->stock_id = $stock->id;
-        $stock_info->date = '2020-06-26';
-        $stock_info->price = 90;
-        $stock_info->save();
-        $stock_infos[] = $stock_info->price;
+        $stock_price = new StockPrice();
+        $stock_price->stock_id = $stock->id;
+        $stock_price->date = '2020-06-26';
+        $stock_price->price = 90;
+        $stock_price->save();
+        $stock_prices[] = $stock_price->price;
 
-        $stock_info = new StockInfo();
-        $stock_info->stock_id = $stock->id;
-        $stock_info->date = '2020-06-29';
-        $stock_info->price = 91;
-        $stock_info->save();
-        $stock_infos[] = $stock_info->price;
+        $stock_price = new StockPrice();
+        $stock_price->stock_id = $stock->id;
+        $stock_price->date = '2020-06-29';
+        $stock_price->price = 91;
+        $stock_price->save();
+        $stock_prices[] = $stock_price->price;
 
-        $stock_info = new StockInfo();
-        $stock_info->stock_id = $stock->id;
-        $stock_info->date = '2020-06-30';
-        $stock_info->price = 92;
-        $stock_info->save();
-        $stock_infos[] = $stock_info->price;
+        $stock_price = new StockPrice();
+        $stock_price->stock_id = $stock->id;
+        $stock_price->date = '2020-06-30';
+        $stock_price->price = 92;
+        $stock_price->save();
+        $stock_prices[] = $stock_price->price;
 
-        $stock_info = new StockInfo();
-        $stock_info->stock_id = $stock->id;
-        $stock_info->date = '2020-07-01';
-        $stock_info->price = 86;
-        $stock_info->save();
-        $stock_infos[] = $stock_info->price;
+        $stock_price = new StockPrice();
+        $stock_price->stock_id = $stock->id;
+        $stock_price->date = '2020-07-01';
+        $stock_price->price = 86;
+        $stock_price->save();
+        $stock_prices[] = $stock_price->price;
 
-        $stock_info = new StockInfo();
-        $stock_info->stock_id = $stock->id;
-        $stock_info->date = '2020-07-02';
-        $stock_info->price = 89;
-        $stock_info->save();
-        $stock_infos[] = $stock_info->price;
+        $stock_price = new StockPrice();
+        $stock_price->stock_id = $stock->id;
+        $stock_price->date = '2020-07-02';
+        $stock_price->price = 89;
+        $stock_price->save();
+        $stock_prices[] = $stock_price->price;
 
-        return $stock_infos;
+        return $stock_prices;
     }
 
     private function createStockPosition(Stock $stock, Carbon $date, int $quantity, float $amount, float $contributed_amount, float $average_price): StockPosition {
