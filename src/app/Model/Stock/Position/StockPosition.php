@@ -20,6 +20,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class StockPosition extends Model {
 
+    protected $fillable = [
+        'stock_id',
+        'date',
+        'quantity',
+        'amount',
+        'contributed_amount',
+        'average_price',
+    ];
+
     public static function getLastStockPositions(): array {
         $stock_ids = self::getConsolidatedStockIds();
 

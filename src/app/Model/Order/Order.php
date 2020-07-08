@@ -111,6 +111,14 @@ class Order extends Model {
         return $order ? Carbon::parse($order->date) : null;
     }
 
+    public static function getAllOrdersForStockUntilDate(Stock $stock, Carbon $date): Collection {
+        return self::query()
+            ->where('stock_id', $stock->id)
+            ->where('date', '<=', $date->toDateString())
+            ->orderBy('sequence')
+            ->get();
+    }
+
     public static function getAllOrdersForStock(Stock $stock): Collection {
         return self::where('stock_id', $stock->id)->orderBy('sequence')->get();
     }
