@@ -6,6 +6,10 @@ use Carbon\Carbon;
 
 class Calendar {
 
+    public static function getLastWorkingDay(): Carbon {
+        return self::getLastWorkingDayForDate(Carbon::today());
+    }
+
     public static function getLastWorkingDayForDate(Carbon $date): Carbon {
         $date = clone $date;
 

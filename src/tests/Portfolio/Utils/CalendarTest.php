@@ -66,4 +66,18 @@ class CalendarTest extends TestCase {
 
         $this->assertEquals('2020-07-03', $working_day->toDateString());
     }
+
+    public function testGetLastWorkingDayOnWeekDay_ShouldReturnSameDay(): void {
+        Carbon::setTestNow('2020-06-16');
+        $working_day = Calendar::getLastWorkingDay();
+
+        $this->assertEquals('2020-06-16', $working_day->toDateString());
+    }
+
+    public function testGetLastWorkingDayOnWeekend_ShouldReturnFriday(): void {
+        Carbon::setTestNow('2020-07-05');
+        $working_day = Calendar::getLastWorkingDay();
+
+        $this->assertEquals('2020-07-03', $working_day->toDateString());
+    }
 }

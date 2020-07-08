@@ -10,10 +10,9 @@ use Tests\TestCase;
 class StockTest extends TestCase {
 
     public function testGetStockPriceForDate_ShouldGetStoredInfo(): void {
-        $stock = new Stock();
-        $stock->store('BOVA11');
+        $stock = Stock::getStockBySymbol('BOVA11');
 
-        $date = Carbon::parse('2020-06-26');
+        $date = Carbon::parse('2020-05-07');
         $expected_price = 123.45;
 
         $stock_price = new StockPrice();
@@ -28,23 +27,22 @@ class StockTest extends TestCase {
     }
 
     public function testGetStockPriceForDate_ShouldLoadFromAPIAndStore(): void {
-        $stock = new Stock();
-        $stock->store('BOVA11');
+        $stock = Stock::getStockBySymbol('SQIA3');
 
-        $date = Carbon::createFromFormat('Y-m-d', '2020-06-26');
+        $date = Carbon::createFromFormat('Y-m-d', '2020-04-29');
         $price = $stock->getStockPriceForDate($date);
 
         /** @var StockPrice $stock_price */
         $stock_price = $stock->getStockPrices()->first();
 
         $this->assertEquals($date->toDateString(), $stock_price->date);
-        $this->assertEquals(90.22, $stock_price->price);
-        $this->assertEquals(90.22, $price);
+        $this->assertEquals(20.29, $stock_price->price);
+        $this->assertEquals(20.29, $price);
     }
 
     public function testStoreStock_ShouldNotLoadName(): void {
         $stock = new Stock();
-        $stock->store('BOVA11');
+        $stock->store('ITSA4');
 
         $this->assertNull($stock->name);
     }

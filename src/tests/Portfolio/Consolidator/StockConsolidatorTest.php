@@ -5,7 +5,6 @@ namespace Tests\Portfolio\Consolidator;
 use App\Model\Order\Order;
 use App\Model\Stock\Position\StockPosition;
 use App\Model\Stock\Stock;
-use App\Model\Stock\StockPrice;
 use App\Portfolio\Consolidator\StockConsolidator;
 use Carbon\Carbon;
 use Tests\TestCase;
@@ -13,35 +12,34 @@ use Tests\TestCase;
 class StockConsolidatorTest extends TestCase {
 
     public function testUpdatePositions_ShouldUpdatePosition(): void {
-        $stock_1 = $this->createStock('SQIA3');
-        $prices_1 = $this->createStockPrices($stock_1);
-        $date = Carbon::parse('2020-06-29');
+        $stock_1 = Stock::getStockBySymbol('SQIA3');
+        Carbon::setTestNow('2020-06-30');
 
         $order_1 = new Order();
         $order_1->store(
             $stock_1,
-            $date,
+            Carbon::now()->subDays(2),
             $type = 'buy',
             $quantity = 10,
-            $price = 15.22,
+            $price = 18.22,
             $cost = 7.50
         );
 
         $stock_position_1 = $this->createStockPosition(
             $stock_1,
-            $date->addDay(),
-            $order_1->quantity,
-            $prices_1[1] * $order_1->quantity,
-            $order_1->quantity * $order_1->price,
-            $order_1->quantity * $order_1->price/$order_1->quantity
+            Carbon::now()->subDay(),
+            10,
+            18.72 * 10,
+            18.22 * 10,
+            18.22
         );
 
-        StockConsolidator::updatePositions($date);
+        StockConsolidator::updatePositions();
 
         $order_2 = new Order();
         $order_2->store(
             $stock_1,
-            $date,
+            Carbon::now()->subDay(),
             $type = 'buy',
             $quantity = 10,
             $price = 15.22,
@@ -49,26 +47,25 @@ class StockConsolidatorTest extends TestCase {
         );
 
         $stock_position_1->quantity = $stock_position_1->quantity + $order_2->quantity;
-        $stock_position_1->amount = $prices_1[2] * $stock_position_1->quantity;
+        $stock_position_1->amount = 18.72 * $stock_position_1->quantity;
         $stock_position_1->contributed_amount = $stock_position_1->contributed_amount + $order_2->quantity * $order_2->price;
+        $stock_position_1->average_price = (18.22 + 15.22)/2;
 
-        StockConsolidator::updatePositions($date);
+        StockConsolidator::updatePositions();
 
         $this->assertStockPositions([$stock_position_1]);
         $this->assertCount(1, StockPosition::all());
     }
 
-    public function testUpdatePositions_ShouldOnlyCreateLastWorkingDateForAllStocks(): void {
-        $stock_1 = $this->createStock('SQIA3');
-        $prices_1 = $this->createStockPrices($stock_1);
-        $stock_2 = $this->createStock('FLRY3');
-        $prices_2 = $this->createStockPrices($stock_2);
-        $date_weekend = Carbon::parse('2020-06-28');
+    public function testUpdatePositionsOnMonday_ShouldOnlyCreateFridayForAllStocks(): void {
+        $stock_1 = Stock::getStockBySymbol('SQIA3');
+        $stock_2 = Stock::getStockBySymbol('XPML11');
+        Carbon::setTestNow('2020-06-29');
 
         $order_1 = new Order();
         $order_1->store(
             $stock_1,
-            Carbon::parse('2020-06-26'),
+            Carbon::now()->subDays(3),
             $type = 'buy',
             $quantity = 10,
             $price = 15.22,
@@ -77,17 +74,17 @@ class StockConsolidatorTest extends TestCase {
 
         $stock_position_1 = $this->createStockPosition(
             $stock_1,
-            $date_weekend->subDays(2),
+            Carbon::now()->subDays(3),
             $order_1->quantity,
-            $prices_1[0] * $order_1->quantity,
+            18.51 * $order_1->quantity,
             $order_1->quantity * $order_1->price,
-            $order_1->quantity * $order_1->price/$order_1->quantity
+            $order_1->price
         );
 
         $order_2 = new Order();
         $order_2->store(
             $stock_2,
-            Carbon::parse('2020-06-26'),
+            Carbon::now()->subDays(3),
             $type = 'buy',
             $quantity = 10,
             $price = 15.22,
@@ -96,27 +93,132 @@ class StockConsolidatorTest extends TestCase {
 
         $stock_position_2 = $this->createStockPosition(
             $stock_2,
-            $date_weekend,
+            Carbon::now()->subDays(3),
             $order_2->quantity,
-            $prices_2[0] * $order_2->quantity,
+            103.25 * $order_2->quantity,
             $order_2->quantity * $order_2->price,
-            $order_2->quantity * $order_2->price/$order_2->quantity
+            $order_2->price
         );
 
-        StockConsolidator::updatePositions($date_weekend->addDays(2));
+        StockConsolidator::updatePositions();
 
         $this->assertStockPositions([$stock_position_1, $stock_position_2]);
     }
 
-    public function testUpdatePositionForStock_ShouldOnlyCreateLastWorkingDate(): void {
-        $stock = $this->createStock();
-        $prices = $this->createStockPrices($stock);
-        $date_weekend = Carbon::parse('2020-06-28');
+    public function testUpdatePositionsOnWeekDay_ShouldOnlyCreatePreviousLastWorkingDateForAllStocks(): void {
+        $stock_1 = Stock::getStockBySymbol('SQIA3');
+        $stock_2 = Stock::getStockBySymbol('XPML11');
+        Carbon::setTestNow('2020-06-24');
+
+        $order_1 = new Order();
+        $order_1->store(
+            $stock_1,
+            Carbon::now()->subDay(),
+            $type = 'buy',
+            $quantity = 10,
+            $price = 15.22,
+            $cost = 7.50
+        );
+
+        $stock_position_1 = $this->createStockPosition(
+            $stock_1,
+            Carbon::now()->subDay(),
+            $order_1->quantity,
+            19.5 * $order_1->quantity,
+            $order_1->quantity * $order_1->price,
+            $order_1->price
+        );
+
+        $order_2 = new Order();
+        $order_2->store(
+            $stock_2,
+            Carbon::now()->subDays(2),
+            $type = 'buy',
+            $quantity = 10,
+            $price = 15.22,
+            $cost = 7.50
+        );
+
+        $order_3 = new Order();
+        $order_3->store(
+            $stock_2,
+            Carbon::now(),
+            $type = 'buy',
+            $quantity = 123,
+            $price = 333.22,
+            $cost = 7.50
+        );
+
+        $stock_position_2 = $this->createStockPosition(
+            $stock_2,
+            Carbon::now()->subDay(),
+            $order_2->quantity,
+            105 * $order_2->quantity,
+            $order_2->quantity * $order_2->price,
+            $order_2->price
+        );
+
+        StockConsolidator::updatePositions();
+
+        $this->assertStockPositions([$stock_position_1, $stock_position_2]);
+    }
+
+    public function testUpdatePositionsOnWeekend_ShouldOnlyCreateLastWorkingDateForAllStocks(): void {
+        $stock_1 = Stock::getStockBySymbol('SQIA3');
+        $stock_2 = Stock::getStockBySymbol('XPML11');
+        Carbon::setTestNow('2020-06-27');
+
+        $order_1 = new Order();
+        $order_1->store(
+            $stock_1,
+            Carbon::now()->subDay(),
+            $type = 'buy',
+            $quantity = 10,
+            $price = 15.22,
+            $cost = 7.50
+        );
+
+        $stock_position_1 = $this->createStockPosition(
+            $stock_1,
+            Carbon::now()->subDay(),
+            $order_1->quantity,
+            18.51 * $order_1->quantity,
+            $order_1->quantity * $order_1->price,
+            $order_1->price
+        );
+
+        $order_2 = new Order();
+        $order_2->store(
+            $stock_2,
+            Carbon::now()->subDay(),
+            $type = 'buy',
+            $quantity = 10,
+            $price = 15.22,
+            $cost = 7.50
+        );
+
+        $stock_position_2 = $this->createStockPosition(
+            $stock_2,
+            Carbon::now()->subDay(),
+            $order_2->quantity,
+            103.25 * $order_2->quantity,
+            $order_2->quantity * $order_2->price,
+            $order_2->price
+        );
+
+        StockConsolidator::updatePositions();
+
+        $this->assertStockPositions([$stock_position_1, $stock_position_2]);
+    }
+
+    public function testUpdatePositionForStockOnWeekend_ShouldOnlyCreateLastWorkingDate(): void {
+        $stock = Stock::getStockBySymbol('BOVA11');
+        Carbon::setTestNow('2020-06-28');
 
         $order_1 = new Order();
         $order_1->store(
             $stock,
-            Carbon::parse('2020-06-26'),
+            Carbon::now()->subDays(2),
             $type = 'buy',
             $quantity = 10,
             $price = 15.22,
@@ -125,20 +227,20 @@ class StockConsolidatorTest extends TestCase {
 
         $stock_position_1 = $this->createStockPosition(
             $stock,
-            $date_weekend->subDays(2),
+            Carbon::now()->subDays(2),
             $order_1->quantity,
-            $prices[0] * $order_1->quantity,
+            90.22 * $order_1->quantity,
             $order_1->quantity * $order_1->price,
-            $order_1->quantity * $order_1->price/$order_1->quantity
+            $order_1->price
         );
 
-        StockConsolidator::updatePositionForStock($stock, $date_weekend);
+        StockConsolidator::updatePositionForStock($stock);
 
         $this->assertStockPositions([$stock_position_1]);
     }
 
     public function testConsolidateFromBeginWithoutOrders_ShouldNotCreatePositions(): void {
-        $stock = $this->createStock();
+        $stock = Stock::getStockBySymbol('BOVA11');
 
         StockConsolidator::consolidateFromBegin($stock);
 
@@ -148,14 +250,13 @@ class StockConsolidatorTest extends TestCase {
     }
 
     public function testConsolidateFromBegin(): void {
-        $stock = $this->createStock();
-        $prices = $this->createStockPrices($stock);
-        $date_1 = Carbon::parse('2020-06-26');
+        $stock = Stock::getStockBySymbol('BOVA11');
+        Carbon::setTestNow('2020-06-26');
 
         $order_1 = new Order();
         $order_1->store(
             $stock,
-            $date_1,
+            Carbon::now(),
             $type = 'buy',
             $quantity = 10,
             $price = 90.22,
@@ -165,110 +266,62 @@ class StockConsolidatorTest extends TestCase {
         $order_2 = new Order();
         $order_2->store(
             $stock,
-            $date_1,
+            Carbon::now(),
             $type = 'buy',
             $quantity = 5,
             $price = 90.22,
             $cost = 7.50
         );
 
-        $date_2 = clone $date_1;
-
         $order_3 = new Order();
         $order_3->store(
             $stock,
-            $date_2->addDays(5),
+            Carbon::now()->addDays(5),
             $type = 'buy',
             $quantity = 8,
             $price = 90.22,
             $cost = 7.50
         );
 
-        StockConsolidator::consolidateFromBegin($stock, $date_2->addDay());
-
         $stock_position_1 = $this->createStockPosition(
             $stock,
-            $date_1,
+            Carbon::now(),
             $order_1->quantity + $order_2->quantity,
-            $prices[0] * ($order_1->quantity + $order_2->quantity),
+            90.22 * ($order_1->quantity + $order_2->quantity),
             $order_1->quantity * $order_1->price + $order_2->quantity * $order_2->price,
             ($order_1->quantity * $order_1->price + $order_2->quantity * $order_2->price)/($order_1->quantity + $order_2->quantity)
         );
         $stock_positions[] = $stock_position_1;
 
         $stock_position_2 = clone $stock_position_1;
-        $stock_position_2->date = $date_1->addDays(3)->toDateString();
-        $stock_position_2->amount = $prices[1] * $stock_position_1->quantity;
+        $stock_position_2->date = Carbon::now()->addDays(3)->toDateString();
+        $stock_position_2->amount = 92.3 * $stock_position_1->quantity;
         $stock_positions[] = $stock_position_2;
 
         $stock_position_3 = clone $stock_position_1;
-        $stock_position_3->date = $date_1->addDay()->toDateString();
-        $stock_position_3->amount = $prices[2] * $stock_position_1->quantity;
+        $stock_position_3->date = Carbon::now()->addDays(4)->toDateString();
+        $stock_position_3->amount = 91.62 * $stock_position_1->quantity;
         $stock_positions[] = $stock_position_3;
 
         $stock_position_4 = $this->createStockPosition(
             $stock,
-            $date_2->subDay(),
+            Carbon::now()->addDays(5),
             $stock_positions[0]->quantity + $order_3->quantity,
-            $prices[3] * ($stock_positions[0]->quantity + $order_3->quantity),
+            92.68 * ($stock_positions[0]->quantity + $order_3->quantity),
             $stock_positions[0]->contributed_amount + $order_3->quantity * $order_3->price,
             ($stock_positions[0]->contributed_amount + $order_3->quantity * $order_3->price)/($stock_positions[0]->quantity + $order_3->quantity)
         );
         $stock_positions[] = $stock_position_4;
 
         $stock_position_5 = clone $stock_position_4;
-        $stock_position_5->date = $date_2->addDay()->toDateString();
-        $stock_position_5->amount = $prices[4] * $stock_position_4->quantity;
+        $stock_position_5->date = Carbon::now()->addDays(6)->toDateString();
+        $stock_position_5->amount = 92.5 * $stock_position_4->quantity;
         $stock_positions[] = $stock_position_5;
 
+        Carbon::setTestNow(Carbon::now()->addDays(7));
+        StockConsolidator::consolidateFromBegin($stock);
+
         $this->assertStockPositions($stock_positions);
-    }
-
-    private function createStock(string $symbol = 'BOVA11'): Stock {
-        $stock = new Stock();
-        $stock->symbol = $symbol;
-        $stock->save();
-
-        return $stock;
-    }
-
-    private function createStockPrices(Stock $stock): array {
-        $stock_price = new StockPrice();
-        $stock_price->stock_id = $stock->id;
-        $stock_price->date = '2020-06-26';
-        $stock_price->price = 90;
-        $stock_price->save();
-        $stock_prices[] = $stock_price->price;
-
-        $stock_price = new StockPrice();
-        $stock_price->stock_id = $stock->id;
-        $stock_price->date = '2020-06-29';
-        $stock_price->price = 91;
-        $stock_price->save();
-        $stock_prices[] = $stock_price->price;
-
-        $stock_price = new StockPrice();
-        $stock_price->stock_id = $stock->id;
-        $stock_price->date = '2020-06-30';
-        $stock_price->price = 92;
-        $stock_price->save();
-        $stock_prices[] = $stock_price->price;
-
-        $stock_price = new StockPrice();
-        $stock_price->stock_id = $stock->id;
-        $stock_price->date = '2020-07-01';
-        $stock_price->price = 86;
-        $stock_price->save();
-        $stock_prices[] = $stock_price->price;
-
-        $stock_price = new StockPrice();
-        $stock_price->stock_id = $stock->id;
-        $stock_price->date = '2020-07-02';
-        $stock_price->price = 89;
-        $stock_price->save();
-        $stock_prices[] = $stock_price->price;
-
-        return $stock_prices;
     }
 
     private function createStockPosition(Stock $stock, Carbon $date, int $quantity, float $amount, float $contributed_amount, float $average_price): StockPosition {

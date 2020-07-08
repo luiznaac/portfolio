@@ -10,10 +10,8 @@ use Tests\TestCase;
 class StockPositionTest extends TestCase {
 
     public function testLastStockPositions(): void {
-        $stock_1 = new Stock();
-        $stock_1->store('BOVA11');
-        $stock_2 = new Stock();
-        $stock_2->store('SQIA3');
+        $stock_1 = Stock::getStockBySymbol('BOVA11');
+        $stock_2 = Stock::getStockBySymbol('SQIA3');
 
         $date_1 = Carbon::parse('2020-06-26');
         $date_2 = Carbon::parse('2020-06-29');

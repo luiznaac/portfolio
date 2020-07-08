@@ -9,6 +9,51 @@ use Tests\TestCase;
 
 class OrderTest extends TestCase {
 
+    public function testGetAllOrdersForStockUntilDate(): void {
+        $date = Carbon::parse('2020-06-22');
+        $stock = Stock::getStockBySymbol('BOVA11');
+
+        $expected_orders[] = Order::createOrder(
+            $stock->symbol,
+            $date,
+            $type = 'buy',
+            $quantity = 10,
+            $price = 90.22,
+            $cost = 7.50
+        );
+
+        $expected_orders[] = Order::createOrder(
+            $stock->symbol,
+            $date->addDay(),
+            $type = 'buy',
+            $quantity = 10,
+            $price = 90.22,
+            $cost = 7.50
+        );
+
+        $expected_orders[] = Order::createOrder(
+            $stock->symbol,
+            $date->addDay(),
+            $type = 'buy',
+            $quantity = 10,
+            $price = 90.22,
+            $cost = 7.50
+        );
+
+        $actual_orders = Order::getAllOrdersForStockUntilDate($stock, $date->subDay())->toArray();
+
+        $this->assertCount(2, $actual_orders);
+        $this->assertEquals($expected_orders[0]->toArray(), $actual_orders[0]);
+        $this->assertEquals($expected_orders[1]->toArray(), $actual_orders[1]);
+
+        $actual_orders = Order::getAllOrdersForStockUntilDate($stock, $date->addDay())->toArray();
+
+        $this->assertCount(3, $actual_orders);
+        $this->assertEquals($expected_orders[0]->toArray(), $actual_orders[0]);
+        $this->assertEquals($expected_orders[1]->toArray(), $actual_orders[1]);
+        $this->assertEquals($expected_orders[2]->toArray(), $actual_orders[2]);
+    }
+
     public function testGetAllStocksWithOrdersWhenThereIsNoOrders_ShouldReturnEmptyArray(): void {
         $stocks = Order::getAllStocksWithOrders();
 
