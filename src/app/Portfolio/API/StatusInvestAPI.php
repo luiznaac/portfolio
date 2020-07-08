@@ -3,19 +3,25 @@
 namespace App\Portfolio\API;
 
 use App\Model\Stock\Stock;
+use App\Model\Stock\StockType;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 
-class StatusInvestAPI implements PriceAPI {
+class StatusInvestAPI implements PriceAPI, StockTypeAPI {
 
     private const API = 'https://statusinvest.com.br';
     private const PRICE_ENDPOINT = '/category/tickerprice?ticker=:symbol&type=4';
+    private const ETF_PRICE_ENDPOINT = '/etf/tickerprice';
+    private const SEARCH_ENDPOINT = '/home/mainsearchquery?q=:symbol';
+
+    private const API_TYPES = [
+        1 => StockType::ACAO_TYPE,
+        6 => StockType::ETF_TYPE,
+        2 => StockType::FII_TYPE,
+    ];
 
     public static function getPricesForRange(Stock $stock, Carbon $start_date, Carbon $end_date): array {
-        $endpoint_path = self::buildGetPriceEndpointPath($stock->symbol);
-
-        $response = Http::get(self::API . $endpoint_path);
-        $data = $response->json()['prices'];
+        $data = self::getPricesForRangeAccordinglyStockType($stock);
 
         return self::buildDatePriceArray($data, $start_date, $end_date);
     }
@@ -26,8 +32,48 @@ class StatusInvestAPI implements PriceAPI {
         return $price_for_date[$date->toDateString()];
     }
 
+    public static function getTypeForStock(Stock $stock): string {
+        $endpoint_path = self::buildSearchEndpointPath($stock->symbol);
+
+        $response = Http::get(self::API . $endpoint_path);
+        $api_type = $response->json()[0]['type'];
+
+        return self::API_TYPES[$api_type];
+    }
+
+    private static function getPricesForRangeAccordinglyStockType(Stock $stock): array {
+        $stock_type = $stock->getStockType();
+
+        if($stock_type->id == StockType::ETF_ID) {
+            return self::getETFPrices($stock);
+        }
+
+        return self::getStockPrices($stock);
+    }
+
+    private static function getETFPrices(Stock $stock): array {
+        $parameters = [
+            'ticker' => $stock->symbol,
+            'type' => 4,
+        ];
+
+        $response = Http::get(self::API . self::ETF_PRICE_ENDPOINT, $parameters);
+        return $response->json()['prices'];
+    }
+
+    private static function getStockPrices(Stock $stock): array {
+        $endpoint_path = self::buildGetPriceEndpointPath($stock->symbol);
+
+        $response = Http::get(self::API . $endpoint_path);
+        return $response->json()['prices'];
+    }
+
     private static function buildGetPriceEndpointPath(string $symbol): string {
         return str_replace(':symbol', $symbol, self::PRICE_ENDPOINT);
+    }
+
+    private static function buildSearchEndpointPath(string $symbol): string {
+        return str_replace(':symbol', $symbol, self::SEARCH_ENDPOINT);
     }
 
     private static function buildDatePriceArray(array $data, Carbon $start_date, Carbon $end_date): array {
