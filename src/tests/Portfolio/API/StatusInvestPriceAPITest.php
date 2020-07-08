@@ -3,7 +3,6 @@
 namespace Tests\Portfolio\API;
 
 use App\Model\Stock\Stock;
-use App\Model\Stock\StockType;
 use App\Portfolio\API\StatusInvestAPI;
 use Carbon\Carbon;
 

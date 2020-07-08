@@ -20,12 +20,12 @@ class StockPrice extends Model {
     public function store(Stock $stock, Carbon $date): void {
         $this->stock_id = $stock->id;
         $this->date = $date->toDateString();
-        $this->price = UolAPI::getStockPriceForDate($stock->symbol, $date);
+        $this->price = UolAPI::getPriceForDate($stock, $date);
         $this->save();
     }
 
     public static function storePricesForDates(Stock $stock, Carbon $start_date, Carbon $end_date): void {
-        $prices = UolAPI::getStockPricesForRange($stock->symbol, $start_date, $end_date);
+        $prices = UolAPI::getPricesForRange($stock, $start_date, $end_date);
 
         foreach ($prices as $date => $price) {
             $stock_price = new self();
