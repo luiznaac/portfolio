@@ -12,6 +12,8 @@ class UolAPI implements PriceAPI {
     private const LIST_SYMBOL_CODES_ENDPOINT = '/stock/list';
     private const PRICE_ENDPOINT = '/:code/interday?replicate=true&page=1&fields=date,price&begin=:start_date&end=:end_date';
 
+    private const TIMEOUT = 2;
+
     public static function getPricesForRange(Stock $stock, Carbon $start_date, Carbon $end_date): array {
         $code = self::getCodeForSymbol($stock->symbol);
 
@@ -33,14 +35,14 @@ class UolAPI implements PriceAPI {
     private static function getCodePriceForDateRange(int $code, Carbon $start_date, Carbon $end_date): array {
         $endpoint_path = self::buildGetPriceEndpointPath($code, $start_date, $end_date);
 
-        $response = Http::get(self::API . $endpoint_path);
+        $response = Http::timeout(self::TIMEOUT)->get(self::API . $endpoint_path);
         $data = $response->json()['data'];
 
         return self::buildDatePriceArray($data);
     }
 
     protected static function getAllSymbolCodes(): array {
-        $response = Http::get(self::API . self::LIST_SYMBOL_CODES_ENDPOINT);
+        $response = Http::timeout(self::TIMEOUT)->get(self::API . self::LIST_SYMBOL_CODES_ENDPOINT);
 
         return self::buildSymbolCodeArray($response->json()['data']);
     }

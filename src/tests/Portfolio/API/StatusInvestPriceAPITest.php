@@ -27,4 +27,15 @@ class StatusInvestPriceAPITest extends PriceAPITest {
 
         $this->assertEquals($expected_price, $price);
     }
+
+    public function testGetPriceForDateWithIVVB11(): void {
+        $date = Carbon::parse('2020-07-07');
+        $stock = new Stock();
+        $stock->symbol = 'IVVB11';
+        $stock->save();
+
+        $price = StatusInvestAPI::getPriceForDate($stock, $date);
+
+        $this->assertEquals(182.60, $price);
+    }
 }

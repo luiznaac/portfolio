@@ -14,6 +14,8 @@ class StatusInvestAPI implements PriceAPI, StockTypeAPI {
     private const ETF_PRICE_ENDPOINT = '/etf/tickerprice';
     private const SEARCH_ENDPOINT = '/home/mainsearchquery?q=:symbol';
 
+    private const TIMEOUT = 2;
+
     private const API_TYPES = [
         1 => StockType::ACAO_TYPE,
         6 => StockType::ETF_TYPE,
@@ -35,7 +37,7 @@ class StatusInvestAPI implements PriceAPI, StockTypeAPI {
     public static function getTypeForStock(Stock $stock): string {
         $endpoint_path = self::buildSearchEndpointPath($stock->symbol);
 
-        $response = Http::get(self::API . $endpoint_path);
+        $response = Http::timeout(self::TIMEOUT)->get(self::API . $endpoint_path);
         $api_type = $response->json()[0]['type'];
 
         return self::API_TYPES[$api_type];
@@ -57,14 +59,14 @@ class StatusInvestAPI implements PriceAPI, StockTypeAPI {
             'type' => 4,
         ];
 
-        $response = Http::get(self::API . self::ETF_PRICE_ENDPOINT, $parameters);
+        $response = Http::timeout(self::TIMEOUT)->get(self::API . self::ETF_PRICE_ENDPOINT, $parameters);
         return $response->json()['prices'];
     }
 
     private static function getStockPrices(Stock $stock): array {
         $endpoint_path = self::buildGetPriceEndpointPath($stock->symbol);
 
-        $response = Http::get(self::API . $endpoint_path);
+        $response = Http::timeout(self::TIMEOUT)->get(self::API . $endpoint_path);
         return $response->json()['prices'];
     }
 
