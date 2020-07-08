@@ -19,7 +19,7 @@ class AlterStocksTableAddStockTypeColumn extends Migration
                 ->after('symbol')
                 ->nullable()
                 ->constrained()
-                ->onDelete('cascade');
+                ->onDelete('set null');
         });
     }
 

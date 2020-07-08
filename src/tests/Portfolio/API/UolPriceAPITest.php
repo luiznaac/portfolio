@@ -6,7 +6,7 @@ use App\Model\Stock\Stock;
 use App\Portfolio\API\UolAPI;
 use Carbon\Carbon;
 
-class UolAPITest extends PriceAPITest {
+class UolPriceAPITest extends PriceAPITest {
 
     /**
      * @dataProvider dataProviderForTestGetPricesForRange
