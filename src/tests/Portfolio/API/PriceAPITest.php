@@ -30,17 +30,34 @@ abstract class PriceAPITest extends TestCase {
                     '2020-06-16' => 18.98,
                     '2020-06-15' => 19.38,
                 ]
-            ]
+            ],
+            'BOVA11 prices' => [
+                'symbol' => 'BOVA11',
+                'start_date' => Carbon::parse('2020-06-15'),
+                'end_date' => Carbon::parse('2020-06-19'),
+                'expected_prices' => [
+                    '2020-06-19' => 92.64,
+                    '2020-06-18' => 92.63,
+                    '2020-06-17' => 91.95,
+                    '2020-06-16' => 90.0,
+                    '2020-06-15' => 89.07,
+                ]
+            ],
         ];
     }
 
     public function dataProviderForTestGetPriceForDate(): array {
         return [
-            'BOVA11 price' => [
+            'SQIA3 price' => [
                 'symbol' => 'SQIA3',
                 'date' => Carbon::parse('2020-06-24'),
                 'expected_price' => 18.77,
-            ]
+            ],
+            'BOVA11 price' => [
+                'symbol' => 'BOVA11',
+                'date' => Carbon::parse('2020-06-24'),
+                'expected_price' => 90.77,
+            ],
         ];
     }
 }

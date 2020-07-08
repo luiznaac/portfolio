@@ -3,6 +3,7 @@
 namespace App\Model\Stock;
 
 use App\Portfolio\API\AlphaVantageAPI;
+use App\Portfolio\API\StatusInvestAPI;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  *
  * @property int $id
  * @property string $symbol
+ * @property int $stock_type_id
  * @property string $name
  */
 
@@ -45,6 +47,14 @@ class Stock extends Model {
         return $stock_price->price;
     }
 
+    public function getStockType(): StockType {
+        if(!isset($this->stock_type_id)) {
+            return $this->loadStockType();
+        }
+
+        return StockType::find($this->stock_type_id);
+    }
+
     public function loadStockName(): void {
         $this->name = AlphaVantageAPI::getStockNameForSymbol($this->symbol);
         $this->save();
@@ -59,5 +69,11 @@ class Stock extends Model {
         $stock_price->store($this, $date);
 
         return $stock_price;
+    }
+
+    private function loadStockType(): StockType {
+        $type = StatusInvestAPI::getTypeForStock($this);
+
+        return StockType::getStockTypeByType($type);
     }
 }
