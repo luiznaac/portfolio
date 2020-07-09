@@ -17,22 +17,43 @@ use Illuminate\Database\Eloquent\Model;
 
 class StockPrice extends Model {
 
+    protected $fillable = [
+        'stock_id',
+        'date',
+        'price',
+    ];
+
     public function store(Stock $stock, Carbon $date): void {
-        $this->stock_id = $stock->id;
-        $this->date = $date->toDateString();
-        $this->price = StockPriceProvider::getPriceForDate($stock, $date);
-        $this->save();
+        $price = StockPriceProvider::getPriceForDate($stock, $date);
+
+        if(!$price) {
+            return;
+        }
+
+        $this->query()->updateOrCreate(
+            [
+                'stock_id'  => $stock->id,
+                'date'      => $date->toDateString(),
+            ],
+            [
+                'price' => $price,
+            ]
+        );
     }
 
     public static function storePricesForDates(Stock $stock, Carbon $start_date, Carbon $end_date): void {
         $prices = StockPriceProvider::getPricesForRange($stock, $start_date, $end_date);
 
         foreach ($prices as $date => $price) {
-            $stock_price = new self();
-            $stock_price->stock_id = $stock->id;
-            $stock_price->date = $date;
-            $stock_price->price = $price;
-            $stock_price->save();
+            self::query()->updateOrCreate(
+                [
+                    'stock_id'  => $stock->id,
+                    'date'      => $date,
+                ],
+                [
+                    'price' => $price,
+                ]
+            );
         }
     }
 }

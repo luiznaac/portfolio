@@ -9,6 +9,15 @@ use Tests\TestCase;
 
 class StockTest extends TestCase {
 
+    public function testGetStockPriceForDateWithInvalidDate_ShouldReturnNull(): void {
+        $stock = Stock::getStockBySymbol('SQIA3');
+        $weekend_date = Carbon::parse('2020-07-05');
+
+        $price = $stock->getStockPriceForDate($weekend_date);
+
+        $this->assertNull($price);
+    }
+
     public function testGetStockPriceForDate_ShouldGetStoredInfo(): void {
         $stock = Stock::getStockBySymbol('BOVA11');
 
