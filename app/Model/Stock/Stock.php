@@ -41,10 +41,10 @@ class Stock extends Model {
             ->get()->first();
 
         if(!$stock_price) {
-            $stock_price = $this->loadStockPriceForDate($date);
+            $stock_price = StockPrice::store($this, $date);
         }
 
-        return $stock_price->price;
+        return $stock_price ? $stock_price->price : null;
     }
 
     public function getStockType(): StockType {
@@ -62,13 +62,6 @@ class Stock extends Model {
 
     public function loadStockPrices(Carbon $start_date, Carbon $end_date): void {
         StockPrice::storePricesForDates($this, $start_date, $end_date);
-    }
-
-    private function loadStockPriceForDate(Carbon $date): StockPrice {
-        $stock_price = new StockPrice();
-        $stock_price->store($this, $date);
-
-        return $stock_price;
     }
 
     private function loadStockType(): StockType {
