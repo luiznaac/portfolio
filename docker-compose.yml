@@ -30,7 +30,7 @@ services:
       - php
       - mysql
     volumes:
-      - ./src:/var/www/html
+      - ./:/var/www/html
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
     networks:
       - portfolio
@@ -41,7 +41,7 @@ services:
       dockerfile: Dockerfile
     container_name: php
     volumes:
-      - ./src:/var/www/html
+      - ./:/var/www/html
     ports:
       - "9000:9000"
     networks:
@@ -51,18 +51,18 @@ services:
     image: composer:latest
     container_name: composer
     volumes:
-      - ./src:/var/www/html
+      - ./:/var/www/html
     working_dir: /var/www/html
     depends_on:
       - php
     networks:
-      - portfolio 
+      - portfolio
 
   npm:
     image: node:13.7
     container_name: npm
     volumes:
-      - ./src:/var/www/html
+      - ./:/var/www/html
     working_dir: /var/www/html
     entrypoint: ['npm']
     networks:
@@ -74,7 +74,7 @@ services:
       dockerfile: Dockerfile
     container_name: artisan
     volumes:
-      - ./src:/var/www/html
+      - ./:/var/www/html
     depends_on:
       - mysql
     working_dir: /var/www/html
