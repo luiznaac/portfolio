@@ -10,6 +10,10 @@ class OrdersPagesController extends Controller
 {
     const DEFAULT_DIR = 'pages.orders';
 
+    public function __construct() {
+        $this->middleware('auth');
+    }
+
     public function index(): View {
         $data = [
             'orders' => Order::all(),

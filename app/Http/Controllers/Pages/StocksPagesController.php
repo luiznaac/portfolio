@@ -10,6 +10,10 @@ class StocksPagesController extends Controller
 {
     const DEFAULT_DIR = 'pages.stocks';
 
+    public function __construct() {
+        $this->middleware('auth', ['except' => ['index', 'show']]);
+    }
+
     public function index(): View {
         $data = [
             'stocks' => Stock::all(),
