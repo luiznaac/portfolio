@@ -23,14 +23,15 @@ class StockPrice extends Model {
         'price',
     ];
 
-    public function store(Stock $stock, Carbon $date): void {
+    public static function store(Stock $stock, Carbon $date): ?self {
         $price = StockPriceProvider::getPriceForDate($stock, $date);
 
         if(!$price) {
-            return;
+            return null;
         }
 
-        $this->query()->updateOrCreate(
+        /** @var StockPrice $stock_price */
+        $stock_price = self::query()->updateOrCreate(
             [
                 'stock_id'  => $stock->id,
                 'date'      => $date->toDateString(),
@@ -39,6 +40,8 @@ class StockPrice extends Model {
                 'price' => $price,
             ]
         );
+
+        return $stock_price;
     }
 
     public static function storePricesForDates(Stock $stock, Carbon $start_date, Carbon $end_date): void {
