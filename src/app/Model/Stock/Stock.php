@@ -34,7 +34,7 @@ class Stock extends Model {
         return StockPrice::where('stock_id', $this->id)->orderBy('date')->get();
     }
 
-    public function getStockPriceForDate(Carbon $date): float {
+    public function getStockPriceForDate(Carbon $date): ?float {
         $stock_price = StockPrice::query()
             ->where('stock_id', $this->id)
             ->where('date', $date->toDateString())
