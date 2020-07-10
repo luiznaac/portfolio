@@ -8,6 +8,10 @@ use Illuminate\Http\Request;
 
 class StocksController extends Controller {
 
+    public function __construct() {
+        $this->middleware('auth');
+    }
+
     public function store(Request $request) {
         $this->validate($request,[
             'symbol' => 'required',

@@ -40,3 +40,5 @@ Route::get('/positions/stocks/{id}', 'Pages\PositionsPagesController@showStockDe
 Route::post('/positions/stocks/update-position', 'StockConsolidatorController@updatePosition');
 Route::post('/positions/stocks/update-all-positions', 'StockConsolidatorController@updateAllPositions');
 Route::post('/positions/stocks/consolidate', 'StockConsolidatorController@consolidateForStock');
+
+Auth::routes();

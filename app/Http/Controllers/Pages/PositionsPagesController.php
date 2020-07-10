@@ -13,6 +13,10 @@ class PositionsPagesController extends Controller
     const DEFAULT_DIR = 'pages.positions';
     const STOCKS_SUBDIR = '.stocks';
 
+    public function __construct() {
+        $this->middleware('auth');
+    }
+
     public function showStocks() {
         $stock_positions = StockPosition::getLastStockPositions();
 
