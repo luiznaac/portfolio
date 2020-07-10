@@ -12,6 +12,20 @@ class StocksController extends Controller {
         $this->middleware('auth');
     }
 
+    public function updateInfos() {
+        try {
+            Stock::updateInfosForAllStocks();
+
+            $status = 'ok';
+            $message = "Infos updated";
+        } catch (\Exception $exception) {
+            $status = 'error';
+            $message = $exception->getMessage();
+        }
+
+        return redirect('/stocks')->with($status, $message);
+    }
+
     public function store(Request $request) {
         $this->validate($request,[
             'symbol' => 'required',

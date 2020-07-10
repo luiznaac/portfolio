@@ -2,13 +2,42 @@
 
 @section('content')
     <h2>Stocks</h2>
-    @foreach($stocks as $stock)
-        <a href="/stocks/{{$stock->id}}">{{$stock->symbol}}</a>{{" - $stock->name"}}<br>
-    @endforeach
+    <div>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Symbol</th>
+                <th>Type</th>
+                <th>Name</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach($stocks as $stock)
+                <tr>
+                    <td><a href="/stocks/{{$stock->id}}">{{$stock->symbol}}</a></td>
+                    <td>
+                        @if(isset($stock->stock_type_id))
+                            {{$stock_types[$stock->stock_type_id]['type']}}
+                        @endif
+                    </td>
+                    <td>{{$stock->name}}</td>
+                </tr>
+            @endforeach
 
-    @if(count($stocks) == 0)
-        No stocks registered.
-    @endif
+            @if(count($stocks) == 0)
+                No stocks registered.
+            @endif
+            </tbody>
+        </table>
+    </div>
 
-    <a href="/stocks/create" class="btn btn-primary">Register Stock</a>
+    {!! Form::open(['action' => 'StocksController@updateInfos']) !!}
+    <div class="form-group">
+        <div class="row">
+            <div class="col">
+                {{Form::submit('Update infos', ['class' => 'btn btn-primary'])}}
+            </div>
+        </div>
+    </div>
+    {!! Form::close() !!}
 @endsection
