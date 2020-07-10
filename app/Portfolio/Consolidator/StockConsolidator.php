@@ -104,6 +104,7 @@ class StockConsolidator {
         foreach (self::$positions_buffer as $position) {
             StockPosition::updateOrCreate(
                 [
+                    'user_id'   => auth()->id(),
                     'stock_id'  => self::$stock->id,
                     'date'      => $position['date']->toDateString(),
                 ],

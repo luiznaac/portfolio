@@ -3,6 +3,8 @@
 namespace App\Model\Stock\Position;
 
 use App\Model\Stock\Stock;
+use App\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
@@ -10,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
  * App\Model\Stock\StockPosition
  *
  * @property int $id
+ * @property int $user_id
  * @property int $stock_id
  * @property string $date
  * @property int $quantity
@@ -21,6 +24,7 @@ use Illuminate\Database\Eloquent\Model;
 class StockPosition extends Model {
 
     protected $fillable = [
+        'user_id',
         'stock_id',
         'date',
         'quantity',
@@ -28,6 +32,10 @@ class StockPosition extends Model {
         'contributed_amount',
         'average_price',
     ];
+
+    public function user() {
+        return $this->belongsTo('App\User');
+    }
 
     public static function getLastStockPositions(): array {
         $stock_ids = self::getConsolidatedStockIds();
@@ -41,14 +49,14 @@ class StockPosition extends Model {
     }
 
     public static function getPositionsForStock(Stock $stock): Collection {
-        return self::query()
+        return self::getBaseQuery()
             ->where('stock_id', $stock->id)
             ->orderByDesc('date')
             ->get();
     }
 
     private static function getConsolidatedStockIds(): array {
-        $cursor = self::query()->select('stock_id')->distinct()->get();
+        $cursor = self::getBaseQuery()->select('stock_id')->distinct()->get();
 
         $stock_ids = [];
         foreach ($cursor as $data) {
@@ -59,10 +67,17 @@ class StockPosition extends Model {
     }
 
     private static function getLastPositionForStock(int $stock_id): StockPosition {
-        return self::query()
+        return self::getBaseQuery()
             ->where('stock_id', $stock_id)
             ->orderByDesc('date')
             ->limit(1)
             ->get()->first();
+    }
+
+    private static function getBaseQuery(): Builder {
+        /** @var User $user */
+        $user = User::find(auth()->id());
+
+        return $user->stockPositions()->getQuery();
     }
 }

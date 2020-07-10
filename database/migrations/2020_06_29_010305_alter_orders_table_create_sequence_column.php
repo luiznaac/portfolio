@@ -14,7 +14,8 @@ class AlterOrdersTableCreateSequenceColumn extends Migration
     public function up()
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->integer('sequence')->after('id')->unique();
+            $table->integer('sequence')->after('id');
+            $table->unique(['user_id', 'sequence']);
         });
     }
 
@@ -26,6 +27,7 @@ class AlterOrdersTableCreateSequenceColumn extends Migration
     public function down()
     {
         Schema::table('orders', function (Blueprint $table) {
+            $table->dropUnique('orders_user_id_sequence_unique');
             $table->dropColumn('sequence');
         });
     }

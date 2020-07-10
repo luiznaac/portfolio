@@ -3,7 +3,9 @@
 namespace App\Model\Order;
 
 use App\Model\Stock\Stock;
+use App\User;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
@@ -11,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  * App\Model\Order\Order
  *
  * @property int $id
+ * @property int $user_id
  * @property int $sequence
  * @property int $stock_id
  * @property string $date
@@ -23,6 +26,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Order extends Model {
 
+    public function user() {
+        return $this->belongsTo('App\User');
+    }
+
     public function store(
         Stock $stock,
         Carbon $date,
@@ -32,6 +39,7 @@ class Order extends Model {
         float $cost
     ): void {
         $this->stock_id = $stock->id;
+        $this->user_id = auth()->id();
         $this->date = $date->toDateString();
         $this->type = $type;
         $this->quantity = $quantity;
@@ -75,7 +83,8 @@ class Order extends Model {
     }
 
     public static function getAllStocksWithOrders(): array {
-        $cursor = self::query()->select('stock_id')->distinct()->get();
+        $cursor = self::getBaseQuery()
+            ->select('stock_id')->distinct()->get();
 
         $stocks = [];
         foreach ($cursor as $data) {
@@ -86,7 +95,8 @@ class Order extends Model {
     }
 
     public static function consolidateQuantityForStock(Stock $stock): int {
-        $orders = self::where('stock_id', $stock->id)->get();
+        $orders = self::getBaseQuery()
+            ->where('stock_id', $stock->id)->get();
 
         $quantity = 0;
         /** @var Order $order */
@@ -99,7 +109,7 @@ class Order extends Model {
     }
 
     public static function getDateOfFirstContribution(Stock $stock = null): ?Carbon {
-        $query = self::query();
+        $query = self::getBaseQuery();
 
         if($stock) {
             $query->where('stock_id', $stock->id);
@@ -112,7 +122,7 @@ class Order extends Model {
     }
 
     public static function getAllOrdersForStockUntilDate(Stock $stock, Carbon $date): Collection {
-        return self::query()
+        return self::getBaseQuery()
             ->where('stock_id', $stock->id)
             ->where('date', '<=', $date->toDateString())
             ->orderBy('sequence')
@@ -120,7 +130,8 @@ class Order extends Model {
     }
 
     public static function getAllOrdersForStock(Stock $stock): Collection {
-        return self::where('stock_id', $stock->id)->orderBy('sequence')->get();
+        return self::getBaseQuery()
+            ->where('stock_id', $stock->id)->orderBy('sequence')->get();
     }
 
     private function calculateAveragePrice(): float {
@@ -143,7 +154,7 @@ class Order extends Model {
 
     public function save(array $options = []) {
         if(isset($options['should_increment_sequence'])) {
-            $this->sequence = (self::max('sequence') ?? 0) + 1;
+            $this->sequence = (self::getBaseQuery()->max('sequence') ?? 0) + 1;
         }
 
         return parent::save($options);
@@ -156,12 +167,20 @@ class Order extends Model {
     }
 
     private function updatePrecedingOrdersSequence() {
-        $preceding_orders = self::where('sequence', '>', $this->sequence)->orderBy('sequence')->get();
+        $preceding_orders = self::getBaseQuery()
+            ->where('sequence', '>', $this->sequence)->orderBy('sequence')->get();
 
         /** @var Order $order */
         foreach ($preceding_orders as $order) {
             $order->sequence = $order->sequence - 1;
             $order->save();
         }
+    }
+
+    private static function getBaseQuery(): Builder {
+        /** @var User $user */
+        $user = User::find(auth()->id());
+
+        return $user->orders()->getQuery();
     }
 }

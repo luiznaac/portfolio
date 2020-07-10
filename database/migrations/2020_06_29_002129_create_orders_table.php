@@ -16,6 +16,7 @@ class CreateOrdersTable extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('stock_id')->constrained()->onDelete('cascade');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->date('date');
             $table->string('type');
             $table->integer('quantity');
@@ -24,10 +25,10 @@ class CreateOrdersTable extends Migration
             $table->float('average_price');
             $table->timestamps();
 
-            $table->index(['stock_id', 'date', 'type']);
-            $table->index(['stock_id', 'date']);
-            $table->index(['date']);
-            $table->index(['type']);
+            $table->index(['user_id', 'stock_id', 'date', 'type']);
+            $table->index(['user_id', 'stock_id', 'date']);
+            $table->index(['user_id', 'date']);
+            $table->index(['user_id', 'type']);
         });
     }
 

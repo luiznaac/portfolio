@@ -16,14 +16,15 @@ class CreateStockPositionsTable extends Migration
         Schema::create('stock_positions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('stock_id')->constrained()->onDelete('cascade');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->date('date');
             $table->integer('quantity');
             $table->float('amount');
             $table->float('average_price');
             $table->timestamps();
 
-            $table->unique(['stock_id', 'date']);
-            $table->index(['stock_id', 'date']);
+            $table->unique(['user_id', 'stock_id', 'date']);
+            $table->index(['user_id', 'stock_id', 'date']);
         });
     }
 

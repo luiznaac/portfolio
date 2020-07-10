@@ -9,6 +9,50 @@ use Tests\TestCase;
 
 class OrderTest extends TestCase {
 
+    protected function setUp(): void {
+        parent::setUp();
+        $this->loginWithFakeUser();
+        $date = Carbon::parse('2020-06-26');
+
+        Order::createOrder(
+            'FLRY3',
+            $date,
+            $type = 'buy',
+            $quantity = 10,
+            $price = 90.22,
+            $cost = 7.50
+        );
+
+        Order::createOrder(
+            'XPML11',
+            $date,
+            $type = 'sell',
+            $quantity = 5,
+            $price = 90.22,
+            $cost = 7.50
+        );
+
+        Order::createOrder(
+            'BOVA11',
+            $date,
+            $type = 'buy',
+            $quantity = 10,
+            $price = 90.22,
+            $cost = 7.50
+        );
+
+        Order::createOrder(
+            'MXRF11',
+            $date,
+            $type = 'buy',
+            $quantity = 10,
+            $price = 90.22,
+            $cost = 7.50
+        );
+
+        $this->loginWithFakeUser();
+    }
+
     public function testGetAllOrdersForStockUntilDate(): void {
         $date = Carbon::parse('2020-06-22');
         $stock = Stock::getStockBySymbol('BOVA11');

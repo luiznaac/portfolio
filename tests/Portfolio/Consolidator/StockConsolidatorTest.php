@@ -11,6 +11,85 @@ use Tests\TestCase;
 
 class StockConsolidatorTest extends TestCase {
 
+    private $user;
+
+    protected function setUp(): void {
+        parent::setUp();
+        $this->loginWithFakeUser();
+        Carbon::setTestNow('2020-06-30');
+
+        $stock_1 = Stock::getStockBySymbol('SQIA3');
+
+        $order_1 = new Order();
+        $order_1->store(
+            $stock_1,
+            Carbon::now()->subDays(2),
+            $type = 'buy',
+            $quantity = 10,
+            $price = 18.22,
+            $cost = 7.50
+        );
+
+        $stock_2 = Stock::getStockBySymbol('XPML11');
+        Carbon::setTestNow('2020-06-29');
+
+        $order_1 = new Order();
+        $order_1->store(
+            $stock_1,
+            Carbon::now()->subDays(3),
+            $type = 'buy',
+            $quantity = 10,
+            $price = 15.22,
+            $cost = 7.50
+        );
+
+        $order_2 = new Order();
+        $order_2->store(
+            $stock_2,
+            Carbon::now()->subDays(3),
+            $type = 'buy',
+            $quantity = 10,
+            $price = 15.22,
+            $cost = 7.50
+        );
+
+        Carbon::setTestNow('2020-06-24');
+
+        $order_1 = new Order();
+        $order_1->store(
+            $stock_1,
+            Carbon::now()->subDay(),
+            $type = 'buy',
+            $quantity = 10,
+            $price = 15.22,
+            $cost = 7.50
+        );
+
+        $order_2 = new Order();
+        $order_2->store(
+            $stock_2,
+            Carbon::now()->subDays(2),
+            $type = 'buy',
+            $quantity = 10,
+            $price = 15.22,
+            $cost = 7.50
+        );
+
+        $stock_3 = Stock::getStockBySymbol('BOVA11');
+
+        $order_1 = new Order();
+        $order_1->store(
+            $stock_3,
+            Carbon::now()->subDays(2),
+            $type = 'buy',
+            $quantity = 10,
+            $price = 15.22,
+            $cost = 7.50
+        );
+
+        $this->user = $this->loginWithFakeUser();
+    }
+
     public function testUpdatePositions_ShouldUpdatePosition(): void {
         $stock_1 = Stock::getStockBySymbol('SQIA3');
         Carbon::setTestNow('2020-06-30');
@@ -326,6 +405,7 @@ class StockConsolidatorTest extends TestCase {
 
     private function createStockPosition(Stock $stock, Carbon $date, int $quantity, float $amount, float $contributed_amount, float $average_price): StockPosition {
         $position = new StockPosition();
+        $position->user_id = $this->user->id;
         $position->stock_id = $stock->id;
         $position->date = $date->toDateString();
         $position->quantity = $quantity;
@@ -348,6 +428,7 @@ class StockConsolidatorTest extends TestCase {
             /** @var StockPosition $created_stock_position */
             $created_stock_position = $created_stock_positions->pop();
 
+            $this->assertEquals($expected_stock_position->user_id, $created_stock_position->user_id);
             $this->assertEquals($expected_stock_position->stock_id, $created_stock_position->stock_id);
             $this->assertEquals($expected_stock_position->date, $created_stock_position->date);
             $this->assertEquals($expected_stock_position->quantity, $created_stock_position->quantity);
