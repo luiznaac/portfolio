@@ -95,13 +95,17 @@ class StockConsolidator {
     private static function calculateAmountAccordinglyPriceOnDate(Carbon $date, array $position): array {
         $price_on_date = self::$stock->getStockPriceForDate($date);
 
-        $position['amount'] = $price_on_date * $position['quantity'];
+        $position['amount'] = ($price_on_date ?: 0) * $position['quantity'];
 
         return $position;
     }
 
     private static function savePositionsBuffer(): void {
         foreach (self::$positions_buffer as $position) {
+            if($position['amount'] == 0) {
+                continue;
+            }
+
             StockPosition::updateOrCreate(
                 [
                     'user_id'   => auth()->id(),

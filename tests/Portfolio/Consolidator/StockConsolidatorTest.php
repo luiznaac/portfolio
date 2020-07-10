@@ -90,6 +90,25 @@ class StockConsolidatorTest extends TestCase {
         $this->user = $this->loginWithFakeUser();
     }
 
+    public function testUpdatePositionsWhenPriceNotFound_ShouldNotCreatePosition(): void {
+        $stock_1 = Stock::getStockBySymbol('SQIA3');
+        Carbon::setTestNow('2020-06-12');
+
+        $order_1 = new Order();
+        $order_1->store(
+            $stock_1,
+            Carbon::now()->subDays(3),
+            $type = 'buy',
+            $quantity = 10,
+            $price = 15.22,
+            $cost = 7.50
+        );
+
+        StockConsolidator::updatePositions();
+
+        $this->assertEmpty(StockPosition::getPositionsForStock($stock_1));
+    }
+
     public function testUpdatePositions_ShouldUpdatePosition(): void {
         $stock_1 = Stock::getStockBySymbol('SQIA3');
         Carbon::setTestNow('2020-06-30');
