@@ -5,6 +5,7 @@ namespace App\Portfolio\Consolidator;
 use App\Model\Order\Order;
 use App\Model\Stock\Position\StockPosition;
 use App\Model\Stock\Stock;
+use App\Model\Stock\StockPrice;
 use App\Portfolio\Utils\Calendar;
 use Carbon\Carbon;
 
@@ -12,6 +13,7 @@ class StockConsolidator {
 
     /** @var Stock $stock */
     private static $stock;
+    private static $prices;
     private static $positions_buffer = [];
 
     public static function updatePositions(): void {
@@ -26,6 +28,7 @@ class StockConsolidator {
         self::$stock = $stock;
         $date = Calendar::getLastWorkingDayForDate(Carbon::today()->subDay());
         $orders = Order::getAllOrdersForStockUntilDate($stock, $date);
+        self::storeAndCachePricesBeforeProcessing([$date->toDateString()]);
 
         $position['date'] = $date;
         $position = self::sumOrdersToPosition($orders->toArray(), $position);
@@ -40,6 +43,7 @@ class StockConsolidator {
         $end_date = Calendar::getLastWorkingDayForDate(Carbon::today()->subDay());
         $dates = self::generateAllDatesAccordinglyDayOfFirstContribution($end_date);
         $grouped_orders = self::getOrdersGroupedByDateUntilDate($end_date);
+        self::storeAndCachePricesBeforeProcessing($dates);
 
         foreach ($dates as $date) {
             $position = isset($position) ? $position : [];
@@ -70,6 +74,25 @@ class StockConsolidator {
         return $grouped_orders;
     }
 
+    private static function storeAndCachePricesBeforeProcessing(array $dates): void {
+        if(sizeof($dates) < 1) {
+            return;
+        }
+
+        $start_date = Carbon::parse($dates[0]);
+        $end_date = Carbon::parse($dates[sizeof($dates)-1]);
+
+        StockPrice::storePricesForDates(self::$stock, $start_date, $end_date);
+
+        $stock_prices = self::$stock->getStockPrices();
+
+        self::$prices = [];
+        /** @var StockPrice $stock_price */
+        foreach ($stock_prices as $stock_price) {
+            self::$prices[$stock_price->date] = $stock_price->price;
+        }
+    }
+
     private static function generateAllDatesAccordinglyDayOfFirstContribution(Carbon $end_date): array {
         $start_date = Order::getDateOfFirstContribution(self::$stock);
         if(!$start_date) {
@@ -93,11 +116,19 @@ class StockConsolidator {
     }
 
     private static function calculateAmountAccordinglyPriceOnDate(Carbon $date, array $position): array {
-        $price_on_date = self::$stock->getStockPriceForDate($date);
+        $price_on_date = self::getStockPriceFromCacheForDate($date);
 
-        $position['amount'] = ($price_on_date ?: 0) * $position['quantity'];
+        $position['amount'] = $price_on_date * $position['quantity'];
 
         return $position;
+    }
+
+    private static function getStockPriceFromCacheForDate(Carbon $date): float {
+        if(!isset(self::$prices[$date->toDateString()])) {
+            return 0;
+        }
+
+        return self::$prices[$date->toDateString()];
     }
 
     private static function savePositionsBuffer(): void {
