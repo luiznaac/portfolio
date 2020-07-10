@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Pages;
 
 use App\Http\Controllers\Controller;
 use App\Model\Stock\Stock;
+use App\Model\Stock\StockType;
 use Illuminate\View\View;
 
 class StocksPagesController extends Controller
@@ -16,7 +17,8 @@ class StocksPagesController extends Controller
 
     public function index(): View {
         $data = [
-            'stocks' => Stock::all(),
+            'stocks' => Stock::query()->orderBy('symbol')->get(),
+            'stock_types' => StockType::getStockTypeFromCache(),
         ];
 
         return view(self::DEFAULT_DIR . ".index")

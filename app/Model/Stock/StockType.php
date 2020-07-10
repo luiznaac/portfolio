@@ -25,4 +25,19 @@ class StockType extends Model {
     public static function getStockTypeByType(string $type): self {
         return self::query()->where('type', $type)->get()->first();
     }
+
+    public static function getStockTypeFromCache(): array {
+        $stock_types = self::query()->get();
+
+        $types = [];
+        /** @var StockType $type */
+        foreach ($stock_types as $type) {
+            $types[$type->id] = [
+                'type' => $type->type,
+                'description' => $type->description,
+            ];
+        }
+
+        return $types;
+    }
 }

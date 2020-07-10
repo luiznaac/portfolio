@@ -13,7 +13,9 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', 'Pages\PagesController@index');
+// DASHBOARD
+
+Route::get('/', 'Pages\DashboardPagesController@index');
 
 // STOCKS
 
@@ -22,6 +24,7 @@ Route::get('/stocks/create', 'Pages\StocksPagesController@create');
 Route::get('/stocks/{id}', 'Pages\StocksPagesController@show');
 
 Route::post('/stocks/store', 'StocksController@store');
+Route::post('/stocks/update_infos', 'StocksController@updateInfos');
 Route::post('/stocks/load-info-for-date', 'StocksController@loadInfoForDate');
 
 // ORDERS

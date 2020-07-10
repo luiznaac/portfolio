@@ -55,6 +55,21 @@ class Stock extends Model {
         return StockType::find($this->stock_type_id);
     }
 
+    public static function updateInfosForAllStocks(): void {
+        $stocks = self::all();
+
+        /** @var Stock $stock */
+        foreach ($stocks as $stock) {
+            if(!isset($stock->name)) {
+                $stock->loadStockName();
+            }
+
+            if(!isset($stock->stock_type_id)) {
+                $stock->loadStockType();
+            }
+        }
+    }
+
     public function loadStockName(): void {
         $this->name = AlphaVantageAPI::getStockNameForSymbol($this->symbol);
         $this->save();
@@ -64,9 +79,10 @@ class Stock extends Model {
         StockPrice::storePricesForDates($this, $start_date, $end_date);
     }
 
-    private function loadStockType(): StockType {
+    private function loadStockType(): void {
         $type = StatusInvestAPI::getTypeForStock($this);
-
-        return StockType::getStockTypeByType($type);
+        $stock_type = StockType::getStockTypeByType($type);
+        $this->stock_type_id = $stock_type->id;
+        $this->save();
     }
 }
