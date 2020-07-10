@@ -16,7 +16,7 @@ class OrdersPagesController extends Controller
 
     public function index(): View {
         $data = [
-            'orders' => Order::all(),
+            'orders' => Order::getBaseQuery()->get(),
         ];
 
         return view(self::DEFAULT_DIR . ".index")

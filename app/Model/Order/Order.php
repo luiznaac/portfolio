@@ -177,7 +177,7 @@ class Order extends Model {
         }
     }
 
-    private static function getBaseQuery(): Builder {
+    public static function getBaseQuery(): Builder {
         /** @var User $user */
         $user = User::find(auth()->id());
 
