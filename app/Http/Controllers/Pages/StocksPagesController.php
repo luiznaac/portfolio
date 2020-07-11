@@ -18,7 +18,7 @@ class StocksPagesController extends Controller
     public function index(): View {
         $data = [
             'stocks' => Stock::query()->orderBy('symbol')->get(),
-            'stock_types' => StockType::getStockTypeFromCache(),
+            'stock_types' => StockType::getStockTypesFromCache(),
         ];
 
         return view(self::DEFAULT_DIR . ".index")

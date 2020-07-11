@@ -23,7 +23,7 @@ class StockPrice extends Model {
         'price',
     ];
 
-    public static function store(Stock $stock, Carbon $date): ?self {
+    public static function loadPriceForDateAndStore(Stock $stock, Carbon $date): ?self {
         $price = StockPriceProvider::getPriceForDate($stock, $date);
 
         if(!$price) {
@@ -44,7 +44,7 @@ class StockPrice extends Model {
         return $stock_price;
     }
 
-    public static function storePricesForDates(Stock $stock, Carbon $start_date, Carbon $end_date): void {
+    public static function loadPricesForDatesAndStore(Stock $stock, Carbon $start_date, Carbon $end_date): void {
         $prices = StockPriceProvider::getPricesForRange($stock, $start_date, $end_date);
 
         foreach ($prices as $date => $price) {

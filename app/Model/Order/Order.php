@@ -30,6 +30,13 @@ class Order extends Model {
         return $this->belongsTo('App\User');
     }
 
+    public static function getBaseQuery(): Builder {
+        /** @var User $user */
+        $user = User::find(auth()->id());
+
+        return $user->orders()->getQuery();
+    }
+
     public function store(
         Stock $stock,
         Carbon $date,
@@ -129,29 +136,6 @@ class Order extends Model {
             ->get();
     }
 
-    public static function getAllOrdersForStock(Stock $stock): Collection {
-        return self::getBaseQuery()
-            ->where('stock_id', $stock->id)->orderBy('sequence')->get();
-    }
-
-    private function calculateAveragePrice(): float {
-        return $this->getTotal() / $this->quantity;
-    }
-
-    private function calculateTotal(): float {
-        $type_modifier = self::getTypeModifier($this->type);
-
-        return (($this->quantity * $this->price) + ($this->cost * $type_modifier));
-    }
-
-    public static function getTypeModifier(string $type): int {
-        if($type == 'sell') {
-            return -1;
-        }
-
-        return 1;
-    }
-
     public function save(array $options = []) {
         if(isset($options['should_increment_sequence'])) {
             $this->sequence = (self::getBaseQuery()->max('sequence') ?? 0) + 1;
@@ -166,6 +150,14 @@ class Order extends Model {
         $this->updatePrecedingOrdersSequence();
     }
 
+    private static function getTypeModifier(string $type): int {
+        if($type == 'sell') {
+            return -1;
+        }
+
+        return 1;
+    }
+
     private function updatePrecedingOrdersSequence() {
         $preceding_orders = self::getBaseQuery()
             ->where('sequence', '>', $this->sequence)->orderBy('sequence')->get();
@@ -177,10 +169,13 @@ class Order extends Model {
         }
     }
 
-    public static function getBaseQuery(): Builder {
-        /** @var User $user */
-        $user = User::find(auth()->id());
+    private function calculateAveragePrice(): float {
+        return $this->getTotal() / $this->quantity;
+    }
 
-        return $user->orders()->getQuery();
+    private function calculateTotal(): float {
+        $type_modifier = self::getTypeModifier($this->type);
+
+        return (($this->quantity * $this->price) + ($this->cost * $type_modifier));
     }
 }

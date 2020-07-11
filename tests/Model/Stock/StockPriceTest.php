@@ -15,7 +15,7 @@ class StockPriceTest extends TestCase {
         $weekend_date = Carbon::parse('2020-07-05');
 
         $stock_price = new StockPrice();
-        $stock_price->store($stock, $weekend_date);
+        $stock_price->loadPriceForDateAndStore($stock, $weekend_date);
 
         $stored_stock_price = StockPrice::query()
             ->where('date', $weekend_date->toDateString())
@@ -30,7 +30,7 @@ class StockPriceTest extends TestCase {
         $date = Carbon::parse('2020-02-05');
 
         $stock_price = new StockPrice();
-        $stock_price->store($stock, $date);
+        $stock_price->loadPriceForDateAndStore($stock, $date);
 
         $stored_stock_price = StockPrice::query()
             ->where('date', $date->toDateString())

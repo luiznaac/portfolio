@@ -41,7 +41,7 @@ class Stock extends Model {
             ->get()->first();
 
         if(!$stock_price) {
-            $stock_price = StockPrice::store($this, $date);
+            $stock_price = StockPrice::loadPriceForDateAndStore($this, $date);
         }
 
         return $stock_price ? $stock_price->price : null;
@@ -49,10 +49,30 @@ class Stock extends Model {
 
     public function getStockType(): StockType {
         if(!isset($this->stock_type_id)) {
-            return $this->loadStockType();
+            $this->loadStockType();
         }
 
-        return StockType::find($this->stock_type_id);
+        return StockType::find($this->stock_type_id ?: StockType::ACAO_ID);
+    }
+
+    public function getStockName(): ?string {
+        if(!isset($this->name)) {
+            $this->loadStockName();
+        }
+
+        return $this->name;
+    }
+
+    public static function getAllStocksFromCache(): array {
+        $stocks = self::query()->get();
+
+        $stocks_cache = [];
+        /** @var Stock $stock */
+        foreach ($stocks as $stock) {
+            $stocks_cache[$stock->id] = $stock;
+        }
+
+        return $stocks_cache;
     }
 
     public static function updateInfosForAllStocks(): void {
@@ -70,19 +90,23 @@ class Stock extends Model {
         }
     }
 
-    public function loadStockName(): void {
-        $this->name = AlphaVantageAPI::getStockNameForSymbol($this->symbol);
-        $this->save();
-    }
-
-    public function loadStockPrices(Carbon $start_date, Carbon $end_date): void {
-        StockPrice::storePricesForDates($this, $start_date, $end_date);
+    private function loadStockName(): void {
+        try {
+            $this->name = AlphaVantageAPI::getStockNameForSymbol($this->symbol);
+            $this->save();
+        }  catch (\Exception $e) {
+            return;
+        }
     }
 
     private function loadStockType(): void {
-        $type = StatusInvestAPI::getTypeForStock($this);
-        $stock_type = StockType::getStockTypeByType($type);
-        $this->stock_type_id = $stock_type->id;
-        $this->save();
+        try {
+            $type = StatusInvestAPI::getTypeForStock($this);
+            $stock_type = StockType::getStockTypeByType($type);
+            $this->stock_type_id = $stock_type->id;
+            $this->save();
+        } catch (\Exception $e) {
+            return;
+        }
     }
 }
