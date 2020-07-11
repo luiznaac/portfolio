@@ -17,6 +17,7 @@ class Dashboard {
 
     private static function getStockPositionsAndCalculatePercentages(): array {
         $stock_positions_by_type = self::getLatestStockPositionsByType();
+        ksort($stock_positions_by_type);
         $total_amount = self::calculateTotalAmount($stock_positions_by_type);
 
         return self::calculatePercentages($stock_positions_by_type, $total_amount);
