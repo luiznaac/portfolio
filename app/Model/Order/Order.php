@@ -148,6 +148,15 @@ class Order extends Model {
         parent::delete();
 
         $this->updatePrecedingOrdersSequence();
+        self::touchLastOrder();
+    }
+
+    private static function touchLastOrder(): void {
+        /** @var Order $last_order */
+        $last_order = self::getBaseQuery()->orderByDesc('id')->get()->first();
+        if($last_order) {
+            $last_order->touch();
+        }
     }
 
     private static function getTypeModifier(string $type): int {
