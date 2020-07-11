@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Route;
 
 // DASHBOARD
 
-Route::get('/', 'Pages\PagesController@index');
+Route::get('/', 'Pages\DashboardPagesController@index');
 
 // STOCKS
 
