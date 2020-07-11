@@ -63,7 +63,11 @@ class StockPosition extends Model {
     }
 
     private static function getConsolidatedStockIds(): array {
-        $cursor = self::getBaseQuery()->select('stock_id')->distinct()->get();
+        $cursor = self::getBaseQuery()
+            ->select('stock_id', 'symbol')->distinct()
+            ->leftJoin('stocks', 'stocks.id', '=', 'stock_positions.stock_id')
+            ->orderBy('stocks.symbol')
+            ->get();
 
         $stock_ids = [];
         foreach ($cursor as $data) {
