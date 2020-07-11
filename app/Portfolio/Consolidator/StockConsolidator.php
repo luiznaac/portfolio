@@ -22,6 +22,8 @@ class StockConsolidator {
         foreach ($stocks as $stock) {
             self::updatePositionForStock($stock);
         }
+
+        self::removePositionsWithoutOrders($stocks);
     }
 
     public static function updatePositionForStock(Stock $stock) {
@@ -153,5 +155,29 @@ class StockConsolidator {
         }
 
         self::$positions_buffer = [];
+    }
+
+    private static function removePositionsWithoutOrders(array $stocks): void {
+        $stock_ids_to_remove = self::getStockIdsToRemove($stocks);
+
+        StockPosition::getBaseQuery()->whereIn('stock_id', $stock_ids_to_remove)->delete();
+    }
+
+    private static function getStockIdsToRemove(array $stocks): array {
+        $stock_ids_with_positions = StockPosition::getBaseQuery()->select('stock_id')->distinct('stock_id')->get();
+
+        $stock_ids_with_positions = self::buildStockIdArray($stock_ids_with_positions->toArray(), 'stock_id');
+        $stock_ids_with_orders = self::buildStockIdArray($stocks, 'id');
+
+        return array_diff($stock_ids_with_positions, $stock_ids_with_orders);
+    }
+
+    private static function buildStockIdArray(array $data_to_pluck, string $field): array {
+        $stock_ids = [];
+        foreach ($data_to_pluck as $data) {
+            $stock_ids[] = $data[$field];
+        }
+
+        return $stock_ids;
     }
 }

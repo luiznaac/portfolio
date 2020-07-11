@@ -90,6 +90,71 @@ class StockConsolidatorTest extends TestCase {
         $this->user = $this->loginWithFakeUser();
     }
 
+    public function testUpdatePositionsWithDeletedOrder_ShouldDeletePositions(): void {
+        $stock_1 = Stock::getStockBySymbol('SQIA3');
+        $stock_2 = Stock::getStockBySymbol('XPML11');
+        Carbon::setTestNow('2020-06-24');
+
+        $order_1 = new Order();
+        $order_1->store(
+            $stock_1,
+            Carbon::now()->subDay(),
+            $type = 'buy',
+            $quantity = 10,
+            $price = 15.22,
+            $cost = 7.50
+        );
+
+        $stock_position_1 = $this->createStockPosition(
+            $stock_1,
+            Carbon::now()->subDay(),
+            $order_1->quantity,
+            19.5 * $order_1->quantity,
+            $order_1->quantity * $order_1->price,
+            $order_1->price
+        );
+
+        $order_2 = new Order();
+        $order_2->store(
+            $stock_2,
+            Carbon::now()->subDays(2),
+            $type = 'buy',
+            $quantity = 10,
+            $price = 15.22,
+            $cost = 7.50
+        );
+
+        $order_3 = new Order();
+        $order_3->store(
+            $stock_2,
+            Carbon::now(),
+            $type = 'buy',
+            $quantity = 123,
+            $price = 333.22,
+            $cost = 7.50
+        );
+
+        $stock_position_2 = $this->createStockPosition(
+            $stock_2,
+            Carbon::now()->subDay(),
+            $order_2->quantity,
+            105 * $order_2->quantity,
+            $order_2->quantity * $order_2->price,
+            $order_2->price
+        );
+
+        StockConsolidator::updatePositions();
+
+        $this->assertStockPositions([$stock_position_1, $stock_position_2]);
+        $this->assertCount(2, StockPosition::getBaseQuery()->get());
+
+        $order_1->delete();
+        StockConsolidator::updatePositions();
+
+        $this->assertStockPositions([$stock_position_2]);
+        $this->assertCount(1, StockPosition::getBaseQuery()->get());
+    }
+
     public function testUpdatePositionsWhenPriceNotFound_ShouldNotCreatePosition(): void {
         $stock_1 = Stock::getStockBySymbol('SQIA3');
         Carbon::setTestNow('2020-06-12');
