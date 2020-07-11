@@ -12,7 +12,6 @@
                 <th>Avg. Price Paid</th>
                 <th>Amount Contributed</th>
                 <th>Amount Now</th>
-                <th></th>
             </tr>
             </thead>
             <tbody>
@@ -24,12 +23,6 @@
                     <td>{{$position->average_price}}</td>
                     <td>{{$position->contributed_amount}}</td>
                     <td>{{$position->amount}}</td>
-                    <td>
-                        {!! Form::open(['action' => 'StockConsolidatorController@updatePosition']) !!}
-                            {{Form::hidden('stock_id', $position->stock_id)}}
-                            {{Form::submit('Update', ['class' => 'btn btn-success btn-sm'])}}
-                        {!! Form::close() !!}
-                    </td>
                 </tr>
             @endforeach
 
@@ -38,16 +31,5 @@
             @endif
             </tbody>
         </table>
-        {!! Form::open(['action' => 'StockConsolidatorController@updateAllPositions']) !!}
-        <div class="container">
-            <div class="form-group">
-                <div class="row">
-                    <div class="col">
-                        {{Form::submit('Consolidate', ['class' => 'btn btn-primary'])}}
-                    </div>
-                </div>
-            </div>
-        </div>
-        {!! Form::close() !!}
     </div>
 @endsection
