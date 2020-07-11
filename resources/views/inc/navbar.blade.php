@@ -1,3 +1,5 @@
+@inject('helper', 'App\Http\Controllers\PagesHelperController')
+
 <nav class="navbar navbar-expand-md navbar-dark bg-dark shadow-sm">
     <div class="container">
         <a class="navbar-brand" href="{{ url('/') }}">
@@ -31,6 +33,13 @@
                         <a class="dropdown-item" href="/positions/stocks">Stocks</a>
                     </div>
                 </li>
+                @if($helper::shouldShowUpdateButton())
+                {!! Form::open(['action' => 'PagesHelperController@update']) !!}
+                    <li class="nav-item">
+                        {{Form::submit('Consolidate', ['class' => 'nav-link btn btn-danger btn-sm'])}}
+                    </li>
+                {!! Form::close() !!}
+                @endif
                 @endauth
             </ul>
 

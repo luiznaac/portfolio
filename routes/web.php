@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', 'Pages\DashboardPagesController@index');
 
+Route::post('/update', 'PagesHelperController@update');
+
 // STOCKS
 
 Route::get('/stocks', 'Pages\StocksPagesController@index');
@@ -40,8 +42,6 @@ Route::post('/orders/delete', 'OrdersController@delete');
 Route::get('/positions/stocks', 'Pages\PositionsPagesController@showStocks');
 Route::get('/positions/stocks/{id}', 'Pages\PositionsPagesController@showStockDetailedPosition');
 
-Route::post('/positions/stocks/update-position', 'StockConsolidatorController@updatePosition');
-Route::post('/positions/stocks/update-all-positions', 'StockConsolidatorController@updateAllPositions');
 Route::post('/positions/stocks/consolidate', 'StockConsolidatorController@consolidateForStock');
 
 Auth::routes();
