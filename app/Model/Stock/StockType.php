@@ -26,7 +26,7 @@ class StockType extends Model {
         return self::query()->where('type', $type)->get()->first();
     }
 
-    public static function getStockTypeFromCache(): array {
+    public static function getStockTypesFromCache(): array {
         $stock_types = self::query()->get();
 
         $types = [];

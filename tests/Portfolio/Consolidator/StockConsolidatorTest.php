@@ -152,7 +152,7 @@ class StockConsolidatorTest extends TestCase {
         StockConsolidator::updatePositions();
 
         $this->assertStockPositions([$stock_position_1]);
-        $this->assertCount(1, StockPosition::all());
+        $this->assertCount(1, StockPosition::getBaseQuery()->get());
     }
 
     public function testUpdatePositionsOnMonday_ShouldOnlyCreateFridayForAllStocks(): void {
@@ -342,7 +342,7 @@ class StockConsolidatorTest extends TestCase {
 
         StockConsolidator::consolidateFromBegin($stock);
 
-        $created_stock_positions = StockPosition::query()->orderBy('date')->get();
+        $created_stock_positions = StockPosition::getBaseQuery()->orderBy('date')->get();
 
         $this->assertEmpty($created_stock_positions);
     }
@@ -436,7 +436,7 @@ class StockConsolidatorTest extends TestCase {
     }
 
     private function assertStockPositions(array $expected_stock_positions): void {
-        $created_stock_positions = StockPosition::query()
+        $created_stock_positions = StockPosition::getBaseQuery()
             ->whereIn('stock_id', array_map(function ($position) {
                 return $position->stock_id;
             }, $expected_stock_positions))

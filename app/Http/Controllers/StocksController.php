@@ -55,7 +55,7 @@ class StocksController extends Controller {
             $date = Carbon::createFromFormat('Y-m-d', $request->input('date'));
             /** @var Stock $stock */
             $stock = Stock::find($request->input('stock_id'));
-            $stock->loadStockPriceForDate($date);
+            $stock->getStockPriceForDate($date);
 
             $status = 'ok';
             $message = $date->toDateString() . " price for $stock->symbol was loaded.";

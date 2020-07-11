@@ -33,6 +33,13 @@ class StockPosition extends Model {
         'average_price',
     ];
 
+    public static function getBaseQuery(): Builder {
+        /** @var User $user */
+        $user = User::find(auth()->id());
+
+        return $user->stockPositions()->getQuery();
+    }
+
     public function user() {
         return $this->belongsTo('App\User');
     }
@@ -72,12 +79,5 @@ class StockPosition extends Model {
             ->orderByDesc('date')
             ->limit(1)
             ->get()->first();
-    }
-
-    private static function getBaseQuery(): Builder {
-        /** @var User $user */
-        $user = User::find(auth()->id());
-
-        return $user->stockPositions()->getQuery();
     }
 }

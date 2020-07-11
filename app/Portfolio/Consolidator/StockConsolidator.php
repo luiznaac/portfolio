@@ -28,7 +28,7 @@ class StockConsolidator {
         self::$stock = $stock;
         $date = Calendar::getLastWorkingDayForDate(Carbon::today()->subDay());
         $orders = Order::getAllOrdersForStockUntilDate($stock, $date);
-        self::storeAndCachePricesBeforeProcessing([$date->toDateString()]);
+        self::loadAndCachePricesBeforeProcessing([$date->toDateString()]);
 
         $position['date'] = $date;
         $position = self::sumOrdersToPosition($orders->toArray(), $position);
@@ -43,7 +43,7 @@ class StockConsolidator {
         $end_date = Calendar::getLastWorkingDayForDate(Carbon::today()->subDay());
         $dates = self::generateAllDatesAccordinglyDayOfFirstContribution($end_date);
         $grouped_orders = self::getOrdersGroupedByDateUntilDate($end_date);
-        self::storeAndCachePricesBeforeProcessing($dates);
+        self::loadAndCachePricesBeforeProcessing($dates);
 
         foreach ($dates as $date) {
             $position = isset($position) ? $position : [];
@@ -74,7 +74,7 @@ class StockConsolidator {
         return $grouped_orders;
     }
 
-    private static function storeAndCachePricesBeforeProcessing(array $dates): void {
+    private static function loadAndCachePricesBeforeProcessing(array $dates): void {
         if(sizeof($dates) < 1) {
             return;
         }
@@ -82,7 +82,7 @@ class StockConsolidator {
         $start_date = Carbon::parse($dates[0]);
         $end_date = Carbon::parse($dates[sizeof($dates)-1]);
 
-        StockPrice::storePricesForDates(self::$stock, $start_date, $end_date);
+        StockPrice::loadPricesForDatesAndStore(self::$stock, $start_date, $end_date);
 
         $stock_prices = self::$stock->getStockPrices();
 
