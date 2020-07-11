@@ -24,6 +24,7 @@ class StockConsolidator {
         }
 
         self::removePositionsWithoutOrders($stocks);
+        self::touchLastStockPosition();
     }
 
     public static function updatePositionForStock(Stock $stock) {
@@ -179,5 +180,13 @@ class StockConsolidator {
         }
 
         return $stock_ids;
+    }
+
+    private static function touchLastStockPosition(): void {
+        /** @var StockPosition $last_stock_position */
+        $last_stock_position = StockPosition::getBaseQuery()->orderByDesc('id')->get()->first();
+        if($last_stock_position) {
+            $last_stock_position->touch();
+        }
     }
 }
