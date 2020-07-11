@@ -14,7 +14,7 @@
             <tbody>
             @foreach($stock_positions_by_type as $stock_type_id => $stock_positions_and_percentage)
                 <tr>
-                    <td colspan="3">{{$stock_positions_and_percentage['percentage'] . '% - ' . $stock_types[$stock_type_id]['description']}}</td>
+                    <td colspan="3"><b>{{$stock_positions_and_percentage['percentage'] . '% - ' . $stock_types[$stock_type_id]['description']}}</b></td>
                 </tr>
                 @foreach($stock_positions_and_percentage['positions'] as $stock_position)
                 <tr>
