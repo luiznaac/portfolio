@@ -108,7 +108,7 @@ class StockConsolidator {
             $position['quantity'] =
                 (isset($position['quantity']) ? $position['quantity'] : 0) + $order['quantity'];
             $position['contributed_amount'] =
-                (isset($position['contributed_amount']) ? $position['contributed_amount'] : 0) + $order['quantity'] * $order['price'];
+                (isset($position['contributed_amount']) ? $position['contributed_amount'] : 0) + $order['quantity'] * $order['price'] + $order['cost'];
         }
 
         $position['average_price'] = $position['contributed_amount']/$position['quantity'];

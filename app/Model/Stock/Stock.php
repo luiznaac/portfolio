@@ -26,6 +26,16 @@ class Stock extends Model {
         $this->save();
     }
 
+    public static function isValidSymbol(string $symbol): bool {
+        $stock = self::where('symbol', $symbol)->get()->first();
+
+        if($stock) {
+            return true;
+        }
+
+        return StatusInvestAPI::checkIfSymbolIsValid($symbol);
+    }
+
     public static function getStockBySymbol(string $symbol): ?self {
         return self::where('symbol', $symbol)->get()->first();
     }

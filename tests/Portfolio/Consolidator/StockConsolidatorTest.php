@@ -110,8 +110,8 @@ class StockConsolidatorTest extends TestCase {
             Carbon::now()->subDay(),
             $order_1->quantity,
             19.5 * $order_1->quantity,
-            $order_1->quantity * $order_1->price,
-            $order_1->price
+            $order_1->quantity * $order_1->price + $order_1->cost,
+            ($order_1->quantity * $order_1->price + $order_1->cost)/$order_1->quantity
         );
 
         $order_2 = new Order();
@@ -139,8 +139,8 @@ class StockConsolidatorTest extends TestCase {
             Carbon::now()->subDay(),
             $order_2->quantity,
             105 * $order_2->quantity,
-            $order_2->quantity * $order_2->price,
-            $order_2->price
+            $order_2->quantity * $order_2->price + $order_2->cost,
+            ($order_2->quantity * $order_2->price + $order_2->cost)/$order_2->quantity
         );
 
         StockConsolidator::updatePositions();
@@ -193,8 +193,8 @@ class StockConsolidatorTest extends TestCase {
             Carbon::now()->subDay(),
             10,
             18.72 * 10,
-            18.22 * 10,
-            18.22
+            18.22 * 10 + 7.50,
+            (18.22*10 + 7.50)/10
         );
 
         StockConsolidator::updatePositions();
@@ -211,8 +211,8 @@ class StockConsolidatorTest extends TestCase {
 
         $stock_position_1->quantity = $stock_position_1->quantity + $order_2->quantity;
         $stock_position_1->amount = 18.72 * $stock_position_1->quantity;
-        $stock_position_1->contributed_amount = $stock_position_1->contributed_amount + $order_2->quantity * $order_2->price;
-        $stock_position_1->average_price = (18.22 + 15.22)/2;
+        $stock_position_1->contributed_amount = $stock_position_1->contributed_amount + $order_2->quantity * $order_2->price + $order_2->cost;
+        $stock_position_1->average_price = (18.22 * 10 + 7.50 + 15.22 * 10 + 7.50)/20;
 
         StockConsolidator::updatePositions();
 
@@ -240,8 +240,8 @@ class StockConsolidatorTest extends TestCase {
             Carbon::now()->subDays(3),
             $order_1->quantity,
             18.51 * $order_1->quantity,
-            $order_1->quantity * $order_1->price,
-            $order_1->price
+            $order_1->quantity * $order_1->price + $order_1->cost,
+            ($order_1->quantity * $order_1->price + $order_1->cost)/$order_1->quantity
         );
 
         $order_2 = new Order();
@@ -259,8 +259,8 @@ class StockConsolidatorTest extends TestCase {
             Carbon::now()->subDays(3),
             $order_2->quantity,
             103.25 * $order_2->quantity,
-            $order_2->quantity * $order_2->price,
-            $order_2->price
+            $order_2->quantity * $order_2->price + $order_2->cost,
+            ($order_2->quantity * $order_2->price + $order_2->cost)/$order_2->quantity
         );
 
         StockConsolidator::updatePositions();
@@ -288,8 +288,8 @@ class StockConsolidatorTest extends TestCase {
             Carbon::now()->subDay(),
             $order_1->quantity,
             19.5 * $order_1->quantity,
-            $order_1->quantity * $order_1->price,
-            $order_1->price
+            $order_1->quantity * $order_1->price + $order_1->cost,
+            ($order_1->quantity * $order_1->price + $order_1->cost)/$order_1->quantity
         );
 
         $order_2 = new Order();
@@ -317,8 +317,8 @@ class StockConsolidatorTest extends TestCase {
             Carbon::now()->subDay(),
             $order_2->quantity,
             105 * $order_2->quantity,
-            $order_2->quantity * $order_2->price,
-            $order_2->price
+            $order_2->quantity * $order_2->price + $order_2->cost,
+            ($order_2->quantity * $order_2->price + $order_2->cost)/$order_2->quantity
         );
 
         StockConsolidator::updatePositions();
@@ -346,8 +346,8 @@ class StockConsolidatorTest extends TestCase {
             Carbon::now()->subDay(),
             $order_1->quantity,
             18.51 * $order_1->quantity,
-            $order_1->quantity * $order_1->price,
-            $order_1->price
+            $order_1->quantity * $order_1->price + $order_1->cost,
+            ($order_1->quantity * $order_1->price + $order_1->cost)/$order_1->quantity
         );
 
         $order_2 = new Order();
@@ -365,8 +365,8 @@ class StockConsolidatorTest extends TestCase {
             Carbon::now()->subDay(),
             $order_2->quantity,
             103.25 * $order_2->quantity,
-            $order_2->quantity * $order_2->price,
-            $order_2->price
+            $order_2->quantity * $order_2->price + $order_2->cost,
+            ($order_2->quantity * $order_2->price + $order_2->cost)/$order_2->quantity
         );
 
         StockConsolidator::updatePositions();
@@ -393,8 +393,8 @@ class StockConsolidatorTest extends TestCase {
             Carbon::now()->subDays(2),
             $order_1->quantity,
             90.22 * $order_1->quantity,
-            $order_1->quantity * $order_1->price,
-            $order_1->price
+            $order_1->quantity * $order_1->price + $order_1->cost,
+            ($order_1->quantity * $order_1->price + $order_1->cost)/$order_1->quantity
         );
 
         StockConsolidator::updatePositionForStock($stock);
@@ -451,8 +451,8 @@ class StockConsolidatorTest extends TestCase {
             Carbon::now(),
             $order_1->quantity + $order_2->quantity,
             90.22 * ($order_1->quantity + $order_2->quantity),
-            $order_1->quantity * $order_1->price + $order_2->quantity * $order_2->price,
-            ($order_1->quantity * $order_1->price + $order_2->quantity * $order_2->price)/($order_1->quantity + $order_2->quantity)
+            $order_1->quantity * $order_1->price + $order_1->cost + $order_2->quantity * $order_2->price + $order_2->cost,
+            ($order_1->quantity * $order_1->price + $order_1->cost + $order_2->quantity * $order_2->price + $order_2->cost)/($order_1->quantity + $order_2->quantity)
         );
         $stock_positions[] = $stock_position_1;
 
@@ -471,8 +471,8 @@ class StockConsolidatorTest extends TestCase {
             Carbon::now()->addDays(5),
             $stock_positions[0]->quantity + $order_3->quantity,
             92.68 * ($stock_positions[0]->quantity + $order_3->quantity),
-            $stock_positions[0]->contributed_amount + $order_3->quantity * $order_3->price,
-            ($stock_positions[0]->contributed_amount + $order_3->quantity * $order_3->price)/($stock_positions[0]->quantity + $order_3->quantity)
+            $stock_positions[0]->contributed_amount + $order_3->quantity * $order_3->price + $order_3->cost,
+            round(($stock_positions[0]->contributed_amount + $order_3->quantity * $order_3->price + $order_3->cost)/($stock_positions[0]->quantity + $order_3->quantity), 2)
         );
         $stock_positions[] = $stock_position_4;
 

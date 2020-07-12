@@ -25,10 +25,18 @@ class OrdersController extends Controller {
         ]);
 
         try {
+            $symbol = $request->input('symbol');
+
+            if(!Stock::isValidSymbol($symbol)) {
+                $status = 'error';
+                $message = "$symbol is not a valid stock.";
+                return back()->with($status, $message);
+            }
+
             $date = Carbon::createFromFormat('Y-m-d', $request->input('date'));
 
             $order = Order::createOrder(
-                $request->input('symbol'),
+                $symbol,
                 $date,
                 $request->input('type'),
                 $request->input('quantity'),
@@ -55,7 +63,8 @@ class OrdersController extends Controller {
 
         try {
             /** @var Order $order */
-            $order = Order::find($request->input('id'));
+            $order = Order::getBaseQuery()
+                ->where('id', $request->input('id'));
             $order->delete();
 
             $status = 'ok';
