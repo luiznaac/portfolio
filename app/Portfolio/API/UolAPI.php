@@ -3,6 +3,7 @@
 namespace App\Portfolio\API;
 
 use App\Model\Stock\Stock;
+use App\Portfolio\Utils\Calendar;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 
@@ -37,8 +38,9 @@ class UolAPI implements PriceAPI {
 
         $response = Http::timeout(self::TIMEOUT)->get(self::API . $endpoint_path);
         $data = $response->json()['data'];
+        $expected_dates = Calendar::getWorkingDaysDatesForRange($start_date, $end_date);
 
-        return self::buildDatePriceArray($data);
+        return self::buildDatePriceArray($data, $expected_dates);
     }
 
     protected static function getAllSymbolCodes(): array {
@@ -79,13 +81,18 @@ class UolAPI implements PriceAPI {
         return [$start_date_unix, $end_date_unix];
     }
 
-    private static function buildDatePriceArray(array $data): array {
+    private static function buildDatePriceArray(array $data, array $expected_dates): array {
         $prices = [];
         foreach ($data as $date_price) {
-            $date = Carbon::createFromTimestampMs($date_price['date']);
+            $date = Carbon::createFromTimestampMs($date_price['date'])->toDateString();
+
+            if(!in_array($date, $expected_dates)) {
+                continue;
+            }
+
             $price = $date_price['price'];
 
-            $prices[$date->toDateString()] = $price;
+            $prices[$date] = $price;
         }
 
         return $prices;

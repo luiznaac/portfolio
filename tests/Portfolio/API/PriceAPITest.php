@@ -19,6 +19,14 @@ abstract class PriceAPITest extends TestCase {
 
     public function dataProviderForTestGetPricesForRange(): array {
         return [
+            'Date range with one date - should return only one date' => [
+                'symbol' => 'XPML11',
+                'start_date' => Carbon::parse('2020-06-16'),
+                'end_date' => Carbon::parse('2020-06-16'),
+                'expected_prices' => [
+                    '2020-06-16' => 107.16,
+                ]
+            ],
             'SQIA3 prices' => [
                 'symbol' => 'SQIA3',
                 'start_date' => Carbon::parse('2020-06-15'),
