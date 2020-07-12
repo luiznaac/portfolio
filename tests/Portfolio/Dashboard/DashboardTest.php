@@ -32,10 +32,14 @@ class DashboardTest extends TestCase {
     public function testGetStockData(): void {
         $stock_positions = $this->prepareScenario();
         $stock_positions_by_type = $this->generateExpectedDataForStockPositions($stock_positions);
+        [$amount_updated, $amount_contributed, $overall_variation] = $this->generateExpectedOverallData($stock_positions);
 
         $data = Dashboard::getData();
 
         $this->assertEquals($stock_positions_by_type, $data['stock_positions_by_type']);
+        $this->assertEquals($amount_updated, $data['amount_updated']);
+        $this->assertEquals($amount_contributed, $data['amount_contributed']);
+        $this->assertEquals($overall_variation, $data['overall_variation']);
     }
 
     private function generateExpectedDataForStockPositions(array $stock_positions): array {
@@ -53,6 +57,20 @@ class DashboardTest extends TestCase {
         }
 
         return $stock_positions_by_type;
+    }
+
+    private function generateExpectedOverallData(array $stock_positions): array {
+        $amount_updated = 0.0;
+        $amount_contributed = 0.0;
+        /** @var StockPosition $stock_position */
+        foreach ($stock_positions as $stock_position) {
+            $amount_updated += $stock_position->amount;
+            $amount_contributed += $stock_position->contributed_amount;
+        }
+
+        $overall_variation = round((($amount_updated - $amount_contributed)/$amount_contributed)*100, 2);
+
+        return [$amount_updated, $amount_contributed, $overall_variation];
     }
 
     private function prepareScenario(): array {
