@@ -3,6 +3,7 @@
 namespace App\Model\Stock;
 
 use App\Portfolio\Providers\StockPriceProvider;
+use App\Portfolio\Utils\Calendar;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
@@ -22,6 +23,18 @@ class StockPrice extends Model {
         'date',
         'price',
     ];
+
+    public static function getStockPricesForDateRange(Stock $stock, Carbon $start_date, Carbon $end_date): array {
+        $stock_prices_stored_in_range = self::getStockPricesStoredInRange($stock, $start_date, $end_date);
+
+        if(!self::hasMissingData($stock_prices_stored_in_range, $start_date, $end_date)) {
+            return $stock_prices_stored_in_range;
+        }
+
+        self::loadPricesForMissingDates($stock, $stock_prices_stored_in_range, $start_date, $end_date);
+
+        return self::getStockPricesStoredInRange($stock, $start_date, $end_date);
+    }
 
     public static function loadPriceForDateAndStore(Stock $stock, Carbon $date): ?self {
         $price = StockPriceProvider::getPriceForDate($stock, $date);
@@ -58,5 +71,49 @@ class StockPrice extends Model {
                 ]
             );
         }
+    }
+
+    private static function getStockPricesStoredInRange(Stock $stock, Carbon $start_date, Carbon $end_date): array {
+        return self::query()
+            ->where('stock_id', $stock->id)
+            ->whereBetween('date', [$start_date, $end_date])
+            ->get()->toArray();
+    }
+
+    private static function hasMissingData(array $stock_prices_stored_in_range, Carbon $start_date, Carbon $end_date): bool {
+        $missing_dates = self::getMissingDates($stock_prices_stored_in_range, $start_date, $end_date);
+
+        return !empty($missing_dates);
+    }
+
+    private static function loadPricesForMissingDates(Stock $stock, array $stock_prices_stored_in_range, Carbon $start_date, Carbon $end_date): void {
+        $missing_dates = self::getMissingDates($stock_prices_stored_in_range, $start_date, $end_date);
+        $start_date = Carbon::parse($missing_dates[0]);
+        $end_date = Carbon::parse($missing_dates[sizeof($missing_dates)-1]);
+
+        self::loadPricesForDatesAndStore($stock, $start_date, $end_date);
+    }
+
+    private static function getMissingDates(array $stock_prices_stored_in_range, Carbon $start_date, Carbon $end_date): array {
+        $expected_dates = Calendar::getWorkingDaysDatesForRange($start_date, $end_date);
+        $dates_stored = self::extractDatesStoredInRange($stock_prices_stored_in_range);
+
+        return array_values(array_diff($expected_dates, $dates_stored));
+    }
+
+    private static function extractDatesStoredInRange(array $stock_prices_stored_in_range): array {
+        $dates = [];
+        foreach ($stock_prices_stored_in_range as $stock_price) {
+            $dates[] = $stock_price['date'];
+        }
+
+        usort($dates, function ($date_1, $date_2) {
+            $date_1 = Carbon::parse($date_1);
+            $date_2 = Carbon::parse($date_2);
+
+            return $date_1->lt($date_2);
+        });
+
+        return $dates;
     }
 }
