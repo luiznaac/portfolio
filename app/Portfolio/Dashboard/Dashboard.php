@@ -55,6 +55,9 @@ class Dashboard {
                 $stock_position['percentage'] =
                     round(($stock_position['position']->amount/$total_amount)*100, self::PERCENTAGE_PRECISION);
             }
+            usort($stock_type['positions'], function ($position_1, $position_2) {
+                return $position_1['percentage'] < $position_2['percentage'];
+            });
         }
 
         foreach ($stock_positions_by_type as &$stock_type) {
