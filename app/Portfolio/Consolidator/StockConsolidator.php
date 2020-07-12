@@ -85,14 +85,12 @@ class StockConsolidator {
         $start_date = Carbon::parse($dates[0]);
         $end_date = Carbon::parse($dates[sizeof($dates)-1]);
 
-        StockPrice::loadPricesForDatesAndStore(self::$stock, $start_date, $end_date);
-
-        $stock_prices = self::$stock->getStockPrices();
+        $stock_prices = StockPrice::getStockPricesForDateRange(self::$stock, $start_date, $end_date);
 
         self::$prices = [];
         /** @var StockPrice $stock_price */
         foreach ($stock_prices as $stock_price) {
-            self::$prices[$stock_price->date] = $stock_price->price;
+            self::$prices[$stock_price['date']] = $stock_price['price'];
         }
     }
 
