@@ -22,6 +22,9 @@ class DashboardPagesController extends Controller
             'stock_positions_by_type' => $dashboard_data['stock_positions_by_type'],
             'stock_types' => StockType::getStockTypesFromCache(),
             'stocks' => Stock::getAllStocksFromCache(),
+            'amount_updated' => $dashboard_data['amount_updated'],
+            'amount_contributed' => $dashboard_data['amount_contributed'],
+            'overall_variation' => $dashboard_data['overall_variation'],
         ];
 
         return view(self::DEFAULT_DIR . ".index")->with($data);
