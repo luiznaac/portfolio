@@ -36,14 +36,18 @@ class StockDividend extends Model {
     public static function loadDividendsForDatesAndStore(Stock $stock, Carbon $start_date, Carbon $end_date): void {
         $dividends = StockDividendProvider::getDividendsForRange($stock, $start_date, $end_date);
 
-        foreach ($dividends as $date => $price) {
+        foreach ($dividends as $info => $value) {
+            [$date_paid, $reference_date, $type] = explode('|', $info);
+
             self::query()->updateOrCreate(
                 [
-                    'stock_id'  => $stock->id,
-                    'date'      => $date,
+                    'stock_id'          => $stock->id,
+                    'type'              => $type,
+                    'date_paid'         => $date_paid,
+                    'reference_date'    => $reference_date,
                 ],
                 [
-                    'price' => $price,
+                    'value' => $value,
                 ]
             );
         }
