@@ -8,6 +8,7 @@ use App\Model\Stock\Stock;
 class Dashboard {
 
     private const PERCENTAGE_PRECISION = 2;
+    private const AMOUNT_PRECISION = 2;
 
     public static function getData(): array {
         return [
@@ -19,8 +20,10 @@ class Dashboard {
         $stock_positions_by_type = self::getLatestStockPositionsByType();
         ksort($stock_positions_by_type);
         $total_amount = self::calculateTotalAmount($stock_positions_by_type);
+        $stock_positions_by_type = self::calculatePercentages($stock_positions_by_type, $total_amount);
+        $stock_positions_by_type = self::calculateGrossResult($stock_positions_by_type);
 
-        return self::calculatePercentages($stock_positions_by_type, $total_amount);
+        return $stock_positions_by_type;
     }
 
     private static function getLatestStockPositionsByType(): array {
@@ -63,6 +66,19 @@ class Dashboard {
         foreach ($stock_positions_by_type as &$stock_type) {
             $stock_type['percentage'] =
                 round(array_sum(array_column($stock_type['positions'], 'percentage')), self::PERCENTAGE_PRECISION);
+        }
+
+        return $stock_positions_by_type;
+    }
+
+    private static function calculateGrossResult(array $stock_positions_by_type): array {
+        foreach ($stock_positions_by_type as &$stock_type) {
+            foreach ($stock_type['positions'] as &$stock_position) {
+                /** @var StockPosition $position */
+                $position = $stock_position['position'];
+                $stock_position['gross_result'] = round($position->amount - $position->contributed_amount, self::AMOUNT_PRECISION);
+                $stock_position['gross_result_percentage'] = round(($stock_position['gross_result']/$position->contributed_amount)*100, self::PERCENTAGE_PRECISION);
+            }
         }
 
         return $stock_positions_by_type;

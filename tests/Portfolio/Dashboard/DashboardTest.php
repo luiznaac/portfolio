@@ -45,7 +45,9 @@ class DashboardTest extends TestCase {
             $stock = Stock::find($stock_position->stock_id);
             $stock_positions_by_type[$stock->stock_type_id]['positions'][] = [
                 'position' => $stock_position,
-                'percentage' => 33.33
+                'percentage' => 33.33,
+                'gross_result' => 5.0,
+                'gross_result_percentage' => 50.0,
             ];
             $stock_positions_by_type[$stock->stock_type_id]['percentage'] = 33.33;
         }
@@ -104,7 +106,7 @@ class DashboardTest extends TestCase {
         $position->stock_id = $stock->id;
         $position->date = $date->toDateString();
         $position->quantity = 10;
-        $position->amount = 10;
+        $position->amount = 15;
         $position->contributed_amount = 10;
         $position->average_price = 1;
         $position->save();
