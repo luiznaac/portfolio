@@ -64,7 +64,8 @@ class OrdersController extends Controller {
         try {
             /** @var Order $order */
             $order = Order::getBaseQuery()
-                ->where('id', $request->input('id'));
+                ->where('id', $request->input('id'))
+                ->get()->first();
             $order->delete();
 
             $status = 'ok';
