@@ -34,6 +34,6 @@ class PagesHelper {
 
     public static function update(): void {
         Stock::updateInfosForAllStocks();
-        StockConsolidator::updatePositions();
+        StockConsolidator::updateLastPositions();
     }
 }
