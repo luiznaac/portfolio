@@ -35,7 +35,9 @@ class StocksPagesController extends Controller
 
         $data = [
             'stock' => $stock,
+            'stock_type' => $stock->getStockType(),
             'stock_prices' => $stock->getStockPrices(),
+            'stock_dividends' => $stock->getStockDividends(),
         ];
 
         return view(self::DEFAULT_DIR . ".show")
