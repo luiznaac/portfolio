@@ -29,7 +29,7 @@ class StockConsolidator {
 
     public static function updatePositionForStock(Stock $stock) {
         self::$stock = $stock;
-        $date = Calendar::getLastWorkingDayForDate(Carbon::today()->subDay());
+        $date = Calendar::getLastMarketWorkingDate();
         $orders = Order::getAllOrdersForStockUntilDate($stock, $date);
         self::loadAndCachePricesBeforeProcessing([$date->toDateString()]);
 
@@ -43,7 +43,7 @@ class StockConsolidator {
 
     public static function consolidateFromBegin(Stock $stock) {
         self::$stock = $stock;
-        $end_date = Calendar::getLastWorkingDayForDate(Carbon::today()->subDay());
+        $end_date = Calendar::getLastMarketWorkingDate();
         $dates = self::generateAllDatesAccordinglyDayOfFirstContribution($end_date);
         $grouped_orders = self::getOrdersGroupedByDateUntilDate($end_date);
         self::loadAndCachePricesBeforeProcessing($dates);

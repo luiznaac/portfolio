@@ -6,6 +6,7 @@ use App\Model\Order\Order;
 use App\Model\Stock\Position\StockPosition;
 use App\Model\Stock\Stock;
 use App\Portfolio\Consolidator\StockConsolidator;
+use App\Portfolio\Utils\Calendar;
 use Carbon\Carbon;
 use Tests\TestCase;
 
@@ -93,7 +94,7 @@ class StockConsolidatorTest extends TestCase {
     public function testUpdatePositionsWithDeletedOrder_ShouldDeletePositions(): void {
         $stock_1 = Stock::getStockBySymbol('SQIA3');
         $stock_2 = Stock::getStockBySymbol('XPML11');
-        Carbon::setTestNow('2020-06-24');
+        $this->setTestNowForB3DateTime('2020-06-24 15:00:00');
 
         $order_1 = new Order();
         $order_1->store(
@@ -157,7 +158,7 @@ class StockConsolidatorTest extends TestCase {
 
     public function testUpdatePositionsWhenPriceNotFound_ShouldNotCreatePosition(): void {
         $stock_1 = Stock::getStockBySymbol('SQIA3');
-        Carbon::setTestNow('2020-06-12');
+        $this->setTestNowForB3DateTime('2020-06-12 15:00:00');
 
         $order_1 = new Order();
         $order_1->store(
@@ -176,7 +177,8 @@ class StockConsolidatorTest extends TestCase {
 
     public function testUpdatePositions_ShouldUpdatePosition(): void {
         $stock_1 = Stock::getStockBySymbol('SQIA3');
-        Carbon::setTestNow('2020-06-30');
+
+        $this->setTestNowForB3DateTime('2020-06-30 15:00:00');
 
         $order_1 = new Order();
         $order_1->store(
@@ -220,10 +222,57 @@ class StockConsolidatorTest extends TestCase {
         $this->assertCount(1, StockPosition::getBaseQuery()->get());
     }
 
+    public function testUpdatePositionsAfterMarketIsClosed_ShouldUpdatePositionsToCorrectLastMarketDate(): void {
+        $stock_1 = Stock::getStockBySymbol('SQIA3');
+
+        $this->setTestNowForB3DateTime('2020-06-30 18:00:00');
+
+        $order_1 = new Order();
+        $order_1->store(
+            $stock_1,
+            Carbon::now()->subDays(2),
+            $type = 'buy',
+            $quantity = 10,
+            $price = 18.22,
+            $cost = 7.50
+        );
+
+        $stock_position_1 = $this->createStockPosition(
+            $stock_1,
+            Carbon::now(),
+            10,
+            18.72 * 10,
+            18.22 * 10 + 7.50,
+            (18.22*10 + 7.50)/10
+        );
+
+        StockConsolidator::updatePositions();
+
+        $order_2 = new Order();
+        $order_2->store(
+            $stock_1,
+            Carbon::now(),
+            $type = 'buy',
+            $quantity = 10,
+            $price = 15.22,
+            $cost = 7.50
+        );
+
+        $stock_position_1->quantity = $stock_position_1->quantity + $order_2->quantity;
+        $stock_position_1->amount = 19.24 * $stock_position_1->quantity;
+        $stock_position_1->contributed_amount = $stock_position_1->contributed_amount + $order_2->quantity * $order_2->price + $order_2->cost;
+        $stock_position_1->average_price = (18.22 * 10 + 7.50 + 15.22 * 10 + 7.50)/20;
+
+        StockConsolidator::updatePositions();
+
+        $this->assertStockPositions([$stock_position_1]);
+        $this->assertCount(1, StockPosition::getBaseQuery()->get());
+    }
+
     public function testUpdatePositionsOnMonday_ShouldOnlyCreateFridayForAllStocks(): void {
         $stock_1 = Stock::getStockBySymbol('SQIA3');
         $stock_2 = Stock::getStockBySymbol('XPML11');
-        Carbon::setTestNow('2020-06-29');
+        $this->setTestNowForB3DateTime('2020-06-29 15:00:00');
 
         $order_1 = new Order();
         $order_1->store(
@@ -271,7 +320,7 @@ class StockConsolidatorTest extends TestCase {
     public function testUpdatePositionsOnWeekDay_ShouldOnlyCreatePreviousLastWorkingDateForAllStocks(): void {
         $stock_1 = Stock::getStockBySymbol('SQIA3');
         $stock_2 = Stock::getStockBySymbol('XPML11');
-        Carbon::setTestNow('2020-06-24');
+        $this->setTestNowForB3DateTime('2020-06-24 15:00:00');
 
         $order_1 = new Order();
         $order_1->store(
@@ -329,7 +378,7 @@ class StockConsolidatorTest extends TestCase {
     public function testUpdatePositionsOnWeekend_ShouldOnlyCreateLastWorkingDateForAllStocks(): void {
         $stock_1 = Stock::getStockBySymbol('SQIA3');
         $stock_2 = Stock::getStockBySymbol('XPML11');
-        Carbon::setTestNow('2020-06-27');
+        $this->setTestNowForB3DateTime('2020-06-27 15:00:00');
 
         $order_1 = new Order();
         $order_1->store(
@@ -376,7 +425,7 @@ class StockConsolidatorTest extends TestCase {
 
     public function testUpdatePositionForStockOnWeekend_ShouldOnlyCreateLastWorkingDate(): void {
         $stock = Stock::getStockBySymbol('BOVA11');
-        Carbon::setTestNow('2020-06-28');
+        $this->setTestNowForB3DateTime('2020-06-28 15:00:00');
 
         $order_1 = new Order();
         $order_1->store(
@@ -414,7 +463,7 @@ class StockConsolidatorTest extends TestCase {
 
     public function testConsolidateFromBegin(): void {
         $stock = Stock::getStockBySymbol('BOVA11');
-        Carbon::setTestNow('2020-06-26');
+        $this->setTestNowForB3DateTime('2020-06-26 15:00:00');
 
         $order_1 = new Order();
         $order_1->store(
@@ -485,6 +534,11 @@ class StockConsolidatorTest extends TestCase {
         StockConsolidator::consolidateFromBegin($stock);
 
         $this->assertStockPositions($stock_positions);
+    }
+
+    private function setTestNowForB3DateTime(string $date_time): void {
+        $now_int_utc = Carbon::parse($date_time, Calendar::B3_TIMEZONE)->utc();
+        Carbon::setTestNow($now_int_utc);
     }
 
     private function createStockPosition(Stock $stock, Carbon $date, int $quantity, float $amount, float $contributed_amount, float $average_price): StockPosition {
