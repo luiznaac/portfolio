@@ -53,6 +53,47 @@ class CalendarTest extends TestCase {
         $this->assertEquals($expected_dates, $actual_dates);
     }
 
+    public function dataProviderForTestGetLastMarketWorkingDate(): array {
+        return [
+            'Now as Sunday' => [
+                'now' => '2020-07-12 12:00:00',
+                'expected_date' => Carbon::parse('2020-07-10'),
+            ],
+            'Now as Saturday' => [
+                'now' => '2020-07-11 12:00:00',
+                'expected_date' => Carbon::parse('2020-07-10'),
+            ],
+            'Now as Monday pre market close' => [
+                'now' => '2020-07-13 16:30:00',
+                'expected_date' => Carbon::parse('2020-07-10'),
+            ],
+            'Now as Monday post market close' => [
+                'now' => '2020-07-13 18:00:00',
+                'expected_date' => Carbon::parse('2020-07-13'),
+            ],
+            'Now as weekday pre market close' => [
+                'now' => '2020-07-09 17:00:00',
+                'expected_date' => Carbon::parse('2020-07-08'),
+            ],
+            'Now as weekday post market close' => [
+                'now' => '2020-07-09 18:00:00',
+                'expected_date' => Carbon::parse('2020-07-09'),
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider dataProviderForTestGetLastMarketWorkingDate
+     */
+    public function testGetLastMarketWorkingDate(string $now, Carbon $expected_date): void {
+        $now_in_utc = Carbon::parse($now, Calendar::B3_TIMEZONE)->utc();
+        Carbon::setTestNow($now_in_utc);
+
+        $actual_date = Calendar::getLastMarketWorkingDate();
+
+        $this->assertEquals($expected_date, $actual_date);
+    }
+
     public function testGetLastWorkingDayForDateOnWeekDay_ShouldReturnSameDay(): void {
         $date = Carbon::parse('2020-07-01');
         $working_day = Calendar::getLastWorkingDayForDate($date);

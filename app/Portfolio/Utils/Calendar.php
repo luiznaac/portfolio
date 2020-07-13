@@ -6,6 +6,18 @@ use Carbon\Carbon;
 
 class Calendar {
 
+    public const B3_TIMEZONE = 'America/Sao_Paulo';
+
+    public static function getLastMarketWorkingDate(): Carbon {
+        $now_in_brazil = Carbon::now()->setTimezone(self::B3_TIMEZONE);
+
+        if($now_in_brazil->format('H') < 18) {
+            return self::getLastWorkingDayForDate(Carbon::yesterday());
+        }
+
+        return self::getLastWorkingDay();
+    }
+
     public static function getLastWorkingDay(): Carbon {
         return self::getLastWorkingDayForDate(Carbon::today());
     }
