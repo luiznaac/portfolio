@@ -15,7 +15,7 @@ class StatusInvestAPI implements PriceAPI, StockTypeAPI, StockExistsAPI, Dividen
     private const SEARCH_ENDPOINT = '/home/mainsearchquery?q=:text';
     private const DIVIDEND_ENDPOINT = '/:stock_type/getearnings?Filter=:symbol&Start=:start_date&End=:end_date';
 
-    private const TIMEOUT = 2;
+    private const TIMEOUT = 3;
 
     private const API_TYPES = [
         1 => StockType::ACAO_TYPE,

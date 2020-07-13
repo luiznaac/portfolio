@@ -3,7 +3,34 @@
 @section('content')
     <h2>{{$stock->symbol}}</h2>
     <small>{{$stock->name}}</small>
-
+    <br><br>
+    @if($stock_type->type != \App\Model\Stock\StockType::ETF_TYPE)
+    <h3>Dividends</h3>
+    <div>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Type</th>
+                <th>Reference Date</th>
+                <th>Date Paid</th>
+                <th>Amount</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach($stock_dividends as $dividend)
+                <tr>
+                    <td>{{$dividend->type}}</td>
+                    <td>{{$dividend->reference_date}}</td>
+                    <td>{{$dividend->date_paid}}</td>
+                    <td>R${{$dividend->value}}</td>
+                </tr>
+            @endforeach
+            </tbody>
+        </table>
+    </div>
+    @endif
+    <br><br>
+    <h3>Historical Prices</h3>
     <div>
         <table class="table">
             <thead>
@@ -13,33 +40,14 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($stock_prices as $info)
+                @foreach($stock_prices as $price)
                 <tr>
-                    <td>{{$info->date}}</td>
-                    <td>{{$info->price}}</td>
+                    <td>{{$price->date}}</td>
+                    <td>{{$price->price}}</td>
                 </tr>
                 @endforeach
-
-                @if(count($stock_prices) == 0)
-                    <td>No info.</td>
-                @endif
             </tbody>
         </table>
     </div>
-
-    {!! Form::open(['action' => 'StocksController@loadInfoForDate']) !!}
-        <div class="container">
-            <div class="form-group">
-                <div class="row">
-                    <div class="col-auto">
-                        {{Form::hidden('stock_id', $stock->id)}}
-                        {{Form::date('date', '', ['class' => 'form-control', 'placeholder' => 'Date'])}}
-                    </div>
-                    <div class="col">
-                        {{Form::submit('Get Info', ['class' => 'btn btn-primary'])}}
-                    </div>
-                </div>
-            </div>
-        </div>
-    {!! Form::close() !!}
 @endsection
+

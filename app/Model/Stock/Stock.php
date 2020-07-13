@@ -40,6 +40,10 @@ class Stock extends Model {
         return self::where('symbol', $symbol)->get()->first();
     }
 
+    public function getStockDividends(): Collection {
+        return StockDividend::where('stock_id', $this->id)->orderBy('date_paid')->get();
+    }
+
     public function getStockPrices(): Collection {
         return StockPrice::where('stock_id', $this->id)->orderBy('date')->get();
     }

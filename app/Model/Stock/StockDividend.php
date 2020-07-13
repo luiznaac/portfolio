@@ -2,7 +2,9 @@
 
 namespace App\Model\Stock;
 
+use App\Model\Order\Order;
 use App\Portfolio\Providers\StockDividendProvider;
+use App\Portfolio\Utils\Calendar;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
@@ -27,13 +29,42 @@ class StockDividend extends Model {
         'value',
     ];
 
-    public static function getStockDividendsForDateRange(Stock $stock, Carbon $start_date, Carbon $end_date): array {
-        self::loadDividendsForDatesAndStore($stock, $start_date, $end_date);
-
-        return self::getDividendsStoredInRange($stock, $start_date, $end_date);
+    public static function getStockDividendsStoredInRange(Stock $stock, Carbon $start_date, Carbon $end_date): array {
+        return self::query()
+            ->where('stock_id', $stock->id)
+            ->whereBetween('date_paid', [$start_date, $end_date])
+            ->get()->toArray();
     }
 
-    public static function loadDividendsForDatesAndStore(Stock $stock, Carbon $start_date, Carbon $end_date): void {
+    public static function loadHistoricDividendsForAllStocks(): void {
+        $stocks = Stock::query()->get();
+
+        /** @var Stock $stock */
+        foreach ($stocks as $stock) {
+            /** @var Order $first_order */
+            $first_order = Order::query()
+                ->where('stock_id', $stock->id)
+                ->orderBy('date')
+                ->first();
+
+            if(!$first_order) {
+                continue;
+            }
+
+            $start_date = Carbon::parse($first_order->date);
+            $end_date = Calendar::getLastMarketWorkingDate();
+
+            self::loadDividendsForDatesAndStore($stock, $start_date, $end_date);
+        }
+    }
+
+    private static function loadDividendsForDatesAndStore(Stock $stock, Carbon $start_date, Carbon $end_date): void {
+        $stock_type = $stock->getStockType();
+
+        if ($stock_type->type == StockType::ETF_TYPE) {
+            return;
+        }
+
         $dividends = StockDividendProvider::getDividendsForRange($stock, $start_date, $end_date);
 
         foreach ($dividends as $info => $value) {
@@ -51,12 +82,5 @@ class StockDividend extends Model {
                 ]
             );
         }
-    }
-
-    private static function getDividendsStoredInRange(Stock $stock, Carbon $start_date, Carbon $end_date): array {
-        return self::query()
-            ->where('stock_id', $stock->id)
-            ->whereBetween('date_paid', [$start_date, $end_date])
-            ->get()->toArray();
     }
 }
