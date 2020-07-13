@@ -5,6 +5,7 @@ namespace Tests\Portfolio\Utils;
 use App\Model\Order\Order;
 use App\Model\Stock\Position\StockPosition;
 use App\Model\Stock\Stock;
+use App\Portfolio\Utils\Calendar;
 use App\Portfolio\Utils\PagesHelper;
 use Carbon\Carbon;
 use Tests\TestCase;
@@ -50,8 +51,8 @@ class PagesHelperTest extends TestCase {
                 'stock_position' => ['updated_at' => '2020-07-11'],
                 'expected_result' => false,
             ],
-            'Stock position date before last working day' => [
-                'today' => '2020-07-10',
+            'Stock position date before last working day post market close' => [
+                'today' => '2020-07-10 18:30:00',
                 'order' => ['updated_at' => '2020-07-09'],
                 'stock_position' => [
                     'date' => '2020-07-08',
@@ -59,8 +60,8 @@ class PagesHelperTest extends TestCase {
                 ],
                 'expected_result' => true,
             ],
-            'Stock position date on last working day' => [
-                'today' => '2020-07-10',
+            'Stock position date on last working day pre market close' => [
+                'today' => '2020-07-10 15:30:00',
                 'order' => ['updated_at' => '2020-07-09'],
                 'stock_position' => [
                     'date' => '2020-07-09',
@@ -75,7 +76,8 @@ class PagesHelperTest extends TestCase {
      * @dataProvider dataProviderForTestShouldUpdatePositions
      */
     public function testShouldUpdatePositions(string $today, array $order, array $stock_position, bool $expected_result): void {
-        Carbon::setTestNow($today);
+        $today_in_utc = Carbon::parse($today, Calendar::B3_TIMEZONE)->utc();
+        Carbon::setTestNow($today_in_utc);
         $this->createOrder($order);
         $this->createStockPosition($stock_position);
 

@@ -26,7 +26,7 @@ class PagesHelper {
         $stock_position_updated_at = Carbon::parse($last_stock_position->updated_at);
 
         $stock_position_date = Carbon::parse($last_stock_position->date);
-        $last_reference_date = Calendar::getLastWorkingDayForDate(Carbon::today()->subDay());
+        $last_reference_date = Calendar::getLastMarketWorkingDate();
 
         return $order_updated_at->isAfter($stock_position_updated_at)
             || $stock_position_date->isBefore($last_reference_date);
