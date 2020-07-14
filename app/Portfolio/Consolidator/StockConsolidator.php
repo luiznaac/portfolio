@@ -41,7 +41,22 @@ class StockConsolidator {
         self::savePositionsBuffer();
     }
 
-    public static function consolidateStockPositionsForStock(Stock $stock) {
+    public static function consolidate(): void {
+        $stocks = Order::getAllStocksWithOrders();
+
+        foreach ($stocks as $stock) {
+            self::consolidateForStock($stock);
+        }
+
+        self::removePositionsWithoutOrders($stocks);
+        self::touchLastStockPosition();
+    }
+
+    public static function consolidateForStock(Stock $stock): void {
+        self::consolidateStockPositionsForStock($stock);
+    }
+
+    private static function consolidateStockPositionsForStock(Stock $stock) {
         self::$stock = $stock;
         $end_date = Calendar::getLastMarketWorkingDate();
         $dates = self::generateAllDatesAccordinglyDayOfFirstContribution($end_date);

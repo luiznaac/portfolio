@@ -454,7 +454,7 @@ class StockConsolidatorTest extends TestCase {
     public function testConsolidateFromBeginWithoutOrders_ShouldNotCreatePositions(): void {
         $stock = Stock::getStockBySymbol('BOVA11');
 
-        StockConsolidator::consolidateStockPositionsForStock($stock);
+        StockConsolidator::consolidateForStock($stock);
 
         $created_stock_positions = StockPosition::getBaseQuery()->orderBy('date')->get();
 
@@ -531,7 +531,7 @@ class StockConsolidatorTest extends TestCase {
         $stock_positions[] = $stock_position_5;
 
         Carbon::setTestNow(Carbon::now()->addDays(7));
-        StockConsolidator::consolidateStockPositionsForStock($stock);
+        StockConsolidator::consolidateForStock($stock);
 
         $this->assertStockPositions($stock_positions);
     }
