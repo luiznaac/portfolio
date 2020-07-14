@@ -20,10 +20,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class Log extends Model {
 
+    protected $fillable = ['type', 'source', 'message'];
+
     public const EXCEPTION_TYPE = 'exception';
 
     public static function log(string $type, string $source, string $message): void {
-        self::query()->insert([
+        self::query()->create([
             'type' => $type,
             'source' => $source,
             'message' => $message,
