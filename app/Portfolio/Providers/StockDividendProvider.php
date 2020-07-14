@@ -16,7 +16,7 @@ class StockDividendProvider {
 
     private const ENTITY_NAME = 'StockDividendProvider';
 
-    public static function getDividendsForRange(Stock $stock, Carbon $start_date, Carbon $end_date): ?array {
+    public static function getDividendsForRange(Stock $stock, Carbon $start_date, Carbon $end_date): array {
         /** @var DividendAPI $dividend_api */
         foreach (static::DIVIDEND_APIS as $dividend_api) {
             try {
@@ -27,6 +27,6 @@ class StockDividendProvider {
             }
         }
 
-        return null;
+        return [];
     }
 }
