@@ -10,7 +10,7 @@ use Carbon\Carbon;
 
 class StockDividendProvider {
 
-    protected const DIVIDEND_APIS = [
+    private const DIVIDEND_APIS = [
         StatusInvestAPI::class,
     ];
 
@@ -18,15 +18,24 @@ class StockDividendProvider {
 
     public static function getDividendsForRange(Stock $stock, Carbon $start_date, Carbon $end_date): array {
         /** @var DividendAPI $dividend_api */
-        foreach (static::DIVIDEND_APIS as $dividend_api) {
+        foreach (static::getAvailableAPIs() as $dividend_api) {
             try {
-                return $dividend_api::getDividendsForRange($stock, clone $start_date, clone $end_date);
+                $dividends = $dividend_api::getDividendsForRange($stock, clone $start_date, clone $end_date);
+
+                if(empty($dividends)) {
+                    continue;
+                }
+
+                return $dividends;
             } catch (\Exception $e) {
                 Log::log(Log::EXCEPTION_TYPE, self::ENTITY_NAME.'::'.__FUNCTION__, $e->getMessage());
-                continue;
             }
         }
 
         return [];
+    }
+
+    protected static function getAvailableAPIs(): array {
+        return self::DIVIDEND_APIS;
     }
 }

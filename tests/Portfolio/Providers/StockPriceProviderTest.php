@@ -11,13 +11,94 @@ use Tests\TestCase;
 
 class StockPriceProviderTest extends TestCase {
 
+    public function testGetPriceForDateWithErrorOnFirstAPI_ShouldFallbackToTheNextOne(): void {
+        $stock = new Stock();
+        $stock->symbol = 'FLRY3';
+        $stock->save();
+
+        $date = Carbon::parse('2020-07-13');
+
+        StockPriceProviderForTests::$apis = [
+            PriceAPIForTestsWithError::class,
+            PriceAPIForTests::class
+        ];
+        $price = StockPriceProviderForTests::getPriceForDate($stock, $date);
+
+        $this->assertLog('StockPriceProvider::getPriceForDate');
+        $this->assertEquals(123.45, $price);
+    }
+
     public function testGetPriceForDateWithError_ShouldLogMessage(): void {
         $stock = Stock::getStockBySymbol('SQIA3');
         $date = Carbon::parse('2020-07-02');
 
+        StockPriceProviderForTests::$apis = [PriceAPIForTestsWithError::class];
         StockPriceProviderForTests::getPriceForDate($stock, $date);
 
         $this->assertLog('StockPriceProvider::getPriceForDate');
+    }
+
+    public function testGetPricesForRangeWithEmptyArrayAndError_ShouldFallbackToTheLastOne(): void {
+        $stock = new Stock();
+        $stock->symbol = 'FLRY3';
+        $stock->save();
+
+        $start_date = Carbon::parse('2020-07-13');
+        $end_date = Carbon::parse('2020-07-13');
+
+        StockPriceProviderForTests::$apis = [
+            PriceAPIForTestsWithError::class,
+            PriceAPIForTestsWithEmptyArray::class,
+            PriceAPIForTests::class
+        ];
+        $prices = StockPriceProviderForTests::getPricesForRange($stock, $start_date, $end_date);
+
+        $this->assertLog('StockPriceProvider::getPricesForRange');
+        $this->assertEquals([
+            '2020-07-13' => 123.45,
+        ],
+            $prices);
+    }
+
+    public function testGetPricesForRangeWithEmptyArrayOnFirstAPI_ShouldFallbackToTheNextOne(): void {
+        $stock = new Stock();
+        $stock->symbol = 'FLRY3';
+        $stock->save();
+
+        $start_date = Carbon::parse('2020-07-13');
+        $end_date = Carbon::parse('2020-07-13');
+
+        StockPriceProviderForTests::$apis = [
+            PriceAPIForTestsWithEmptyArray::class,
+            PriceAPIForTests::class
+        ];
+        $prices = StockPriceProviderForTests::getPricesForRange($stock, $start_date, $end_date);
+
+        $this->assertEquals([
+            '2020-07-13' => 123.45,
+        ],
+            $prices);
+    }
+
+    public function testGetPricesForRangeWithErrorOnFirstAPI_ShouldFallbackToTheNextOne(): void {
+        $stock = new Stock();
+        $stock->symbol = 'FLRY3';
+        $stock->save();
+
+        $start_date = Carbon::parse('2020-07-13');
+        $end_date = Carbon::parse('2020-07-13');
+
+        StockPriceProviderForTests::$apis = [
+            PriceAPIForTestsWithError::class,
+            PriceAPIForTests::class
+        ];
+        $prices = StockPriceProviderForTests::getPricesForRange($stock, $start_date, $end_date);
+
+        $this->assertLog('StockPriceProvider::getPricesForRange');
+        $this->assertEquals([
+            '2020-07-13' => 123.45,
+        ],
+            $prices);
     }
 
     public function testGetPricesForRangeWithError_ShouldLogMessage(): void {
@@ -25,6 +106,7 @@ class StockPriceProviderTest extends TestCase {
         $start_date = Carbon::parse('2020-07-02');
         $end_date = Carbon::parse('2020-07-06');
 
+        StockPriceProviderForTests::$apis = [PriceAPIForTestsWithError::class];
         StockPriceProviderForTests::getPricesForRange($stock, $start_date, $end_date);
 
         $this->assertLog('StockPriceProvider::getPricesForRange');
@@ -68,7 +150,7 @@ class StockPriceProviderTest extends TestCase {
     }
 }
 
-class PriceAPIForTests implements PriceAPI {
+class PriceAPIForTestsWithError implements PriceAPI {
 
     public static function getPricesForRange(Stock $stock, Carbon $start_date, Carbon $end_date): array {
         throw new \Exception('test');
@@ -79,8 +161,32 @@ class PriceAPIForTests implements PriceAPI {
     }
 }
 
+class PriceAPIForTestsWithEmptyArray implements PriceAPI {
+
+    public static function getPricesForRange(Stock $stock, Carbon $start_date, Carbon $end_date): array {
+        return [];
+    }
+
+    public static function getPriceForDate(Stock $stock, Carbon $date): float {
+    }
+}
+
+class PriceAPIForTests implements PriceAPI {
+
+    public static function getPricesForRange(Stock $stock, Carbon $start_date, Carbon $end_date): array {
+        return ['2020-07-13' => 123.45];
+    }
+
+    public static function getPriceForDate(Stock $stock, Carbon $date): float {
+        return 123.45;
+    }
+}
+
 class StockPriceProviderForTests extends StockPriceProvider {
-    protected const PRICE_APIS = [
-        PriceAPIForTests::class,
-    ];
+
+    public static $apis = [];
+
+    protected static function getAvailableAPIs(): array {
+        return self::$apis;
+    }
 }

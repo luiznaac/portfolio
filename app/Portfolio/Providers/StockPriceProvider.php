@@ -11,7 +11,7 @@ use Carbon\Carbon;
 
 class StockPriceProvider {
 
-    protected const PRICE_APIS = [
+    private const PRICE_APIS = [
         UolAPI::class,
         StatusInvestAPI::class,
     ];
@@ -20,12 +20,17 @@ class StockPriceProvider {
 
     public static function getPricesForRange(Stock $stock, Carbon $start_date, Carbon $end_date): ?array {
         /** @var PriceAPI $price_api */
-        foreach (static::PRICE_APIS as $price_api) {
+        foreach (static::getAvailableAPIs() as $price_api) {
             try {
-                return $price_api::getPricesForRange($stock, clone $start_date, clone $end_date);
+                $prices = $price_api::getPricesForRange($stock, clone $start_date, clone $end_date);
+
+                if(empty($prices)) {
+                    continue;
+                }
+
+                return $prices;
             } catch (\Exception $e) {
                 Log::log(Log::EXCEPTION_TYPE, self::ENTITY_NAME.'::'.__FUNCTION__, $e->getMessage());
-                continue;
             }
         }
 
@@ -34,15 +39,18 @@ class StockPriceProvider {
 
     public static function getPriceForDate(Stock $stock, Carbon $date): ?float {
         /** @var PriceAPI $price_api */
-        foreach (static::PRICE_APIS as $price_api) {
+        foreach (static::getAvailableAPIs() as $price_api) {
             try {
                 return $price_api::getPriceForDate($stock, clone $date);
             } catch (\Exception $e) {
                 Log::log(Log::EXCEPTION_TYPE, self::ENTITY_NAME.'::'.__FUNCTION__, $e->getMessage());
-                continue;
             }
         }
 
         return null;
+    }
+
+    protected static function getAvailableAPIs(): array {
+        return self::PRICE_APIS;
     }
 }
