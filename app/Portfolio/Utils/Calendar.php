@@ -19,7 +19,9 @@ class Calendar {
     }
 
     public static function getLastWorkingDay(): Carbon {
-        return self::getLastWorkingDayForDate(Carbon::today());
+        $today_in_brazil = Carbon::parse(Carbon::now()->setTimezone(self::B3_TIMEZONE)->toDateString());
+
+        return self::getLastWorkingDayForDate($today_in_brazil);
     }
 
     public static function getLastWorkingDayForDate(Carbon $date): Carbon {

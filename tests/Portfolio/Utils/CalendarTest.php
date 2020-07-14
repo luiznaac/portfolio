@@ -79,6 +79,10 @@ class CalendarTest extends TestCase {
                 'now' => '2020-07-09 18:00:00',
                 'expected_date' => Carbon::parse('2020-07-09'),
             ],
+            'Now as weekday 22PM Brazil' => [
+                'now' => '2020-07-13 22:00:00',
+                'expected_date' => Carbon::parse('2020-07-13'),
+            ],
         ];
     }
 
@@ -109,7 +113,7 @@ class CalendarTest extends TestCase {
     }
 
     public function testGetLastWorkingDayOnWeekDay_ShouldReturnSameDay(): void {
-        Carbon::setTestNow('2020-06-16');
+        Carbon::setTestNow('2020-06-16 12:00:00');
         $working_day = Calendar::getLastWorkingDay();
 
         $this->assertEquals('2020-06-16', $working_day->toDateString());
