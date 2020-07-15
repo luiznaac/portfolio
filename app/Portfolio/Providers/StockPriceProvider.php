@@ -18,7 +18,7 @@ class StockPriceProvider {
 
     private const ENTITY_NAME = 'StockPriceProvider';
 
-    public static function getPricesForRange(Stock $stock, Carbon $start_date, Carbon $end_date): ?array {
+    public static function getPricesForRange(Stock $stock, Carbon $start_date, Carbon $end_date): array {
         /** @var PriceAPI $price_api */
         foreach (static::getAvailableAPIs() as $price_api) {
             try {
@@ -34,7 +34,7 @@ class StockPriceProvider {
             }
         }
 
-        return null;
+        return [];
     }
 
     public static function getPriceForDate(Stock $stock, Carbon $date): ?float {

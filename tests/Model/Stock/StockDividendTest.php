@@ -17,7 +17,7 @@ class StockDividendTest extends TestCase {
 
     public function testLoadHistoricDividendsForAllStocksWithFII_ShouldLoadValues(): void {
         $stock = Stock::getStockBySymbol('XPML11');
-        Carbon::setTestNow('2020-06-25');
+        Carbon::setTestNow('2020-06-25 21:00:00');
         $this->createOrder($stock, '2019-01-04');
 
         $expected_data = [
@@ -36,7 +36,7 @@ class StockDividendTest extends TestCase {
         $stock = new Stock();
         $stock->symbol = 'FLRY3';
         $stock->save();
-        Carbon::setTestNow('2019-10-04');
+        Carbon::setTestNow('2019-10-04 21:00:00');
         $this->createOrder($stock, '2019-04-04');
 
         $expected_data = [
