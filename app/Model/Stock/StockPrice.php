@@ -88,8 +88,8 @@ class StockPrice extends Model {
     }
 
     private static function loadPricesForMissingDates(Stock $stock, array $stock_prices_stored_in_range, Carbon $start_date, Carbon $end_date): void {
-        Log::log('debug', __CLASS__.'::'.__FUNCTION__,$stock->symbol . ' has missing prices ' . $start_date->toDateString() . ' ' . $end_date->toDateString());
         $missing_dates = self::getMissingDates($stock_prices_stored_in_range, $start_date, $end_date);
+        Log::log('debug', __CLASS__.'::'.__FUNCTION__,$stock->symbol . ' has missing prices ' . $missing_dates);
         $start_date = Carbon::parse($missing_dates[0]);
         $end_date = Carbon::parse($missing_dates[sizeof($missing_dates)-1]);
 
