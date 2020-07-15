@@ -47,7 +47,7 @@ class Holiday extends Model {
 
     private static function cacheHolidaysForYear(Carbon $date) {
         $start_date = (clone $date)->startOfYear();
-        $end_date = (clone $date)->endOfDay();
+        $end_date = (clone $date)->endOfYear();
 
         $holidays = self::query()
             ->whereBetween('date', [$start_date->toDateString(), $end_date->toDateString()])->get();
