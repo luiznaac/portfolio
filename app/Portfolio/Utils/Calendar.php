@@ -53,4 +53,16 @@ class Calendar {
 
         return $working_dates;
     }
+
+    public static function getYearsForRange(Carbon $start_date, Carbon $end_date): array {
+        $date = clone $start_date;
+
+        $years = [];
+        while ($date->lte($end_date)) {
+            $years[] = $date->year;
+            $date->addYear();
+        }
+
+        return $years;
+    }
 }

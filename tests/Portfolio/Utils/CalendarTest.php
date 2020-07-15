@@ -125,4 +125,14 @@ class CalendarTest extends TestCase {
 
         $this->assertEquals('2020-07-03', $working_day->toDateString());
     }
+
+    public function testGetYearsForRange(): void {
+        $start_date = Carbon::parse('2013-07-05');
+        $end_date = Carbon::parse('2020-07-05');
+        $years = Calendar::getYearsForRange($start_date, $end_date);
+
+        $this->assertEquals([
+            '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020'
+        ], $years);
+    }
 }
