@@ -14,7 +14,7 @@ class AlterStockPositionsTableAddIndexToUpdatedAt extends Migration
     public function up()
     {
         Schema::table('stock_positions', function (Blueprint $table) {
-            $table->index('updated_at');
+            $table->index(['user_id', 'updated_at']);
         });
     }
 
@@ -26,7 +26,7 @@ class AlterStockPositionsTableAddIndexToUpdatedAt extends Migration
     public function down()
     {
         Schema::table('stock_positions', function (Blueprint $table) {
-            $table->dropIndex('stock_positions_updated_at_index');
+            $table->dropIndex('stock_positions_user_id_updated_at_index');
         });
     }
 }

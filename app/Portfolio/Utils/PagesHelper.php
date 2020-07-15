@@ -12,20 +12,22 @@ class PagesHelper {
 
     public static function shouldUpdatePositions(): bool {
         $last_order = Order::getBaseQuery()->orderByDesc('id')->get()->first();
-        $last_stock_position = StockPosition::getBaseQuery()->orderByDesc('updated_at')->get()->first();
+        $last_stock_position_infos = StockPosition::getBaseQuery()
+            ->selectRaw('MAX(date) AS max_date, MAX(updated_at) AS max_updated_at')
+            ->get()->toArray()[0];
 
-        if(!$last_order && !$last_stock_position) {
+        if(!$last_order && !$last_stock_position_infos['max_date']) {
             return false;
         }
 
-        if((!$last_order && $last_stock_position) || ($last_order && !$last_stock_position)) {
+        if((!$last_order && $last_stock_position_infos['max_date']) || ($last_order && !$last_stock_position_infos['max_date'])) {
             return true;
         }
 
         $order_updated_at = Carbon::parse($last_order->updated_at);
-        $stock_position_updated_at = Carbon::parse($last_stock_position->updated_at);
+        $stock_position_updated_at = Carbon::parse($last_stock_position_infos['max_updated_at']);
 
-        $stock_position_date = Carbon::parse($last_stock_position->date);
+        $stock_position_date = Carbon::parse($last_stock_position_infos['max_date']);
         $last_reference_date = Calendar::getLastMarketWorkingDate();
 
         return $order_updated_at->isAfter($stock_position_updated_at)

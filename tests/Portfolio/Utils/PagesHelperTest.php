@@ -24,50 +24,69 @@ class PagesHelperTest extends TestCase {
             'No orders and no stock positions' => [
                 'today' => '2020-07-10',
                 'order' => [],
-                'stock_position' => [],
+                'stock_positions' => [],
                 'expected_result' => false,
             ],
             'With order and no stock positions' => [
                 'today' => '2020-07-10',
                 'order' => ['updated_at' => '2020-07-10'],
-                'stock_position' => [],
+                'stock_positions' => [],
                 'expected_result' => true,
             ],
             'No order and with stock positions' => [
                 'today' => '2020-07-10',
                 'order' => [],
-                'stock_position' => ['updated_at' => '2020-07-10'],
+                'stock_positions' => [['updated_at' => '2020-07-10']],
                 'expected_result' => true,
             ],
             'Order after stock position' => [
                 'today' => '2020-07-09',
                 'order' => ['updated_at' => '2020-07-11'],
-                'stock_position' => ['updated_at' => '2020-07-10'],
+                'stock_positions' => [['updated_at' => '2020-07-10']],
                 'expected_result' => true,
             ],
             'Order before stock position' => [
                 'today' => '2020-07-09',
-                'order' => ['updated_at' => '2020-07-10'],
-                'stock_position' => ['updated_at' => '2020-07-11'],
+                'order' => ['updated_at' => '2020-07-08'],
+                'stock_positions' => [['updated_at' => '2020-07-09']],
                 'expected_result' => false,
             ],
             'Stock position date before last working day post market close' => [
                 'today' => '2020-07-10 18:30:00',
                 'order' => ['updated_at' => '2020-07-09'],
-                'stock_position' => [
-                    'date' => '2020-07-08',
-                    'updated_at' => '2020-07-09'
+                'stock_positions' => [
+                    [
+                        'date' => '2020-07-08',
+                        'updated_at' => '2020-07-09'
+                    ],
                 ],
                 'expected_result' => true,
             ],
             'Stock position date on last working day pre market close' => [
                 'today' => '2020-07-10 15:30:00',
                 'order' => ['updated_at' => '2020-07-09'],
-                'stock_position' => [
-                    'date' => '2020-07-09',
-                    'updated_at' => '2020-07-10'
+                'stock_positions' => [
+                    [
+                        'date' => '2020-07-09',
+                        'updated_at' => '2020-07-10'
+                    ],
                 ],
                 'expected_result' => false,
+            ],
+            'Most recent stock position updated at is not the last position and has order after last stock position updated' => [
+                'today' => '2020-07-11 15:30:00',
+                'order' => ['updated_at' => '2020-07-10 20:21:55'],
+                'stock_positions' => [
+                    [
+                        'date' => '2020-07-09',
+                        'updated_at' => '2020-07-10 20:21:21'
+                    ],
+                    [
+                        'date' => '2020-07-10',
+                        'updated_at' => '2020-07-10 15:00:58'
+                    ],
+                ],
+                'expected_result' => true,
             ],
         ];
     }
@@ -75,11 +94,11 @@ class PagesHelperTest extends TestCase {
     /**
      * @dataProvider dataProviderForTestShouldUpdatePositions
      */
-    public function testShouldUpdatePositions(string $today, array $order, array $stock_position, bool $expected_result): void {
+    public function testShouldUpdatePositions(string $today, array $order, array $stock_positions, bool $expected_result): void {
         $today_in_utc = Carbon::parse($today, Calendar::B3_TIMEZONE)->utc();
         Carbon::setTestNow($today_in_utc);
         $this->createOrder($order);
-        $this->createStockPosition($stock_position);
+        $this->createStockPositions($stock_positions);
 
         $this->assertEquals($expected_result, PagesHelper::shouldUpdatePositions());
     }
@@ -101,21 +120,23 @@ class PagesHelperTest extends TestCase {
         );
     }
 
-    private function createStockPosition(array $stock_position): void {
-        if(empty($stock_position)) {
+    private function createStockPositions(array $stock_positions): void {
+        if(empty($stock_positions)) {
             return;
         }
 
-        $position = new StockPosition();
-        $position->user_id = $this->user->id;
-        $position->stock_id = Stock::getStockBySymbol('SQIA3')->id;
-        $position->date = isset($stock_position['date']) ? Carbon::parse($stock_position['date']) : Carbon::today();
-        $position->quantity = 1;
-        $position->amount = 1;
-        $position->contributed_amount = 1;
-        $position->average_price = 1;
-        $position->updated_at = $stock_position['updated_at'];
+        foreach ($stock_positions as $stock_position) {
+            $position = new StockPosition();
+            $position->user_id = $this->user->id;
+            $position->stock_id = Stock::getStockBySymbol('SQIA3')->id;
+            $position->date = isset($stock_position['date']) ? Carbon::parse($stock_position['date']) : Carbon::today();
+            $position->quantity = 1;
+            $position->amount = 1;
+            $position->contributed_amount = 1;
+            $position->average_price = 1;
+            $position->updated_at = $stock_position['updated_at'];
 
-        $position->save();
+            $position->save();
+        }
     }
 }
