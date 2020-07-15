@@ -28,6 +28,15 @@ class Holiday extends Model {
         return isset($holidays_in_year[$date->toDateString()]);
     }
 
+    public static function loadHolidays(): void {
+        $years_to_load = self::getYearsToBeLoaded();
+
+        foreach ($years_to_load as $year) {
+            $year_now = Carbon::createFromFormat('Y', $year);
+            self::loadHolidaysForYear($year_now);
+        }
+    }
+
     private static function getHolidaysForYearFromCache(Carbon $date): array {
         if(!isset(self::$cached_holidays[$date->year])) {
             self::cacheHolidaysForYear($date);
@@ -46,15 +55,6 @@ class Holiday extends Model {
         /** @var self $holiday */
         foreach ($holidays as $holiday) {
             self::$cached_holidays[$date->year][$holiday->date] = $holiday->description;
-        }
-    }
-
-    public static function loadHolidays(): void {
-        $years_to_load = self::getYearsToBeLoaded();
-
-        foreach ($years_to_load as $year) {
-            $year_now = Carbon::createFromFormat('Y', $year);
-            self::loadHolidaysForYear($year_now);
         }
     }
 
