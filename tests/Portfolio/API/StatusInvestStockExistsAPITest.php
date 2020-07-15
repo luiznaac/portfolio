@@ -4,6 +4,7 @@ namespace Tests\Portfolio\API;
 
 use App\Model\Stock\Stock;
 use App\Portfolio\API\StatusInvestAPI;
+use Tests\Portfolio\API\Abstracts\StockExistsAPITest;
 
 class StatusInvestStockExistsAPITest extends StockExistsAPITest {
 

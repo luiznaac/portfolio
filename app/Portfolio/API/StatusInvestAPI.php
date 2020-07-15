@@ -4,6 +4,10 @@ namespace App\Portfolio\API;
 
 use App\Model\Stock\Stock;
 use App\Model\Stock\StockType;
+use App\Portfolio\API\Interfaces\DividendAPI;
+use App\Portfolio\API\Interfaces\PriceAPI;
+use App\Portfolio\API\Interfaces\StockExistsAPI;
+use App\Portfolio\API\Interfaces\StockTypeAPI;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 

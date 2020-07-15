@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Portfolio\API;
+namespace Tests\Portfolio\API\Abstracts;
 
 use App\Model\Stock\StockType;
 use Carbon\Carbon;
