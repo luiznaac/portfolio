@@ -3,6 +3,7 @@
 namespace App\Portfolio\API;
 
 use App\Model\Stock\Stock;
+use App\Portfolio\API\Interfaces\PriceAPI;
 use App\Portfolio\Utils\Calendar;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;

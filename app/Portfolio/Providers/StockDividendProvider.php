@@ -4,7 +4,7 @@ namespace App\Portfolio\Providers;
 
 use App\Model\Log\Log;
 use App\Model\Stock\Stock;
-use App\Portfolio\API\DividendAPI;
+use App\Portfolio\API\Interfaces\DividendAPI;
 use App\Portfolio\API\StatusInvestAPI;
 use Carbon\Carbon;
 

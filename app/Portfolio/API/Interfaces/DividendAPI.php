@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Portfolio\API;
+namespace App\Portfolio\API\Interfaces;
 
 use App\Model\Stock\Stock;
 use Carbon\Carbon;

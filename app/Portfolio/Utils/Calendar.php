@@ -2,6 +2,7 @@
 
 namespace App\Portfolio\Utils;
 
+use App\Model\Holiday\Holiday;
 use Carbon\Carbon;
 
 class Calendar {
@@ -27,7 +28,7 @@ class Calendar {
     public static function getLastWorkingDayForDate(Carbon $date): Carbon {
         $date = clone $date;
 
-        while($date->isWeekend()) {
+        while(!self::isWorkingDay($date)) {
             $date->subDay();
         }
 
@@ -40,11 +41,11 @@ class Calendar {
 
         $working_dates = [];
         while($date->lte($end_date)) {
-            while($date->isWeekend() && $date->lt($end_date)) {
+            while(!self::isWorkingDay($date) && $date->lt($end_date)) {
                 $date->addDay();
             }
 
-            if(!$date->isWeekend()) {
+            if(self::isWorkingDay($date)) {
                 $working_dates[] = $date->toDateString();
             }
 
@@ -52,5 +53,21 @@ class Calendar {
         }
 
         return $working_dates;
+    }
+
+    public static function isWorkingDay(Carbon $date): bool {
+        return !$date->isWeekend() && !Holiday::isHoliday($date);
+    }
+
+    public static function getYearsForRange(Carbon $start_date, Carbon $end_date): array {
+        $date = clone $start_date;
+
+        $years = [];
+        while ($date->lte($end_date)) {
+            $years[] = $date->year;
+            $date->addYear();
+        }
+
+        return $years;
     }
 }

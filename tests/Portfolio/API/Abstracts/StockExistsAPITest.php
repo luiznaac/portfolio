@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Portfolio\API;
+namespace Tests\Portfolio\API\Abstracts;
 
 use Carbon\Carbon;
 use Tests\TestCase;

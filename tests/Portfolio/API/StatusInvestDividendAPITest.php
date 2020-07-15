@@ -5,6 +5,7 @@ namespace Tests\Portfolio\API;
 use App\Model\Stock\Stock;
 use App\Portfolio\API\StatusInvestAPI;
 use Carbon\Carbon;
+use Tests\Portfolio\API\Abstracts\DividendAPITest;
 
 class StatusInvestDividendAPITest extends DividendAPITest {
 

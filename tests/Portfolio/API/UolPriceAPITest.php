@@ -5,6 +5,7 @@ namespace Tests\Portfolio\API;
 use App\Model\Stock\Stock;
 use App\Portfolio\API\UolAPI;
 use Carbon\Carbon;
+use Tests\Portfolio\API\Abstracts\PriceAPITest;
 
 class UolPriceAPITest extends PriceAPITest {
 
