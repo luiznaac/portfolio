@@ -20,6 +20,35 @@ class Holiday extends Model {
 
     protected $fillable = ['date', 'description'];
 
+    private static $cached_holidays = [];
+
+    public static function isHoliday(Carbon $date): bool {
+        $holidays_in_year = self::getHolidaysForYearFromCache($date);
+
+        return isset($holidays_in_year[$date->toDateString()]);
+    }
+
+    private static function getHolidaysForYearFromCache(Carbon $date): array {
+        if(!isset(self::$cached_holidays[$date->year])) {
+            self::cacheHolidaysForYear($date);
+        }
+
+        return isset(self::$cached_holidays[$date->year]) ? self::$cached_holidays[$date->year] : [];
+    }
+
+    private static function cacheHolidaysForYear(Carbon $date) {
+        $start_date = (clone $date)->startOfYear();
+        $end_date = (clone $date)->endOfDay();
+
+        $holidays = self::query()
+            ->whereBetween('date', [$start_date->toDateString(), $end_date->toDateString()])->get();
+
+        /** @var self $holiday */
+        foreach ($holidays as $holiday) {
+            self::$cached_holidays[$date->year][$holiday->date] = $holiday->description;
+        }
+    }
+
     public static function loadHolidays(): void {
         $years_to_load = self::getYearsToBeLoaded();
 
