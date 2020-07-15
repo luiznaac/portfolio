@@ -2,6 +2,7 @@
 
 namespace App\Portfolio\Consolidator;
 
+use App\Model\Log\Log;
 use App\Model\Order\Order;
 use App\Model\Stock\Position\StockPosition;
 use App\Model\Stock\Stock;
@@ -42,6 +43,8 @@ class StockConsolidator {
     }
 
     public static function consolidate(): void {
+        ini_set('max_execution_time', '300');
+        Log::log('debug', __CLASS__.'::'.__FUNCTION__, 'starting at:' . Carbon::now()->toDateTimeString());
         $stocks = Order::getAllStocksWithOrders();
 
         foreach ($stocks as $stock) {
@@ -50,6 +53,7 @@ class StockConsolidator {
 
         self::removePositionsWithoutOrders($stocks);
         self::touchLastStockPosition();
+        Log::log('debug', __CLASS__.'::'.__FUNCTION__, 'finishing at:' . Carbon::now()->toDateTimeString());
     }
 
     public static function consolidateForStock(Stock $stock): void {
