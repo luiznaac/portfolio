@@ -16,16 +16,16 @@ class HolidayProvider {
     private const ENTITY_NAME = 'HolidayProvider';
 
     public static function getHolidaysForYear(Carbon $date): array {
-        /** @var HolidayAPI $dividend_api */
-        foreach (static::getAvailableAPIs() as $dividend_api) {
+        /** @var HolidayAPI $holiday_api */
+        foreach (static::getAvailableAPIs() as $holiday_api) {
             try {
-                $dividends = $dividend_api::getHolidaysForYear(clone $date);
+                $holidays = $holiday_api::getHolidaysForYear(clone $date);
 
-                if(empty($dividends)) {
+                if(empty($holidays)) {
                     continue;
                 }
 
-                return $dividends;
+                return $holidays;
             } catch (\Exception $e) {
                 Log::log(Log::EXCEPTION_TYPE, self::ENTITY_NAME.'::'.__FUNCTION__, $e->getMessage());
             }

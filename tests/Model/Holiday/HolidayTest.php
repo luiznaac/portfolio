@@ -53,11 +53,11 @@ class HolidayTest extends TestCase {
         $this->assertHolidays(2020, 1);
     }
 
-    public function testLoadHolidays(): void {
+    public function testLoadHolidaysWithoutOrders_ShouldNotLoad(): void {
         Carbon::setTestNow('2018-05-07');
         Holiday::loadHolidays();
 
-        $this->assertHolidays(2018, 16);
+        $this->assertHolidays(2018, 0);
     }
 
     private function createHolidays(array $years): void {
