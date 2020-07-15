@@ -5,27 +5,36 @@ namespace App\Portfolio\API;
 use App\Model\Stock\Stock;
 use App\Model\Stock\StockType;
 use App\Portfolio\API\Interfaces\DividendAPI;
+use App\Portfolio\API\Interfaces\HolidayAPI;
 use App\Portfolio\API\Interfaces\PriceAPI;
 use App\Portfolio\API\Interfaces\StockExistsAPI;
 use App\Portfolio\API\Interfaces\StockTypeAPI;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 
-class StatusInvestAPI implements PriceAPI, StockTypeAPI, StockExistsAPI, DividendAPI {
+class StatusInvestAPI implements PriceAPI, StockTypeAPI, StockExistsAPI, DividendAPI, HolidayAPI {
 
     private const API = 'https://statusinvest.com.br';
     private const PRICE_ENDPOINT = '/category/tickerprice?ticker=:symbol&type=4';
     private const ETF_PRICE_ENDPOINT = '/etf/tickerprice';
     private const SEARCH_ENDPOINT = '/home/mainsearchquery?q=:text';
     private const DIVIDEND_ENDPOINT = '/:stock_type/getearnings?Filter=:symbol&Start=:start_date&End=:end_date';
+    private const HOLIDAY_ENDPOINT = '/calendar/getevents?type=99&year=:year&month=:month';
 
     private const TIMEOUT = 3;
+    private const RETRIES_FOR_HOLIDAY = 2;
 
     private const API_TYPES = [
         1 => StockType::ACAO_TYPE,
         6 => StockType::ETF_TYPE,
         2 => StockType::FII_TYPE,
     ];
+
+    public static function getHolidaysForYear(Carbon $date): array {
+        $data = self::getHolidays($date);
+
+        return self::buildHolidayDataArray($data);
+    }
 
     public static function getDividendsForRange(Stock $stock, Carbon $start_date, Carbon $end_date): array {
         $data = self::getDividendsForRangeAccordinglyStockType($stock, $start_date, $end_date);
@@ -114,6 +123,52 @@ class StatusInvestAPI implements PriceAPI, StockTypeAPI, StockExistsAPI, Dividen
         return $response->json();
     }
 
+    private static function getHolidays(Carbon $year_date): array {
+        $date = (clone $year_date)->startOfYear();
+        $end_of_year = (clone $year_date)->endOfYear();
+
+        $data = [];
+        while($date->lte($end_of_year)) {
+            $endpoint_path = self::buildHolidayEndpointPath($date->year, $date->month);
+            $holidays_in_month = self::makeRequestAndParseResultForHolidayEndpoint($endpoint_path);
+            $data = array_merge($data, $holidays_in_month);
+
+            $date->addMonth();
+        }
+
+        return $data;
+    }
+
+    private static function makeRequestAndParseResultForHolidayEndpoint(string $endpoint_path): array {
+        $times_tried = 0;
+
+        while($times_tried < self::RETRIES_FOR_HOLIDAY) {
+            $times_tried += 1;
+
+            try {
+                $response = Http::timeout(self::TIMEOUT)->get(self::API . $endpoint_path);
+                $data = $response->json();
+
+                if ($data['totalEvents'] > 0) {
+                    return $data['holidays'];
+                }
+
+                return [];
+            } catch(\Exception $exception) {
+
+            }
+        }
+
+        throw new \Exception("Something went wrong when trying to get holidays. Endpoint: $endpoint_path");
+    }
+
+    private static function buildHolidayEndpointPath(int $year, int $month): string {
+        $endpoint_path = str_replace(':year', $year, self::HOLIDAY_ENDPOINT);
+        $endpoint_path = str_replace(':month', $month, $endpoint_path);
+
+        return $endpoint_path;
+    }
+
     private static function buildGetPriceEndpointPath(string $symbol): string {
         return str_replace(':symbol', $symbol, self::PRICE_ENDPOINT);
     }
@@ -165,5 +220,17 @@ class StatusInvestAPI implements PriceAPI, StockTypeAPI, StockExistsAPI, Dividen
         }
 
         return $dividends_data;
+    }
+
+    private static function buildHolidayDataArray(array $data): array {
+        $holidays_data = [];
+        foreach ($data as $holiday) {
+            $date = Carbon::createFromFormat('d/m/Y', $holiday['date']);
+            $description = $holiday['description'];
+
+            $holidays_data[$date->toDateString()] = $description;
+        }
+
+        return $holidays_data;
     }
 }

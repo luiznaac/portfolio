@@ -3,24 +3,23 @@
 namespace App\Portfolio\Providers;
 
 use App\Model\Log\Log;
-use App\Model\Stock\Stock;
-use App\Portfolio\API\Interfaces\DividendAPI;
+use App\Portfolio\API\Interfaces\HolidayAPI;
 use App\Portfolio\API\StatusInvestAPI;
 use Carbon\Carbon;
 
-class StockDividendProvider {
+class HolidayProvider {
 
-    private const DIVIDEND_APIS = [
+    private const HOLIDAY_APIS = [
         StatusInvestAPI::class,
     ];
 
-    private const ENTITY_NAME = 'StockDividendProvider';
+    private const ENTITY_NAME = 'HolidayProvider';
 
-    public static function getDividendsForRange(Stock $stock, Carbon $start_date, Carbon $end_date): array {
-        /** @var DividendAPI $dividend_api */
+    public static function getHolidaysForYear(Carbon $date): array {
+        /** @var HolidayAPI $dividend_api */
         foreach (static::getAvailableAPIs() as $dividend_api) {
             try {
-                $dividends = $dividend_api::getDividendsForRange($stock, clone $start_date, clone $end_date);
+                $dividends = $dividend_api::getHolidaysForYear(clone $date);
 
                 if(empty($dividends)) {
                     continue;
@@ -36,6 +35,6 @@ class StockDividendProvider {
     }
 
     protected static function getAvailableAPIs(): array {
-        return self::DIVIDEND_APIS;
+        return self::HOLIDAY_APIS;
     }
 }
