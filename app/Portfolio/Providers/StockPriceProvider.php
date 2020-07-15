@@ -12,8 +12,8 @@ use Carbon\Carbon;
 class StockPriceProvider {
 
     private const PRICE_APIS = [
-        UolAPI::class,
         StatusInvestAPI::class,
+        UolAPI::class,
     ];
 
     private const ENTITY_NAME = 'StockPriceProvider';
