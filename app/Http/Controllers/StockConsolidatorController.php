@@ -19,7 +19,7 @@ class StockConsolidatorController extends Controller {
 
         try {
             $stock = Stock::find($request->input('stock_id'));
-            StockConsolidator::consolidateFromBegin($stock);
+            StockConsolidator::consolidateForStock($stock);
 
             $status = 'ok';
             $message = "Positions for $stock->symbol consolidated.";

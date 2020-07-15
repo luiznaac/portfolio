@@ -145,10 +145,17 @@ class StatusInvestAPI implements PriceAPI, StockTypeAPI, StockExistsAPI, Dividen
     private static function buildDividendDataArray(array $data): array {
         $dividends_data = [];
         foreach ($data as $dividend) {
-            $date_paid = Carbon::createFromFormat('d/m/Y', $dividend['paymentDividend'])->toDateString();
-            $reference_date = Carbon::createFromFormat('d/m/Y', $dividend['dateCom'])->toDateString();
+            $date_paid = Carbon::createFromFormat('d/m/Y', $dividend['paymentDividend']);
+            $reference_date = Carbon::createFromFormat('d/m/Y', $dividend['dateCom']);
             $type = $dividend['earningType'] == 'Rendimento' ? 'Dividendo' : $dividend['earningType'];
             $value = str_replace(',', '.', $dividend['resultAbsoluteValue']);
+
+            if($reference_date->gt($date_paid)) {
+                continue;
+            }
+
+            $date_paid = $date_paid->toDateString();
+            $reference_date = $reference_date->toDateString();
 
             $dividends_data["$date_paid|$reference_date|$type"] = round($value, 8);
         }

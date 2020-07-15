@@ -144,13 +144,13 @@ class StockConsolidatorTest extends TestCase {
             ($order_2->quantity * $order_2->price + $order_2->cost)/$order_2->quantity
         );
 
-        StockConsolidator::updatePositions();
+        StockConsolidator::updateLastPositions();
 
         $this->assertStockPositions([$stock_position_1, $stock_position_2]);
         $this->assertCount(2, StockPosition::getBaseQuery()->get());
 
         $order_1->delete();
-        StockConsolidator::updatePositions();
+        StockConsolidator::updateLastPositions();
 
         $this->assertStockPositions([$stock_position_2]);
         $this->assertCount(1, StockPosition::getBaseQuery()->get());
@@ -170,7 +170,7 @@ class StockConsolidatorTest extends TestCase {
             $cost = 7.50
         );
 
-        StockConsolidator::updatePositions();
+        StockConsolidator::updateLastPositions();
 
         $this->assertEmpty(StockPosition::getPositionsForStock($stock_1));
     }
@@ -199,7 +199,7 @@ class StockConsolidatorTest extends TestCase {
             (18.22*10 + 7.50)/10
         );
 
-        StockConsolidator::updatePositions();
+        StockConsolidator::updateLastPositions();
 
         $order_2 = new Order();
         $order_2->store(
@@ -216,7 +216,7 @@ class StockConsolidatorTest extends TestCase {
         $stock_position_1->contributed_amount = $stock_position_1->contributed_amount + $order_2->quantity * $order_2->price + $order_2->cost;
         $stock_position_1->average_price = (18.22 * 10 + 7.50 + 15.22 * 10 + 7.50)/20;
 
-        StockConsolidator::updatePositions();
+        StockConsolidator::updateLastPositions();
 
         $this->assertStockPositions([$stock_position_1]);
         $this->assertCount(1, StockPosition::getBaseQuery()->get());
@@ -246,7 +246,7 @@ class StockConsolidatorTest extends TestCase {
             (18.22*10 + 7.50)/10
         );
 
-        StockConsolidator::updatePositions();
+        StockConsolidator::updateLastPositions();
 
         $order_2 = new Order();
         $order_2->store(
@@ -263,7 +263,7 @@ class StockConsolidatorTest extends TestCase {
         $stock_position_1->contributed_amount = $stock_position_1->contributed_amount + $order_2->quantity * $order_2->price + $order_2->cost;
         $stock_position_1->average_price = (18.22 * 10 + 7.50 + 15.22 * 10 + 7.50)/20;
 
-        StockConsolidator::updatePositions();
+        StockConsolidator::updateLastPositions();
 
         $this->assertStockPositions([$stock_position_1]);
         $this->assertCount(1, StockPosition::getBaseQuery()->get());
@@ -312,7 +312,7 @@ class StockConsolidatorTest extends TestCase {
             ($order_2->quantity * $order_2->price + $order_2->cost)/$order_2->quantity
         );
 
-        StockConsolidator::updatePositions();
+        StockConsolidator::updateLastPositions();
 
         $this->assertStockPositions([$stock_position_1, $stock_position_2]);
     }
@@ -370,7 +370,7 @@ class StockConsolidatorTest extends TestCase {
             ($order_2->quantity * $order_2->price + $order_2->cost)/$order_2->quantity
         );
 
-        StockConsolidator::updatePositions();
+        StockConsolidator::updateLastPositions();
 
         $this->assertStockPositions([$stock_position_1, $stock_position_2]);
     }
@@ -418,7 +418,7 @@ class StockConsolidatorTest extends TestCase {
             ($order_2->quantity * $order_2->price + $order_2->cost)/$order_2->quantity
         );
 
-        StockConsolidator::updatePositions();
+        StockConsolidator::updateLastPositions();
 
         $this->assertStockPositions([$stock_position_1, $stock_position_2]);
     }
@@ -446,7 +446,7 @@ class StockConsolidatorTest extends TestCase {
             ($order_1->quantity * $order_1->price + $order_1->cost)/$order_1->quantity
         );
 
-        StockConsolidator::updatePositionForStock($stock);
+        StockConsolidator::updateLastPositionForStock($stock);
 
         $this->assertStockPositions([$stock_position_1]);
     }
@@ -454,7 +454,7 @@ class StockConsolidatorTest extends TestCase {
     public function testConsolidateFromBeginWithoutOrders_ShouldNotCreatePositions(): void {
         $stock = Stock::getStockBySymbol('BOVA11');
 
-        StockConsolidator::consolidateFromBegin($stock);
+        StockConsolidator::consolidateForStock($stock);
 
         $created_stock_positions = StockPosition::getBaseQuery()->orderBy('date')->get();
 
@@ -531,7 +531,7 @@ class StockConsolidatorTest extends TestCase {
         $stock_positions[] = $stock_position_5;
 
         Carbon::setTestNow(Carbon::now()->addDays(7));
-        StockConsolidator::consolidateFromBegin($stock);
+        StockConsolidator::consolidateForStock($stock);
 
         $this->assertStockPositions($stock_positions);
     }
