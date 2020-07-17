@@ -533,7 +533,7 @@ class StockConsolidatorTest extends TestCase {
         Carbon::setTestNow(Carbon::now()->addDays(7));
         StockConsolidator::consolidateForStock($stock);
 
-        $this->assertStockPositions($stock_positions);
+        $this->assertStockPositions(array_reverse($stock_positions));
     }
 
     private function setTestNowForB3DateTime(string $date_time): void {
@@ -562,7 +562,7 @@ class StockConsolidatorTest extends TestCase {
             ->orderBy('date')->get();
 
         /** @var StockPosition $expected_stock_position */
-        foreach (array_reverse($expected_stock_positions) as $expected_stock_position) {
+        foreach ($expected_stock_positions as $expected_stock_position) {
             /** @var StockPosition $created_stock_position */
             $created_stock_position = $created_stock_positions->pop();
 

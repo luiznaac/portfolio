@@ -4,6 +4,7 @@ namespace App\Model\Stock;
 
 use App\Model\Log\Log;
 use App\Portfolio\Providers\StockPriceProvider;
+use App\Portfolio\Utils\BatchInsertOrUpdate;
 use App\Portfolio\Utils\Calendar;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
@@ -61,17 +62,16 @@ class StockPrice extends Model {
     public static function loadPricesForDatesAndStore(Stock $stock, Carbon $start_date, Carbon $end_date): void {
         $prices = StockPriceProvider::getPricesForRange($stock, $start_date, $end_date);
 
+        $data = [];
         foreach ($prices as $date => $price) {
-            self::query()->updateOrCreate(
-                [
+            $data[] = [
                     'stock_id'  => $stock->id,
                     'date'      => $date,
-                ],
-                [
                     'price' => $price,
-                ]
-            );
+            ];
         }
+
+        BatchInsertOrUpdate::execute('stock_prices', $data);
     }
 
     private static function getStockPricesStoredInRange(Stock $stock, Carbon $start_date, Carbon $end_date): array {
