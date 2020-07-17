@@ -7,6 +7,10 @@ use Illuminate\Support\Facades\DB;
 class BatchInsertOrUpdate {
 
     public static function execute(string $table, array $data): void {
+        if(empty($data)) {
+            return;
+        }
+
         $statement = self::buildStatement($table, $data);
 
         $parameters = [];
