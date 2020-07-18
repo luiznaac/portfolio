@@ -14,7 +14,6 @@ use Illuminate\Database\Eloquent\Model;
  *
  * @property int $id
  * @property int $user_id
- * @property int $sequence
  * @property int $stock_id
  * @property string $date
  * @property string $type
@@ -53,7 +52,7 @@ class Order extends Model {
         $this->price = $price;
         $this->cost = $cost;
         $this->average_price = $this->calculateAveragePrice();
-        $this->save(['should_increment_sequence' => true]);
+        $this->save();
     }
 
     public static function createOrder(
@@ -132,28 +131,18 @@ class Order extends Model {
         return self::getBaseQuery()
             ->where('stock_id', $stock->id)
             ->where('date', '<=', $date->toDateString())
-            ->orderBy('sequence')
+            ->orderBy('date')
             ->get();
-    }
-
-    public function save(array $options = []) {
-        if(isset($options['should_increment_sequence'])) {
-            $this->sequence = (self::getBaseQuery()->max('sequence') ?? 0) + 1;
-        }
-
-        return parent::save($options);
     }
 
     public function delete() {
         parent::delete();
-
-        $this->updatePrecedingOrdersSequence();
         self::touchLastOrder();
     }
 
     private static function touchLastOrder(): void {
         /** @var Order $last_order */
-        $last_order = self::getBaseQuery()->orderByDesc('id')->get()->first();
+        $last_order = self::getBaseQuery()->orderByDesc('date')->get()->first();
         if($last_order) {
             $last_order->touch();
         }
@@ -165,17 +154,6 @@ class Order extends Model {
         }
 
         return 1;
-    }
-
-    private function updatePrecedingOrdersSequence() {
-        $preceding_orders = self::getBaseQuery()
-            ->where('sequence', '>', $this->sequence)->orderBy('sequence')->get();
-
-        /** @var Order $order */
-        foreach ($preceding_orders as $order) {
-            $order->sequence = $order->sequence - 1;
-            $order->save();
-        }
     }
 
     private function calculateAveragePrice(): float {
