@@ -15,8 +15,7 @@ use Illuminate\Support\Facades\Http;
 class StatusInvestAPI implements PriceAPI, StockTypeAPI, StockExistsAPI, DividendAPI, HolidayAPI {
 
     private const API = 'https://statusinvest.com.br';
-    private const PRICE_ENDPOINT = '/category/tickerprice?ticker=:symbol&type=4';
-    private const ETF_PRICE_ENDPOINT = '/etf/tickerprice';
+    private const PRICE_ENDPOINT = '/:type/tickerpricerange?ticker=:symbol&start=:start_date&end=:end_date';
     private const SEARCH_ENDPOINT = '/home/mainsearchquery?q=:text';
     private const DIVIDEND_ENDPOINT = '/:stock_type/getearnings?Filter=:symbol&Start=:start_date&End=:end_date';
     private const HOLIDAY_ENDPOINT = '/calendar/getevents?type=99&year=:year&month=:month';
@@ -49,7 +48,7 @@ class StatusInvestAPI implements PriceAPI, StockTypeAPI, StockExistsAPI, Dividen
     }
 
     public static function getPricesForRange(Stock $stock, Carbon $start_date, Carbon $end_date): array {
-        $data = self::getPricesForRangeAccordinglyStockType($stock);
+        $data = self::getPricesForRangeAccordinglyStockType($stock, $start_date, $end_date);
 
         return self::buildDatePriceArray($data, $start_date, $end_date);
     }
@@ -66,31 +65,26 @@ class StatusInvestAPI implements PriceAPI, StockTypeAPI, StockExistsAPI, Dividen
         return self::API_TYPES[$response[0]['type']];
     }
 
-    private static function getPricesForRangeAccordinglyStockType(Stock $stock): array {
+    private static function getPricesForRangeAccordinglyStockType(Stock $stock, Carbon $start_date, Carbon $end_date): array {
         $stock_type = $stock->getStockType();
 
-        if($stock_type->id == StockType::ETF_ID) {
-            return self::getETFPrices($stock);
+        switch ($stock_type->type) {
+            case StockType::ETF_TYPE:
+                $type = 'etf';
+                break;
+            default:
+                $type = 'category';
+                break;
         }
 
-        return self::getStockPrices($stock);
+        return self::getPrices($stock, $type, $start_date, $end_date);
     }
 
-    private static function getETFPrices(Stock $stock): array {
-        $parameters = [
-            'ticker' => $stock->symbol,
-            'type' => 4,
-        ];
-
-        $response = Http::timeout(self::TIMEOUT)->get(self::API . self::ETF_PRICE_ENDPOINT, $parameters);
-        return $response->json()['prices'];
-    }
-
-    private static function getStockPrices(Stock $stock): array {
-        $endpoint_path = self::buildGetPriceEndpointPath($stock->symbol);
+    private static function getPrices(Stock $stock, string $type, Carbon $start_date, Carbon $end_date): array {
+        $endpoint_path = self::buildGetPriceEndpointPath($stock->symbol, $type, $start_date, $end_date);
 
         $response = Http::timeout(self::TIMEOUT)->get(self::API . $endpoint_path);
-        return $response->json()['prices'];
+        return $response->json()['data']['prices'];
     }
 
     private static function getDividendsForRangeAccordinglyStockType(Stock $stock, Carbon $start_date, Carbon $end_date): array {
@@ -169,8 +163,13 @@ class StatusInvestAPI implements PriceAPI, StockTypeAPI, StockExistsAPI, Dividen
         return $endpoint_path;
     }
 
-    private static function buildGetPriceEndpointPath(string $symbol): string {
-        return str_replace(':symbol', $symbol, self::PRICE_ENDPOINT);
+    private static function buildGetPriceEndpointPath(string $symbol, string $type, Carbon $start_date, Carbon $end_date): string {
+        $endpoint_path = str_replace(':type', $type, self::PRICE_ENDPOINT);
+        $endpoint_path = str_replace(':symbol', $symbol, $endpoint_path);
+        $endpoint_path = str_replace(':start_date', $start_date->toDateString(), $endpoint_path);
+        $endpoint_path = str_replace(':end_date', $end_date->toDateString(), $endpoint_path);
+
+        return $endpoint_path;
     }
 
     private static function buildSearchEndpointPath(string $symbol): string {
