@@ -7,6 +7,7 @@ use App\Model\Order\Order;
 use App\Model\Stock\Position\StockPosition;
 use App\Model\Stock\Stock;
 use App\Model\Stock\StockPrice;
+use App\Portfolio\Utils\BatchInsertOrUpdate;
 use App\Portfolio\Utils\Calendar;
 use Carbon\Carbon;
 
@@ -152,26 +153,24 @@ class StockConsolidator {
     }
 
     private static function savePositionsBuffer(): void {
+        $data = [];
         foreach (self::$positions_buffer as $position) {
             if($position['amount'] == 0) {
                 continue;
             }
 
-            StockPosition::updateOrCreate(
-                [
+            $data[] = [
                     'user_id'   => auth()->id(),
                     'stock_id'  => self::$stock->id,
                     'date'      => $position['date']->toDateString(),
-                ],
-                [
                     'quantity'              => $position['quantity'],
                     'amount'                => $position['amount'],
                     'contributed_amount'    => $position['contributed_amount'],
                     'average_price'         => $position['average_price'],
-                ]
-            );
+            ];
         }
 
+        BatchInsertOrUpdate::execute('stock_positions', $data);
         self::$positions_buffer = [];
     }
 
