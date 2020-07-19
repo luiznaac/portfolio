@@ -25,6 +25,7 @@ class DashboardPagesController extends Controller
             'amount_updated' => $dashboard_data['amount_updated'],
             'amount_contributed' => $dashboard_data['amount_contributed'],
             'overall_variation' => $dashboard_data['overall_variation'],
+            'dividends_amount' => $dashboard_data['dividends_amount'],
         ];
 
         return view(self::DEFAULT_DIR . ".index")->with($data);

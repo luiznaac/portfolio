@@ -59,6 +59,18 @@
                     </div>
                 </div>
             </div>
+            <div class="col-sm">
+                <div class="container">
+                    <div class="row d-flex justify-content-center">
+                        <h2>Dividends</h2>
+                    </div>
+                    <div class="row d-flex justify-content-center">
+                        <div class="text-center">
+                            <p style="font-size: 1.5rem">{{'R$' . $dividends_amount}}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="row">
             <table class="table">

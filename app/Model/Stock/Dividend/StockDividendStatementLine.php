@@ -64,4 +64,8 @@ SQL;
 
         return $data;
     }
+
+    public static function getTotalAmountPaid(): float {
+        return self::getBaseQuery()->sum('amount_paid');
+    }
 }

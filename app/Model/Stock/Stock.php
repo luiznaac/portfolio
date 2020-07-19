@@ -2,6 +2,7 @@
 
 namespace App\Model\Stock;
 
+use App\Model\Stock\Dividend\StockDividend;
 use App\Portfolio\API\AlphaVantageAPI;
 use App\Portfolio\API\StatusInvestAPI;
 use Carbon\Carbon;
