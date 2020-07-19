@@ -43,7 +43,7 @@ class StockConsolidator {
     }
 
     public static function shouldConsolidate(): bool {
-        return !empty(self::getStockDatesToBeUpdated()) || !empty(self::getStockIdsToRemove());
+        return !empty(self::getStockDatesToBeUpdated()) || !empty(self::getStockPositionIdsToRemove());
     }
 
     private static function consolidateForStock(Stock $stock, Carbon $date): void {
@@ -164,25 +164,26 @@ class StockConsolidator {
     }
 
     private static function removePositionsWithoutOrders(): void {
-        $stock_ids_to_remove = self::getStockIdsToRemove();
+        $stock_position_ids_to_remove = self::getStockPositionIdsToRemove();
 
-        StockPosition::getBaseQuery()->whereIn('stock_id', $stock_ids_to_remove)->delete();
+        StockPosition::getBaseQuery()->whereIn('id', $stock_position_ids_to_remove)->delete();
     }
 
-    private static function getStockIdsToRemove(): array {
+    private static function getStockPositionIdsToRemove(): array {
         $query = <<<SQL
-SELECT sp.stock_id
+SELECT sp.id AS stock_position_id
 FROM stock_positions sp
-LEFT JOIN orders o ON sp.stock_id = o.stock_id AND sp.user_id = o.user_id
-WHERE o.id IS NULL
-AND sp.user_id = ?;
+         LEFT JOIN orders o ON sp.stock_id = o.stock_id AND sp.user_id = o.user_id
+WHERE sp.user_id = ?
+  AND (o.id IS NULL
+    OR sp.date < (SELECT MIN(date) FROM orders o2 WHERE sp.stock_id = o2.stock_id AND sp.user_id = o2.user_id));
 SQL;
 
         $rows = DB::select($query, [auth()->id()]);
 
         $data = [];
         foreach ($rows as $row) {
-            $data[] = $row->stock_id;
+            $data[] = $row->stock_position_id;
         }
 
         return $data;
