@@ -36,8 +36,8 @@ class Stock extends Model {
         return StatusInvestAPI::checkIfSymbolIsValid($symbol);
     }
 
-    public static function getStockBySymbol(string $symbol): ?self {
-        return self::where('symbol', $symbol)->get()->first();
+    public static function getStockBySymbol(string $symbol): self {
+        return Stock::firstOrCreate(['symbol' => $symbol]);
     }
 
     public function getStockDividends(): Collection {
