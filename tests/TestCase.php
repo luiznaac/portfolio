@@ -50,7 +50,7 @@ abstract class TestCase extends BaseTestCase
             $item['user_id'] = $item['user_id'] ?? auth()->id();
             $item['quantity'] = $item['quantity'] ?? rand(1, 100);
             $item['price'] = $item['price'] ?? rand(100, 10000);
-            $item['cost'] = $item['contributed_amount'] ?? rand(100, 700)/100;
+            $item['cost'] = $item['cost'] ?? rand(100, 700)/100;
             $item['average_price'] = $item['average_price'] ?? (($item['price'] * $item['quantity'] + $item['cost']) / $item['quantity']);
             $this->setTimestamps($item);
 

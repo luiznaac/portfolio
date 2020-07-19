@@ -148,6 +148,14 @@ class Order extends Model {
             ->get();
     }
 
+    public static function getAllOrdersForStockInRage(Stock $stock, Carbon $start_date, Carbon $end_date): Collection {
+        return self::getBaseQuery()
+            ->where('stock_id', $stock->id)
+            ->whereBetween('date', [$start_date, $end_date])
+            ->orderBy('date')
+            ->get();
+    }
+
     public function delete() {
         parent::delete();
         self::touchLastOrder();

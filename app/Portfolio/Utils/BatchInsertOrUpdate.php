@@ -2,6 +2,7 @@
 
 namespace App\Portfolio\Utils;
 
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class BatchInsertOrUpdate {
@@ -13,9 +14,10 @@ class BatchInsertOrUpdate {
 
         $statement = self::buildStatement($table, $data);
 
+        $now = Carbon::now()->toDateTimeString();
         $parameters = [];
         foreach ($data as $item) {
-            $parameters = array_merge($parameters, array_values($item));
+            $parameters = array_merge(array_merge($parameters, array_values($item)), [$now, $now]);
         }
 
         DB::affectingStatement($statement, $parameters);
@@ -37,7 +39,7 @@ class BatchInsertOrUpdate {
     private static function values(array $data): string {
         $values = [];
         foreach ($data as $item) {
-            $values[] = '(' . implode(', ', array_fill(0, sizeof($item), '?')) . ', NOW(), NOW())';
+            $values[] = '(' . implode(', ', array_fill(0, sizeof($item) + 2, '?')) . ')';
         }
 
         return implode(', ', $values);
