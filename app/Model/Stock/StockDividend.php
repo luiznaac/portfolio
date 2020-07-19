@@ -4,6 +4,7 @@ namespace App\Model\Stock;
 
 use App\Model\Order\Order;
 use App\Portfolio\Providers\StockDividendProvider;
+use App\Portfolio\Utils\BatchInsertOrUpdate;
 use App\Portfolio\Utils\Calendar;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
@@ -67,20 +68,19 @@ class StockDividend extends Model {
 
         $dividends = StockDividendProvider::getDividendsForRange($stock, $start_date, $end_date);
 
+        $data = [];
         foreach ($dividends as $info => $value) {
             [$date_paid, $reference_date, $type] = explode('|', $info);
 
-            self::query()->updateOrCreate(
-                [
-                    'stock_id'          => $stock->id,
-                    'type'              => $type,
-                    'date_paid'         => $date_paid,
-                    'reference_date'    => $reference_date,
-                ],
-                [
-                    'value' => $value,
-                ]
-            );
+            $data[] = [
+                'stock_id'          => $stock->id,
+                'type'              => $type,
+                'date_paid'         => $date_paid,
+                'reference_date'    => $reference_date,
+                'value' => $value,
+            ];
         }
+
+        BatchInsertOrUpdate::execute('stock_dividends', $data);
     }
 }
