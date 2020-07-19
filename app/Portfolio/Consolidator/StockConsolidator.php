@@ -42,6 +42,10 @@ class StockConsolidator {
         return self::mergeDatesConsideringTheOldestOne($stock_ids_orders_dates, $stock_ids_positions_dates);
     }
 
+    public static function shouldConsolidate(): bool {
+        return !empty(self::getStockDatesToBeUpdated()) || !empty(self::getStockIdsToRemove());
+    }
+
     private static function consolidateForStock(Stock $stock, Carbon $date): void {
         self::consolidateStockPositionsForStock($stock, $date);
     }
@@ -182,15 +186,6 @@ SQL;
         }
 
         return $data;
-    }
-
-    private static function buildStockIdArray(array $data_to_pluck, string $field): array {
-        $stock_ids = [];
-        foreach ($data_to_pluck as $data) {
-            $stock_ids[] = $data[$field];
-        }
-
-        return $stock_ids;
     }
 
     private static function touchLastStockPosition(): void {
