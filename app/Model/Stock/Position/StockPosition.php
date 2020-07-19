@@ -31,6 +31,8 @@ class StockPosition extends Model {
         'amount',
         'contributed_amount',
         'average_price',
+        'created_at',
+        'updated_at',
     ];
 
     public static function getBaseQuery(): Builder {

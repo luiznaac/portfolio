@@ -10,6 +10,7 @@ use App\Model\Stock\StockPrice;
 use App\Portfolio\Utils\BatchInsertOrUpdate;
 use App\Portfolio\Utils\Calendar;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class StockConsolidator {
 
@@ -18,58 +19,46 @@ class StockConsolidator {
     private static $prices;
     private static $positions_buffer = [];
 
-    public static function updateLastPositions(): void {
-        $stocks = Order::getAllStocksWithOrders();
-
-        foreach ($stocks as $stock) {
-            self::updateLastPositionForStock($stock);
-        }
-
-        self::removePositionsWithoutOrders($stocks);
-        self::touchLastStockPosition();
-    }
-
-    public static function updateLastPositionForStock(Stock $stock) {
-        self::$stock = $stock;
-        $date = Calendar::getLastMarketWorkingDate();
-        $orders = Order::getAllOrdersForStockUntilDate($stock, $date);
-        self::loadAndCachePricesBeforeProcessing([$date->toDateString()]);
-
-        $position['date'] = $date;
-        $position = self::sumOrdersToPosition($orders->toArray(), $position);
-        $position = self::calculateAmountAccordinglyPriceOnDate($date, $position);
-
-        self::$positions_buffer[] = $position;
-        self::savePositionsBuffer();
-    }
-
     public static function consolidate(): void {
-        ini_set('max_execution_time', '300');
         Log::log('debug', __CLASS__.'::'.__FUNCTION__, 'starting at:' . Carbon::now()->toDateTimeString());
-        $stocks = Order::getAllStocksWithOrders();
+        self::removePositionsWithoutOrders();
+        $stocks_dates = self::getStockDatesToBeUpdated();
 
-        foreach ($stocks as $stock) {
-            self::consolidateForStock($stock);
+        foreach ($stocks_dates as $stock_id => $date) {
+            $stock = Stock::find($stock_id);
+            $date = Carbon::parse($date);
+
+            self::consolidateForStock($stock, $date);
         }
 
-        self::removePositionsWithoutOrders($stocks);
         self::touchLastStockPosition();
         Log::log('debug', __CLASS__.'::'.__FUNCTION__, 'finishing at:' . Carbon::now()->toDateTimeString());
     }
 
-    public static function consolidateForStock(Stock $stock): void {
-        self::consolidateStockPositionsForStock($stock);
+    public static function getStockDatesToBeUpdated(): array {
+        $stock_ids_orders_dates = self::getOldestDateOfLastInsertedOrdersForEachStock();
+        $stock_ids_positions_dates = self::getLastDateOfOutdatedStockPositionsForEachStock();
+
+        return self::mergeDatesConsideringTheOldestOne($stock_ids_orders_dates, $stock_ids_positions_dates);
     }
 
-    private static function consolidateStockPositionsForStock(Stock $stock) {
+    public static function shouldConsolidate(): bool {
+        return !empty(self::getStockDatesToBeUpdated()) || !empty(self::getStockIdsToRemove());
+    }
+
+    private static function consolidateForStock(Stock $stock, Carbon $date): void {
+        self::consolidateStockPositionsForStock($stock, $date);
+    }
+
+    private static function consolidateStockPositionsForStock(Stock $stock, Carbon $start_date) {
         self::$stock = $stock;
         $end_date = Calendar::getLastMarketWorkingDate();
-        $dates = self::generateAllDatesAccordinglyDayOfFirstContribution($end_date);
-        $grouped_orders = self::getOrdersGroupedByDateUntilDate($end_date);
+        $dates = Calendar::getWorkingDaysDatesForRange($start_date, $end_date);
+        $grouped_orders = self::getOrdersGroupedByDateInRange($start_date, $end_date);
         self::loadAndCachePricesBeforeProcessing($dates);
 
         foreach ($dates as $date) {
-            $position = isset($position) ? $position : [];
+            $position = $position ?? self::getStockPositionOrEmpty($stock, $start_date);
             $position['date'] = Carbon::parse($date);
 
             if(isset($grouped_orders[$date])) {
@@ -85,8 +74,8 @@ class StockConsolidator {
         self::savePositionsBuffer();
     }
 
-    private static function getOrdersGroupedByDateUntilDate(Carbon $end_date): array {
-        $orders = Order::getAllOrdersForStockUntilDate(self::$stock, $end_date);
+    private static function getOrdersGroupedByDateInRange(Carbon $start_date, Carbon $end_date): array {
+        $orders = Order::getAllOrdersForStockInRage(self::$stock, $start_date, $end_date);
 
         $grouped_orders = [];
         /** @var Order $order */
@@ -114,13 +103,13 @@ class StockConsolidator {
         }
     }
 
-    private static function generateAllDatesAccordinglyDayOfFirstContribution(Carbon $end_date): array {
-        $start_date = Order::getDateOfFirstContribution(self::$stock);
-        if(!$start_date) {
-            return [];
-        }
+    private static function getStockPositionOrEmpty(Stock $stock, Carbon $date): array {
+        $date = Calendar::getLastWorkingDayForDate((clone $date)->subDay());
 
-        return Calendar::getWorkingDaysDatesForRange($start_date, $end_date);
+        return StockPosition::getBaseQuery()
+            ->where('stock_id', $stock->id)
+            ->where('date', $date->toDateString())
+            ->get()->toArray()[0] ?? [];
     }
 
     private static function sumOrdersToPosition(array $orders, array $position): array {
@@ -160,13 +149,13 @@ class StockConsolidator {
             }
 
             $data[] = [
-                    'user_id'   => auth()->id(),
-                    'stock_id'  => self::$stock->id,
-                    'date'      => $position['date']->toDateString(),
-                    'quantity'              => $position['quantity'],
-                    'amount'                => $position['amount'],
-                    'contributed_amount'    => $position['contributed_amount'],
-                    'average_price'         => $position['average_price'],
+                'user_id'   => auth()->id(),
+                'stock_id'  => self::$stock->id,
+                'date'      => $position['date']->toDateString(),
+                'quantity'              => $position['quantity'],
+                'amount'                => $position['amount'],
+                'contributed_amount'    => $position['contributed_amount'],
+                'average_price'         => $position['average_price'],
             ];
         }
 
@@ -174,28 +163,29 @@ class StockConsolidator {
         self::$positions_buffer = [];
     }
 
-    private static function removePositionsWithoutOrders(array $stocks): void {
-        $stock_ids_to_remove = self::getStockIdsToRemove($stocks);
+    private static function removePositionsWithoutOrders(): void {
+        $stock_ids_to_remove = self::getStockIdsToRemove();
 
         StockPosition::getBaseQuery()->whereIn('stock_id', $stock_ids_to_remove)->delete();
     }
 
-    private static function getStockIdsToRemove(array $stocks): array {
-        $stock_ids_with_positions = StockPosition::getBaseQuery()->select('stock_id')->distinct('stock_id')->get();
+    private static function getStockIdsToRemove(): array {
+        $query = <<<SQL
+SELECT sp.stock_id
+FROM stock_positions sp
+LEFT JOIN orders o ON sp.stock_id = o.stock_id AND sp.user_id = o.user_id
+WHERE o.id IS NULL
+AND sp.user_id = ?;
+SQL;
 
-        $stock_ids_with_positions = self::buildStockIdArray($stock_ids_with_positions->toArray(), 'stock_id');
-        $stock_ids_with_orders = self::buildStockIdArray($stocks, 'id');
+        $rows = DB::select($query, [auth()->id()]);
 
-        return array_diff($stock_ids_with_positions, $stock_ids_with_orders);
-    }
-
-    private static function buildStockIdArray(array $data_to_pluck, string $field): array {
-        $stock_ids = [];
-        foreach ($data_to_pluck as $data) {
-            $stock_ids[] = $data[$field];
+        $data = [];
+        foreach ($rows as $row) {
+            $data[] = $row->stock_id;
         }
 
-        return $stock_ids;
+        return $data;
     }
 
     private static function touchLastStockPosition(): void {
@@ -204,5 +194,70 @@ class StockConsolidator {
         if($last_stock_position) {
             $last_stock_position->touch();
         }
+    }
+
+    private static function getOldestDateOfLastInsertedOrdersForEachStock(): array {
+        $query = <<<SQL
+SELECT o.stock_id, MIN(o.date) AS order_date
+FROM orders o
+         LEFT JOIN stock_positions sp ON o.stock_id = sp.stock_id AND o.user_id = sp.user_id
+WHERE o.user_id = ?
+  AND (o.updated_at >
+       (SELECT MAX(updated_at) FROM stock_positions sp2 WHERE sp2.stock_id = sp.stock_id AND sp2.user_id = sp.user_id)
+    OR sp.id IS NULL)
+GROUP BY o.stock_id;
+SQL;
+
+        $rows = DB::select($query, [auth()->id()]);
+
+        $data = [];
+        foreach ($rows as $row) {
+            $data[$row->stock_id] = $row->order_date;
+        }
+
+        return $data;
+    }
+
+    private static function getLastDateOfOutdatedStockPositionsForEachStock(): array {
+        $query = <<<SQL
+SELECT stock_id, last_date
+FROM (SELECT MAX(date) AS last_date, stock_id
+      FROM stock_positions sp
+      WHERE user_id = ?
+      GROUP BY stock_id) last_positions
+WHERE last_date < ?;
+SQL;
+
+        $rows = DB::select($query, [
+                auth()->id(),
+                Calendar::getLastMarketWorkingDate()->toDateString()
+            ]
+        );
+
+        $data = [];
+        foreach ($rows as $row) {
+            $data[$row->stock_id] = $row->last_date;
+        }
+
+        return $data;
+    }
+
+    private static function mergeDatesConsideringTheOldestOne(array $stock_ids_orders_dates, array $stock_ids_positions_dates): array {
+        $ids = array_merge(array_keys($stock_ids_orders_dates), array_keys($stock_ids_positions_dates));
+
+        $data = [];
+        foreach ($ids as $id) {
+            if (isset($stock_ids_orders_dates[$id]) && isset($stock_ids_positions_dates[$id])) {
+                $date_1 = Carbon::parse($stock_ids_orders_dates[$id]);
+                $date_2 = Carbon::parse($stock_ids_positions_dates[$id]);
+                $data[$id] = $date_1->lte($date_2) ? $date_1->toDateString() : $date_2->toDateString();
+
+                continue;
+            }
+
+            $data[$id] = $stock_ids_orders_dates[$id] ?? $stock_ids_positions_dates[$id];
+        }
+
+        return $data;
     }
 }

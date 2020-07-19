@@ -91,449 +91,243 @@ class StockConsolidatorTest extends TestCase {
         $this->user = $this->loginWithFakeUser();
     }
 
-    public function testUpdatePositionsWithDeletedOrder_ShouldDeletePositions(): void {
-        $stock_1 = Stock::getStockBySymbol('SQIA3');
-        $stock_2 = Stock::getStockBySymbol('XPML11');
-        $this->setTestNowForB3DateTime('2020-06-24 15:00:00');
-
-        $order_1 = new Order();
-        $order_1->store(
-            $stock_1,
-            Carbon::now()->subDay(),
-            $type = 'buy',
-            $quantity = 10,
-            $price = 15.22,
-            $cost = 7.50
-        );
-
-        $stock_position_1 = $this->createStockPosition(
-            $stock_1,
-            Carbon::now()->subDay(),
-            $order_1->quantity,
-            19.5 * $order_1->quantity,
-            $order_1->quantity * $order_1->price + $order_1->cost,
-            ($order_1->quantity * $order_1->price + $order_1->cost)/$order_1->quantity
-        );
-
-        $order_2 = new Order();
-        $order_2->store(
-            $stock_2,
-            Carbon::now()->subDays(2),
-            $type = 'buy',
-            $quantity = 10,
-            $price = 15.22,
-            $cost = 7.50
-        );
-
-        $order_3 = new Order();
-        $order_3->store(
-            $stock_2,
-            Carbon::now(),
-            $type = 'buy',
-            $quantity = 123,
-            $price = 333.22,
-            $cost = 7.50
-        );
-
-        $stock_position_2 = $this->createStockPosition(
-            $stock_2,
-            Carbon::now()->subDay(),
-            $order_2->quantity,
-            105 * $order_2->quantity,
-            $order_2->quantity * $order_2->price + $order_2->cost,
-            ($order_2->quantity * $order_2->price + $order_2->cost)/$order_2->quantity
-        );
-
-        StockConsolidator::updateLastPositions();
-
-        $this->assertStockPositions([$stock_position_1, $stock_position_2]);
-        $this->assertCount(2, StockPosition::getBaseQuery()->get());
-
-        $order_1->delete();
-        StockConsolidator::updateLastPositions();
-
-        $this->assertStockPositions([$stock_position_2]);
-        $this->assertCount(1, StockPosition::getBaseQuery()->get());
+    public function dataProviderForTestGetStockDatesToBeUpdated(): array {
+        return [
+            'Everything is updated - should return empty array' => [
+                'now' => '2020-07-09 23:00:00',
+                'stock_positions' => [
+                    ['stock_symbol' => 'SQIA3', 'date' => '2020-07-09', 'updated_at' => '2020-07-09 23:01:00'],
+                    ['stock_symbol' => 'XPML11', 'date' => '2020-07-09', 'updated_at' => '2020-07-09 23:01:00'],
+                ],
+                'orders' => [
+                    ['stock_symbol' => 'SQIA3', 'date' => '2020-07-01', 'updated_at' => '2020-07-09 23:00:00', 'type' => 'buy'],
+                    ['stock_symbol' => 'XPML11', 'date' => '2020-07-01', 'updated_at' => '2020-07-09 23:00:00', 'type' => 'buy'],
+                ],
+                'expected_dates' => [],
+            ],
+            'One stock position is outdated - should return stock position date' => [
+                'now' => '2020-07-09 23:00:00',
+                'stock_positions' => [
+                    ['stock_symbol' => 'SQIA3', 'date' => '2020-07-08', 'updated_at' => '2020-07-08 23:01:00'],
+                    ['stock_symbol' => 'XPML11', 'date' => '2020-07-09', 'updated_at' => '2020-07-09 23:01:00'],
+                ],
+                'orders' => [
+                    ['stock_symbol' => 'SQIA3', 'date' => '2020-07-01', 'updated_at' => '2020-07-08 23:00:00', 'type' => 'buy'],
+                    ['stock_symbol' => 'XPML11', 'date' => '2020-07-01', 'updated_at' => '2020-07-09 23:00:00', 'type' => 'buy'],
+                ],
+                'expected_dates' => [
+                    'SQIA3' => '2020-07-08',
+                ],
+            ],
+            'Two stock positions are outdated - should return stock positions dates' => [
+                'now' => '2020-07-09 23:00:00',
+                'stock_positions' => [
+                    ['stock_symbol' => 'SQIA3', 'date' => '2020-07-08', 'updated_at' => '2020-07-08 23:01:00'],
+                    ['stock_symbol' => 'XPML11', 'date' => '2020-07-07', 'updated_at' => '2020-07-07 23:01:00'],
+                ],
+                'orders' => [
+                    ['stock_symbol' => 'SQIA3', 'date' => '2020-07-01', 'updated_at' => '2020-07-07 23:00:00', 'type' => 'buy'],
+                    ['stock_symbol' => 'XPML11', 'date' => '2020-07-01', 'updated_at' => '2020-07-07 23:00:00', 'type' => 'buy'],
+                ],
+                'expected_dates' => [
+                    'SQIA3' => '2020-07-08',
+                    'XPML11' => '2020-07-07',
+                ],
+            ],
+            'Positions updated but has an order before last reference date - should return order date' => [
+                'now' => '2020-07-09 23:00:00',
+                'stock_positions' => [
+                    ['stock_symbol' => 'SQIA3', 'date' => '2020-07-09', 'updated_at' => '2020-07-09 23:01:00'],
+                    ['stock_symbol' => 'XPML11', 'date' => '2020-07-09', 'updated_at' => '2020-07-09 23:01:00'],
+                ],
+                'orders' => [
+                    ['stock_symbol' => 'SQIA3', 'date' => '2020-07-01', 'updated_at' => '2020-07-09 23:02:00', 'type' => 'buy'],
+                    ['stock_symbol' => 'XPML11', 'date' => '2020-07-01', 'updated_at' => '2020-07-09 23:00:00', 'type' => 'buy'],
+                ],
+                'expected_dates' => [
+                    'SQIA3' => '2020-07-01',
+                ],
+            ],
+            'Positions outdated and has an order before last reference date - should return order date' => [
+                'now' => '2020-07-09 23:00:00',
+                'stock_positions' => [
+                    ['stock_symbol' => 'SQIA3', 'date' => '2020-07-07', 'updated_at' => '2020-07-07 23:01:00'],
+                    ['stock_symbol' => 'XPML11', 'date' => '2020-07-09', 'updated_at' => '2020-07-09 23:01:00'],
+                ],
+                'orders' => [
+                    ['stock_symbol' => 'SQIA3', 'date' => '2020-07-01', 'updated_at' => '2020-07-09 23:02:00', 'type' => 'buy'],
+                    ['stock_symbol' => 'XPML11', 'date' => '2020-07-01', 'updated_at' => '2020-07-09 23:00:00', 'type' => 'buy'],
+                ],
+                'expected_dates' => [
+                    'SQIA3' => '2020-07-01',
+                ],
+            ],
+            'Positions outdated and has an order after last reference date - should return position date' => [
+                'now' => '2020-07-09 23:00:00',
+                'stock_positions' => [
+                    ['stock_symbol' => 'SQIA3', 'date' => '2020-07-07', 'updated_at' => '2020-07-07 23:01:00'],
+                    ['stock_symbol' => 'XPML11', 'date' => '2020-07-09', 'updated_at' => '2020-07-09 23:01:00'],
+                ],
+                'orders' => [
+                    ['stock_symbol' => 'SQIA3', 'date' => '2020-07-08', 'updated_at' => '2020-07-09 23:02:00', 'type' => 'buy'],
+                    ['stock_symbol' => 'XPML11', 'date' => '2020-07-01', 'updated_at' => '2020-07-09 23:00:00', 'type' => 'buy'],
+                ],
+                'expected_dates' => [
+                    'SQIA3' => '2020-07-07',
+                ],
+            ],
+            'No positions for stock but with order - should return order date' => [
+                'now' => '2020-07-09 23:00:00',
+                'stock_positions' => [
+                    ['stock_symbol' => 'XPML11', 'date' => '2020-07-09', 'updated_at' => '2020-07-09 23:01:00'],
+                ],
+                'orders' => [
+                    ['stock_symbol' => 'SQIA3', 'date' => '2020-07-08', 'updated_at' => '2020-07-09 23:02:00', 'type' => 'buy'],
+                    ['stock_symbol' => 'XPML11', 'date' => '2020-07-01', 'updated_at' => '2020-07-09 23:00:00', 'type' => 'buy'],
+                ],
+                'expected_dates' => [
+                    'SQIA3' => '2020-07-08',
+                ],
+            ],
+        ];
     }
 
-    public function testUpdatePositionsWhenPriceNotFound_ShouldNotCreatePosition(): void {
-        $stock_1 = Stock::getStockBySymbol('SQIA3');
-        $this->setTestNowForB3DateTime('2020-06-12 15:00:00');
+    /**
+     * @dataProvider dataProviderForTestGetStockDatesToBeUpdated
+     */
 
-        $order_1 = new Order();
-        $order_1->store(
-            $stock_1,
-            Carbon::now()->subDays(3),
-            $type = 'buy',
-            $quantity = 10,
-            $price = 15.22,
-            $cost = 7.50
-        );
+    public function testGetStockDatesToBeUpdated(string $now, array $stock_positions, array $orders, array $expected_dates): void {
+        Carbon::setTestNow($now);
+        $this->saveStockPositions($stock_positions);
+        $this->saveOrders($orders);
+        $this->translateStockSymbolsToIdsForDates($expected_dates);
 
-        StockConsolidator::updateLastPositions();
+        $stock_dates = StockConsolidator::getStockDatesToBeUpdated();
 
-        $this->assertEmpty(StockPosition::getPositionsForStock($stock_1));
+        $this->assertEquals($expected_dates, $stock_dates);
     }
 
-    public function testUpdatePositions_ShouldUpdatePosition(): void {
-        $stock_1 = Stock::getStockBySymbol('SQIA3');
-
-        $this->setTestNowForB3DateTime('2020-06-30 15:00:00');
-
-        $order_1 = new Order();
-        $order_1->store(
-            $stock_1,
-            Carbon::now()->subDays(2),
-            $type = 'buy',
-            $quantity = 10,
-            $price = 18.22,
-            $cost = 7.50
-        );
-
-        $stock_position_1 = $this->createStockPosition(
-            $stock_1,
-            Carbon::now()->subDay(),
-            10,
-            18.72 * 10,
-            18.22 * 10 + 7.50,
-            (18.22*10 + 7.50)/10
-        );
-
-        StockConsolidator::updateLastPositions();
-
-        $order_2 = new Order();
-        $order_2->store(
-            $stock_1,
-            Carbon::now()->subDay(),
-            $type = 'buy',
-            $quantity = 10,
-            $price = 15.22,
-            $cost = 7.50
-        );
-
-        $stock_position_1->quantity = $stock_position_1->quantity + $order_2->quantity;
-        $stock_position_1->amount = 18.72 * $stock_position_1->quantity;
-        $stock_position_1->contributed_amount = $stock_position_1->contributed_amount + $order_2->quantity * $order_2->price + $order_2->cost;
-        $stock_position_1->average_price = (18.22 * 10 + 7.50 + 15.22 * 10 + 7.50)/20;
-
-        StockConsolidator::updateLastPositions();
-
-        $this->assertStockPositions([$stock_position_1]);
-        $this->assertCount(1, StockPosition::getBaseQuery()->get());
+    public function dataProviderForTestConsolidate(): array {
+        return [
+            'Without orders - should not create positions' => [
+                'now' => '2020-07-03 15:00:00',
+                'stock_positions' => [
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'quantity' => 15, 'amount' => 1374.3, 'contributed_amount' => 1368.3, 'average_price' => 91.22],
+                ],
+                'orders' => [],
+                'expected_positions' => [],
+            ],
+            'No orders for already consolidated stock - should delete positions' => [
+                'now' => '2020-06-30 18:01:00',
+                'stock_positions' => [],
+                'orders' => [
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-11', 'type' => 'buy', 'quantity' => 10, 'price' => 90.22, 'cost' => 7.50],
+                ],
+                'expected_positions' => [],
+            ],
+            'Price not found (not registered holiday) - should not create position' => [
+                'now' => '2020-06-30 18:01:00',
+                'stock_positions' => [],
+                'orders' => [
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-11', 'type' => 'buy', 'quantity' => 10, 'price' => 90.22, 'cost' => 7.50],
+                ],
+                'expected_positions' => [],
+            ],
+            'Already consolidated position but with new order - should update position' => [
+                'now' => '2020-06-30 18:01:00',
+                'stock_positions' => [
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'quantity' => 15, 'amount' => 1374.3, 'contributed_amount' => 1368.3, 'average_price' => 91.22, 'updated_at' => '2020-06-30 18:00:00'],
+                ],
+                'orders' => [
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'type' => 'buy', 'quantity' => 10, 'price' => 90.22, 'cost' => 7.50],
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'type' => 'buy', 'quantity' => 5, 'price' => 90.22, 'cost' => 7.50],
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'type' => 'buy', 'quantity' => 8, 'price' => 90.22, 'cost' => 7.50],
+                ],
+                'expected_positions' => [
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'quantity' => 23, 'amount' => 2107.26, 'contributed_amount' => 2097.56, 'average_price' => 91.20],
+                ],
+            ],
+            'Before market close and new stock in portfolio - should create from order date until previous market date' => [
+                'now' => '2020-07-03 15:00:00',
+                'stock_positions' => [],
+                'orders' => [
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'type' => 'buy', 'quantity' => 10, 'price' => 90.22, 'cost' => 7.50],
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'type' => 'buy', 'quantity' => 5, 'price' => 90.22, 'cost' => 7.50],
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-07-01', 'type' => 'buy', 'quantity' => 8, 'price' => 90.22, 'cost' => 7.50],
+                ],
+                'expected_positions' => [
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'quantity' => 15, 'amount' => 1353.3, 'contributed_amount' => 1368.3, 'average_price' => 91.22],
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-29', 'quantity' => 15, 'amount' => 1384.5, 'contributed_amount' => 1368.3, 'average_price' => 91.22],
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'quantity' => 15, 'amount' => 1374.3, 'contributed_amount' => 1368.3, 'average_price' => 91.22],
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-07-01', 'quantity' => 23, 'amount' => 2131.64, 'contributed_amount' => 2097.56, 'average_price' => 91.20],
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-07-02', 'quantity' => 23, 'amount' => 2127.5, 'contributed_amount' => 2097.56, 'average_price' => 91.20],
+                ],
+            ],
+            'Consolidate on weekend - should create positions until last working day' => [
+                'now' => '2020-06-28 15:00:00',
+                'stock_positions' => [],
+                'orders' => [
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'type' => 'buy', 'quantity' => 10, 'price' => 90.22, 'cost' => 7.50],
+                    ['stock_symbol' => 'SQIA3', 'date' => '2020-06-26', 'type' => 'buy', 'quantity' => 10, 'price' => 19.5, 'cost' => 7.50],
+                    ['stock_symbol' => 'XPML11', 'date' => '2020-06-26', 'type' => 'buy', 'quantity' => 10, 'price' => 102.5, 'cost' => 0],
+                ],
+                'expected_positions' => [
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'quantity' => 10, 'amount' => 902.2, 'contributed_amount' => 909.7, 'average_price' => 90.97],
+                    ['stock_symbol' => 'SQIA3', 'date' => '2020-06-26', 'quantity' => 10, 'amount' => 185.1, 'contributed_amount' => 202.5, 'average_price' => 20.25],
+                    ['stock_symbol' => 'XPML11', 'date' => '2020-06-26', 'quantity' => 10, 'amount' => 1032.5, 'contributed_amount' => 1025, 'average_price' => 102.5],
+                ],
+            ],
+            'Consolidate on monday - should create positions until friday' => [
+                'now' => '2020-06-29 15:00:00',
+                'stock_positions' => [],
+                'orders' => [
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-25', 'type' => 'buy', 'quantity' => 10, 'price' => 90.22, 'cost' => 7.50],
+                    ['stock_symbol' => 'SQIA3', 'date' => '2020-06-25', 'type' => 'buy', 'quantity' => 10, 'price' => 19.5, 'cost' => 7.50],
+                    ['stock_symbol' => 'XPML11', 'date' => '2020-06-25', 'type' => 'buy', 'quantity' => 10, 'price' => 102.5, 'cost' => 0],
+                ],
+                'expected_positions' => [
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-25', 'quantity' => 10, 'amount' => 923.9, 'contributed_amount' => 909.7, 'average_price' => 90.97],
+                    ['stock_symbol' => 'SQIA3', 'date' => '2020-06-25', 'quantity' => 10, 'amount' => 189.8, 'contributed_amount' => 202.5, 'average_price' => 20.25],
+                    ['stock_symbol' => 'XPML11', 'date' => '2020-06-25', 'quantity' => 10, 'amount' => 1036.8, 'contributed_amount' => 1025, 'average_price' => 102.5],
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'quantity' => 10, 'amount' => 902.2, 'contributed_amount' => 909.7, 'average_price' => 90.97],
+                    ['stock_symbol' => 'SQIA3', 'date' => '2020-06-26', 'quantity' => 10, 'amount' => 185.1, 'contributed_amount' => 202.5, 'average_price' => 20.25],
+                    ['stock_symbol' => 'XPML11', 'date' => '2020-06-26', 'quantity' => 10, 'amount' => 1032.5, 'contributed_amount' => 1025, 'average_price' => 102.5],
+                ],
+            ],
+            'After market close and new stock in portfolio - should create from order date until now market date' => [
+                'now' => '2020-07-03 18:00:00',
+                'stock_positions' => [],
+                'orders' => [
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'type' => 'buy', 'quantity' => 10, 'price' => 90.22, 'cost' => 7.50],
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'type' => 'buy', 'quantity' => 5, 'price' => 90.22, 'cost' => 7.50],
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-07-01', 'type' => 'buy', 'quantity' => 8, 'price' => 90.22, 'cost' => 7.50],
+                ],
+                'expected_positions' => [
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'quantity' => 15, 'amount' => 1353.3, 'contributed_amount' => 1368.3, 'average_price' => 91.22],
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-29', 'quantity' => 15, 'amount' => 1384.5, 'contributed_amount' => 1368.3, 'average_price' => 91.22],
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'quantity' => 15, 'amount' => 1374.3, 'contributed_amount' => 1368.3, 'average_price' => 91.22],
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-07-01', 'quantity' => 23, 'amount' => 2131.64, 'contributed_amount' => 2097.56, 'average_price' => 91.20],
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-07-02', 'quantity' => 23, 'amount' => 2127.5, 'contributed_amount' => 2097.56, 'average_price' => 91.20],
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-07-03', 'quantity' => 23, 'amount' => 2143.37, 'contributed_amount' => 2097.56, 'average_price' => 91.20],
+                ],
+            ],
+        ];
     }
 
-    public function testUpdatePositionsAfterMarketIsClosed_ShouldUpdatePositionsToCorrectLastMarketDate(): void {
-        $stock_1 = Stock::getStockBySymbol('SQIA3');
+    /**
+     * @dataProvider dataProviderForTestConsolidate
+     */
 
-        $this->setTestNowForB3DateTime('2020-06-30 18:00:00');
+    public function testConsolidate(string $now, array $stock_positions, array $orders, array $expected_positions): void {
+        $this->setTestNowForB3DateTime($now);
+        $this->saveStockPositions($stock_positions);
+        $this->saveOrders($orders);
+        $this->translateStockSymbolsToIdsForStockPositions($expected_positions);
+        $this->fillUserId($expected_positions);
 
-        $order_1 = new Order();
-        $order_1->store(
-            $stock_1,
-            Carbon::now()->subDays(2),
-            $type = 'buy',
-            $quantity = 10,
-            $price = 18.22,
-            $cost = 7.50
-        );
+        StockConsolidator::consolidate();
 
-        $stock_position_1 = $this->createStockPosition(
-            $stock_1,
-            Carbon::now(),
-            10,
-            18.72 * 10,
-            18.22 * 10 + 7.50,
-            (18.22*10 + 7.50)/10
-        );
-
-        StockConsolidator::updateLastPositions();
-
-        $order_2 = new Order();
-        $order_2->store(
-            $stock_1,
-            Carbon::now(),
-            $type = 'buy',
-            $quantity = 10,
-            $price = 15.22,
-            $cost = 7.50
-        );
-
-        $stock_position_1->quantity = $stock_position_1->quantity + $order_2->quantity;
-        $stock_position_1->amount = 19.24 * $stock_position_1->quantity;
-        $stock_position_1->contributed_amount = $stock_position_1->contributed_amount + $order_2->quantity * $order_2->price + $order_2->cost;
-        $stock_position_1->average_price = (18.22 * 10 + 7.50 + 15.22 * 10 + 7.50)/20;
-
-        StockConsolidator::updateLastPositions();
-
-        $this->assertStockPositions([$stock_position_1]);
-        $this->assertCount(1, StockPosition::getBaseQuery()->get());
-    }
-
-    public function testUpdatePositionsOnMonday_ShouldOnlyCreateFridayForAllStocks(): void {
-        $stock_1 = Stock::getStockBySymbol('SQIA3');
-        $stock_2 = Stock::getStockBySymbol('XPML11');
-        $this->setTestNowForB3DateTime('2020-06-29 15:00:00');
-
-        $order_1 = new Order();
-        $order_1->store(
-            $stock_1,
-            Carbon::now()->subDays(3),
-            $type = 'buy',
-            $quantity = 10,
-            $price = 15.22,
-            $cost = 7.50
-        );
-
-        $stock_position_1 = $this->createStockPosition(
-            $stock_1,
-            Carbon::now()->subDays(3),
-            $order_1->quantity,
-            18.51 * $order_1->quantity,
-            $order_1->quantity * $order_1->price + $order_1->cost,
-            ($order_1->quantity * $order_1->price + $order_1->cost)/$order_1->quantity
-        );
-
-        $order_2 = new Order();
-        $order_2->store(
-            $stock_2,
-            Carbon::now()->subDays(3),
-            $type = 'buy',
-            $quantity = 10,
-            $price = 15.22,
-            $cost = 7.50
-        );
-
-        $stock_position_2 = $this->createStockPosition(
-            $stock_2,
-            Carbon::now()->subDays(3),
-            $order_2->quantity,
-            103.25 * $order_2->quantity,
-            $order_2->quantity * $order_2->price + $order_2->cost,
-            ($order_2->quantity * $order_2->price + $order_2->cost)/$order_2->quantity
-        );
-
-        StockConsolidator::updateLastPositions();
-
-        $this->assertStockPositions([$stock_position_1, $stock_position_2]);
-    }
-
-    public function testUpdatePositionsOnWeekDay_ShouldOnlyCreatePreviousLastWorkingDateForAllStocks(): void {
-        $stock_1 = Stock::getStockBySymbol('SQIA3');
-        $stock_2 = Stock::getStockBySymbol('XPML11');
-        $this->setTestNowForB3DateTime('2020-06-24 15:00:00');
-
-        $order_1 = new Order();
-        $order_1->store(
-            $stock_1,
-            Carbon::now()->subDay(),
-            $type = 'buy',
-            $quantity = 10,
-            $price = 15.22,
-            $cost = 7.50
-        );
-
-        $stock_position_1 = $this->createStockPosition(
-            $stock_1,
-            Carbon::now()->subDay(),
-            $order_1->quantity,
-            19.5 * $order_1->quantity,
-            $order_1->quantity * $order_1->price + $order_1->cost,
-            ($order_1->quantity * $order_1->price + $order_1->cost)/$order_1->quantity
-        );
-
-        $order_2 = new Order();
-        $order_2->store(
-            $stock_2,
-            Carbon::now()->subDays(2),
-            $type = 'buy',
-            $quantity = 10,
-            $price = 15.22,
-            $cost = 7.50
-        );
-
-        $order_3 = new Order();
-        $order_3->store(
-            $stock_2,
-            Carbon::now(),
-            $type = 'buy',
-            $quantity = 123,
-            $price = 333.22,
-            $cost = 7.50
-        );
-
-        $stock_position_2 = $this->createStockPosition(
-            $stock_2,
-            Carbon::now()->subDay(),
-            $order_2->quantity,
-            105 * $order_2->quantity,
-            $order_2->quantity * $order_2->price + $order_2->cost,
-            ($order_2->quantity * $order_2->price + $order_2->cost)/$order_2->quantity
-        );
-
-        StockConsolidator::updateLastPositions();
-
-        $this->assertStockPositions([$stock_position_1, $stock_position_2]);
-    }
-
-    public function testUpdatePositionsOnWeekend_ShouldOnlyCreateLastWorkingDateForAllStocks(): void {
-        $stock_1 = Stock::getStockBySymbol('SQIA3');
-        $stock_2 = Stock::getStockBySymbol('XPML11');
-        $this->setTestNowForB3DateTime('2020-06-27 15:00:00');
-
-        $order_1 = new Order();
-        $order_1->store(
-            $stock_1,
-            Carbon::now()->subDay(),
-            $type = 'buy',
-            $quantity = 10,
-            $price = 15.22,
-            $cost = 7.50
-        );
-
-        $stock_position_1 = $this->createStockPosition(
-            $stock_1,
-            Carbon::now()->subDay(),
-            $order_1->quantity,
-            18.51 * $order_1->quantity,
-            $order_1->quantity * $order_1->price + $order_1->cost,
-            ($order_1->quantity * $order_1->price + $order_1->cost)/$order_1->quantity
-        );
-
-        $order_2 = new Order();
-        $order_2->store(
-            $stock_2,
-            Carbon::now()->subDay(),
-            $type = 'buy',
-            $quantity = 10,
-            $price = 15.22,
-            $cost = 7.50
-        );
-
-        $stock_position_2 = $this->createStockPosition(
-            $stock_2,
-            Carbon::now()->subDay(),
-            $order_2->quantity,
-            103.25 * $order_2->quantity,
-            $order_2->quantity * $order_2->price + $order_2->cost,
-            ($order_2->quantity * $order_2->price + $order_2->cost)/$order_2->quantity
-        );
-
-        StockConsolidator::updateLastPositions();
-
-        $this->assertStockPositions([$stock_position_1, $stock_position_2]);
-    }
-
-    public function testUpdatePositionForStockOnWeekend_ShouldOnlyCreateLastWorkingDate(): void {
-        $stock = Stock::getStockBySymbol('BOVA11');
-        $this->setTestNowForB3DateTime('2020-06-28 15:00:00');
-
-        $order_1 = new Order();
-        $order_1->store(
-            $stock,
-            Carbon::now()->subDays(2),
-            $type = 'buy',
-            $quantity = 10,
-            $price = 15.22,
-            $cost = 7.50
-        );
-
-        $stock_position_1 = $this->createStockPosition(
-            $stock,
-            Carbon::now()->subDays(2),
-            $order_1->quantity,
-            90.22 * $order_1->quantity,
-            $order_1->quantity * $order_1->price + $order_1->cost,
-            ($order_1->quantity * $order_1->price + $order_1->cost)/$order_1->quantity
-        );
-
-        StockConsolidator::updateLastPositionForStock($stock);
-
-        $this->assertStockPositions([$stock_position_1]);
-    }
-
-    public function testConsolidateFromBeginWithoutOrders_ShouldNotCreatePositions(): void {
-        $stock = Stock::getStockBySymbol('BOVA11');
-
-        StockConsolidator::consolidateForStock($stock);
-
-        $created_stock_positions = StockPosition::getBaseQuery()->orderBy('date')->get();
-
-        $this->assertEmpty($created_stock_positions);
-    }
-
-    public function testConsolidateFromBegin(): void {
-        $stock = Stock::getStockBySymbol('BOVA11');
-        $this->setTestNowForB3DateTime('2020-06-26 15:00:00');
-
-        $order_1 = new Order();
-        $order_1->store(
-            $stock,
-            Carbon::now(),
-            $type = 'buy',
-            $quantity = 10,
-            $price = 90.22,
-            $cost = 7.50
-        );
-
-        $order_2 = new Order();
-        $order_2->store(
-            $stock,
-            Carbon::now(),
-            $type = 'buy',
-            $quantity = 5,
-            $price = 90.22,
-            $cost = 7.50
-        );
-
-        $order_3 = new Order();
-        $order_3->store(
-            $stock,
-            Carbon::now()->addDays(5),
-            $type = 'buy',
-            $quantity = 8,
-            $price = 90.22,
-            $cost = 7.50
-        );
-
-        $stock_position_1 = $this->createStockPosition(
-            $stock,
-            Carbon::now(),
-            $order_1->quantity + $order_2->quantity,
-            90.22 * ($order_1->quantity + $order_2->quantity),
-            $order_1->quantity * $order_1->price + $order_1->cost + $order_2->quantity * $order_2->price + $order_2->cost,
-            ($order_1->quantity * $order_1->price + $order_1->cost + $order_2->quantity * $order_2->price + $order_2->cost)/($order_1->quantity + $order_2->quantity)
-        );
-        $stock_positions[] = $stock_position_1;
-
-        $stock_position_2 = clone $stock_position_1;
-        $stock_position_2->date = Carbon::now()->addDays(3)->toDateString();
-        $stock_position_2->amount = 92.3 * $stock_position_1->quantity;
-        $stock_positions[] = $stock_position_2;
-
-        $stock_position_3 = clone $stock_position_1;
-        $stock_position_3->date = Carbon::now()->addDays(4)->toDateString();
-        $stock_position_3->amount = 91.62 * $stock_position_1->quantity;
-        $stock_positions[] = $stock_position_3;
-
-        $stock_position_4 = $this->createStockPosition(
-            $stock,
-            Carbon::now()->addDays(5),
-            $stock_positions[0]->quantity + $order_3->quantity,
-            92.68 * ($stock_positions[0]->quantity + $order_3->quantity),
-            $stock_positions[0]->contributed_amount + $order_3->quantity * $order_3->price + $order_3->cost,
-            round(($stock_positions[0]->contributed_amount + $order_3->quantity * $order_3->price + $order_3->cost)/($stock_positions[0]->quantity + $order_3->quantity), 2)
-        );
-        $stock_positions[] = $stock_position_4;
-
-        $stock_position_5 = clone $stock_position_4;
-        $stock_position_5->date = Carbon::now()->addDays(6)->toDateString();
-        $stock_position_5->amount = 92.5 * $stock_position_4->quantity;
-        $stock_positions[] = $stock_position_5;
-
-        Carbon::setTestNow(Carbon::now()->addDays(7));
-        StockConsolidator::consolidateForStock($stock);
-
-        $this->assertStockPositions(array_reverse($stock_positions));
+        $this->assertStockPositions(array_reverse($expected_positions));
     }
 
     private function setTestNowForB3DateTime(string $date_time): void {
@@ -541,38 +335,48 @@ class StockConsolidatorTest extends TestCase {
         Carbon::setTestNow($now_int_utc);
     }
 
-    private function createStockPosition(Stock $stock, Carbon $date, int $quantity, float $amount, float $contributed_amount, float $average_price): StockPosition {
-        $position = new StockPosition();
-        $position->user_id = $this->user->id;
-        $position->stock_id = $stock->id;
-        $position->date = $date->toDateString();
-        $position->quantity = $quantity;
-        $position->amount = $amount;
-        $position->contributed_amount = $contributed_amount;
-        $position->average_price = $average_price;
+    private function translateStockSymbolsToIdsForDates(array &$expected_dates): void {
+        foreach ($expected_dates as $symbol => $expected_date) {
+            $stock = Stock::getStockBySymbol($symbol);
+            unset($expected_dates[$symbol]);
+            $expected_dates[$stock->id] = $expected_date;
+        }
+    }
 
-        return $position;
+    private function translateStockSymbolsToIdsForStockPositions(array &$expected_positions): void {
+        foreach ($expected_positions as &$position) {
+            $stock = Stock::getStockBySymbol($position['stock_symbol']);
+            unset($position['symbol']);
+            $position['stock_id'] = $stock->id;
+        }
+    }
+
+    private function fillUserId(array &$expected_positions): void {
+        foreach ($expected_positions as &$position) {
+            $position['user_id'] = $this->user->id;
+        }
     }
 
     private function assertStockPositions(array $expected_stock_positions): void {
         $created_stock_positions = StockPosition::getBaseQuery()
             ->whereIn('stock_id', array_map(function ($position) {
-                return $position->stock_id;
+                return $position['stock_id'];
             }, $expected_stock_positions))
             ->orderBy('date')->get();
 
+        $this->assertCount(sizeof($expected_stock_positions), $created_stock_positions);
         /** @var StockPosition $expected_stock_position */
         foreach ($expected_stock_positions as $expected_stock_position) {
             /** @var StockPosition $created_stock_position */
             $created_stock_position = $created_stock_positions->pop();
 
-            $this->assertEquals($expected_stock_position->user_id, $created_stock_position->user_id);
-            $this->assertEquals($expected_stock_position->stock_id, $created_stock_position->stock_id);
-            $this->assertEquals($expected_stock_position->date, $created_stock_position->date);
-            $this->assertEquals($expected_stock_position->quantity, $created_stock_position->quantity);
-            $this->assertEquals($expected_stock_position->amount, $created_stock_position->amount);
-            $this->assertEquals($expected_stock_position->contributed_amount, $created_stock_position->contributed_amount);
-            $this->assertEquals($expected_stock_position->average_price, $created_stock_position->average_price);
+            $this->assertEquals($expected_stock_position['user_id'], $created_stock_position->user_id);
+            $this->assertEquals($expected_stock_position['stock_id'], $created_stock_position->stock_id);
+            $this->assertEquals($expected_stock_position['date'], $created_stock_position->date);
+            $this->assertEquals($expected_stock_position['quantity'], $created_stock_position->quantity);
+            $this->assertEquals($expected_stock_position['amount'], $created_stock_position->amount);
+            $this->assertEquals($expected_stock_position['contributed_amount'], $created_stock_position->contributed_amount);
+            $this->assertEquals($expected_stock_position['average_price'], $created_stock_position->average_price);
         }
     }
 }

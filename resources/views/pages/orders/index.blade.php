@@ -6,7 +6,6 @@
         <table class="table">
             <thead>
             <tr>
-                <th>#</th>
                 <th>Date</th>
                 <th>Stock</th>
                 <th>Type</th>
@@ -21,7 +20,6 @@
             <tbody>
             @foreach($orders as $order)
                 <tr>
-                    <td>{{$order->sequence}}</td>
                     <td>{{$order->date}}</td>
                     <td>{{$order->getStockSymbol()}}</td>
                     <td>{{$order->type}}</td>
