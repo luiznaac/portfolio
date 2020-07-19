@@ -53,6 +53,49 @@ class OrderTest extends TestCase {
         $this->loginWithFakeUser();
     }
 
+    public function testDelete_ShouldTouchNextOrderFromDeletedOrder(): void {
+        Carbon::setTestNow('2020-07-15 15:15:15');
+        $orders = [
+            ['stock_symbol' => 'BOVA11', 'date' => '2020-06-29', 'type' => 'buy', 'quantity' => 10, 'price' => 90.22, 'cost' => 7.50],
+            ['stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'type' => 'buy', 'quantity' => 5, 'price' => 90.22, 'cost' => 7.50],
+        ];
+
+        $this->saveOrders($orders);
+        $stock = Stock::getStockBySymbol('BOVA11');
+
+        $order_1 = Order::getBaseQuery()->where('stock_id', $stock->id)->where('date', '2020-06-29')->get()->first();
+
+        Carbon::setTestNow('2020-07-18 18:18:18');
+        $order_1->delete();
+
+        $order_2 = Order::getBaseQuery()->where('stock_id', $stock->id)->where('date', '2020-06-30')->get()->first();
+
+        $this->assertEquals('2020-07-18 18:18:18', $order_2->updated_at);
+    }
+
+    public function testDelete_ShouldTouchPreviousOrderFromDeletedOrder(): void {
+        Carbon::setTestNow('2020-07-15 15:15:15');
+        $orders = [
+            ['stock_symbol' => 'BOVA11', 'date' => '2020-06-29', 'type' => 'buy', 'quantity' => 10, 'price' => 90.22, 'cost' => 7.50],
+            ['stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'type' => 'buy', 'quantity' => 5, 'price' => 90.22, 'cost' => 7.50],
+            ['stock_symbol' => 'BOVA11', 'date' => '2020-07-01', 'type' => 'buy', 'quantity' => 5, 'price' => 90.22, 'cost' => 7.50],
+        ];
+
+        $this->saveOrders($orders);
+        $stock = Stock::getStockBySymbol('BOVA11');
+
+        $order_1 = Order::getBaseQuery()->where('stock_id', $stock->id)->where('date', '2020-06-30')->get()->first();
+
+        Carbon::setTestNow('2020-07-18 18:18:18');
+        $order_1->delete();
+
+        $order_2 = Order::getBaseQuery()->where('stock_id', $stock->id)->where('date', '2020-06-29')->get()->first();
+        $order_3 = Order::getBaseQuery()->where('stock_id', $stock->id)->where('date', '2020-07-01')->get()->first();
+
+        $this->assertEquals('2020-07-18 18:18:18', $order_2->updated_at);
+        $this->assertEquals('2020-07-15 15:15:15', $order_3->updated_at);
+    }
+
     public function testGetAllOrdersForStockUntilDate(): void {
         $date = Carbon::parse('2020-06-22');
         $stock = Stock::getStockBySymbol('BOVA11');

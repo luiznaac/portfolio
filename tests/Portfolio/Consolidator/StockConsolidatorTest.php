@@ -217,6 +217,20 @@ class StockConsolidatorTest extends TestCase {
                 'orders' => [],
                 'expected_positions' => [],
             ],
+            'Oldest order is not the oldest position - should delete positions and update' => [
+                'now' => '2020-07-02 18:01:00',
+                'stock_positions' => [
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'quantity' => 23, 'amount' => 2075.06],
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-07-01', 'quantity' => 23, 'amount' => 2131.64],
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-07-02', 'quantity' => 23, 'amount' => 2131.64],
+                ],
+                'orders' => [
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-07-02', 'type' => 'buy', 'quantity' => 10, 'price' => 90.22, 'cost' => 7.50, 'updated_at' => '2020-07-02 21:01:01'],
+                ],
+                'expected_positions' => [
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-07-02', 'quantity' => 10, 'amount' => 925, 'contributed_amount' => 909.7, 'average_price' => 90.97],
+                ],
+            ],
             'No orders for already consolidated stock - should delete positions' => [
                 'now' => '2020-06-30 18:01:00',
                 'stock_positions' => [],
@@ -245,6 +259,21 @@ class StockConsolidatorTest extends TestCase {
                 ],
                 'expected_positions' => [
                     ['stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'quantity' => 23, 'amount' => 2107.26, 'contributed_amount' => 2097.56, 'average_price' => 91.20],
+                ],
+            ],
+            'Already consolidated position but with one deleted order - should update position' => [
+                'now' => '2020-07-01 18:01:00',
+                'stock_positions' => [
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'quantity' => 23, 'amount' => 2075.06],
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-07-01', 'quantity' => 23, 'amount' => 2131.64],
+                ],
+                'orders' => [
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'type' => 'buy', 'quantity' => 10, 'price' => 90.22, 'cost' => 7.50],
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'type' => 'buy', 'quantity' => 5, 'price' => 90.22, 'cost' => 7.50, 'updated_at' => '2020-07-01 21:01:01'],
+                ],
+                'expected_positions' => [
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'quantity' => 15, 'amount' => 1374.3, 'contributed_amount' => 1368.3, 'average_price' => 91.22],
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-07-01', 'quantity' => 15, 'amount' => 1390.2, 'contributed_amount' => 1368.3, 'average_price' => 91.22],
                 ],
             ],
             'Before market close and new stock in portfolio - should create from order date until previous market date' => [

@@ -158,14 +158,29 @@ class Order extends Model {
 
     public function delete() {
         parent::delete();
-        self::touchLastOrder();
+        self::touchLastOrder($this);
     }
 
-    private static function touchLastOrder(): void {
+    private static function touchLastOrder(Order $order): void {
         /** @var Order $last_order */
-        $last_order = self::getBaseQuery()->orderByDesc('date')->get()->first();
+        $last_order = self::getBaseQuery()
+            ->where('stock_id', $order->stock_id)
+            ->where('date', '<=', $order->date)
+            ->orderByDesc('date')->get()->first();
+
         if($last_order) {
             $last_order->touch();
+            return;
+        }
+
+        /** @var Order $last_order */
+        $next_order = self::getBaseQuery()
+            ->where('stock_id', $order->stock_id)
+            ->where('date', '>', $order->date)
+            ->orderBy('date')->get()->first();
+
+        if($next_order) {
+            $next_order->touch();
         }
     }
 
