@@ -4,6 +4,7 @@ namespace App\Model\Stock\Position;
 
 use App\Model\Stock\Stock;
 use App\User;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -61,6 +62,13 @@ class StockPosition extends Model {
         return self::getBaseQuery()
             ->where('stock_id', $stock->id)
             ->orderByDesc('date')
+            ->get();
+    }
+
+    public static function getPositionsForStockInRange(Stock $stock, Carbon $start_date, Carbon $end_date): Collection {
+        return self::getBaseQuery()
+            ->where('stock_id', $stock->id)
+            ->whereBetween('date', [$start_date, $end_date])
             ->get();
     }
 

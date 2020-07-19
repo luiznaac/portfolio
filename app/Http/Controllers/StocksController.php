@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Model\Stock\Stock;
-use App\Model\Stock\StockDividend;
+use App\Model\Stock\Dividend\StockDividend;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
