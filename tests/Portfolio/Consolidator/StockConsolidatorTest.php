@@ -247,6 +247,21 @@ class StockConsolidatorTest extends TestCase {
                     ['stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'quantity' => 23, 'amount' => 2107.26, 'contributed_amount' => 2097.56, 'average_price' => 91.20],
                 ],
             ],
+            'Already consolidated position but with one deleted order - should update position' => [
+                'now' => '2020-07-01 18:01:00',
+                'stock_positions' => [
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'quantity' => 23, 'amount' => 2075.06],
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-07-01', 'quantity' => 23, 'amount' => 2131.64],
+                ],
+                'orders' => [
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'type' => 'buy', 'quantity' => 10, 'price' => 90.22, 'cost' => 7.50],
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'type' => 'buy', 'quantity' => 5, 'price' => 90.22, 'cost' => 7.50, 'updated_at' => '2020-07-01 21:01:01'],
+                ],
+                'expected_positions' => [
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'quantity' => 15, 'amount' => 1374.3, 'contributed_amount' => 1368.3, 'average_price' => 91.22],
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-07-01', 'quantity' => 15, 'amount' => 1390.2, 'contributed_amount' => 1368.3, 'average_price' => 91.22],
+                ],
+            ],
             'Before market close and new stock in portfolio - should create from order date until previous market date' => [
                 'now' => '2020-07-03 15:00:00',
                 'stock_positions' => [],
