@@ -27,19 +27,5 @@
             @endif
             </tbody>
         </table>
-        {!! Form::open(['action' => 'StockConsolidatorController@consolidateForStock']) !!}
-        <div class="container">
-            <div class="form-group">
-                <div class="row">
-                    <div class="col-auto">
-                        {{Form::hidden('stock_id', $stock->id)}}
-                    </div>
-                    <div class="col">
-                        {{Form::submit('Consolidate', ['class' => 'btn btn-primary'])}}
-                    </div>
-                </div>
-            </div>
-        </div>
-        {!! Form::close() !!}
     </div>
 @endsection

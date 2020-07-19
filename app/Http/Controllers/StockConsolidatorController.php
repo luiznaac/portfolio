@@ -11,23 +11,4 @@ class StockConsolidatorController extends Controller {
     public function __construct() {
         $this->middleware('auth');
     }
-
-    public function consolidateForStock(Request $request) {
-        $this->validate($request,[
-            'stock_id' => 'required',
-        ]);
-
-        try {
-            $stock = Stock::find($request->input('stock_id'));
-            StockConsolidator::consolidateForStock($stock);
-
-            $status = 'ok';
-            $message = "Positions for $stock->symbol consolidated.";
-        } catch (\Exception $exception) {
-            $status = 'error';
-            $message = $exception->getMessage();
-        }
-
-        return redirect('/positions/stocks/' . $request->input('stock_id'))->with($status, $message);
-    }
 }
