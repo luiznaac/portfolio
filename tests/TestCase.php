@@ -3,6 +3,8 @@
 namespace Tests;
 
 use App\Model\Order\Order;
+use App\Model\Stock\Dividend\StockDividend;
+use App\Model\Stock\Dividend\StockDividendStatementLine;
 use App\Model\Stock\Position\StockPosition;
 use App\Model\Stock\Stock;
 use App\User;
@@ -55,6 +57,24 @@ abstract class TestCase extends BaseTestCase
             $this->setTimestamps($item);
 
             Order::query()->insert($item);
+        }
+    }
+
+    public function saveDividendLines(array $data): void {
+        foreach ($data as $item) {
+            $item['user_id'] = $item['user_id'] ?? auth()->id();
+            $this->setTimestamps($item);
+
+            StockDividendStatementLine::query()->insert($item);
+        }
+    }
+
+    public function saveStockDividends(array $data): void {
+        foreach ($data as $item) {
+            $this->extractStockAndUnsetStockSymbol($item);
+            $this->setTimestamps($item);
+
+            StockDividend::query()->insert($item);
         }
     }
 

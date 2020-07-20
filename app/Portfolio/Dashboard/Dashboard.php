@@ -2,6 +2,7 @@
 
 namespace App\Portfolio\Dashboard;
 
+use App\Model\Stock\Dividend\StockDividendStatementLine;
 use App\Model\Stock\Position\StockPosition;
 use App\Model\Stock\Stock;
 
@@ -19,6 +20,7 @@ class Dashboard {
             'amount_updated' => self::$amount_updated ?: 0.0,
             'amount_contributed' => self::$amount_contributed ?: 0.0,
             'overall_variation' => self::calculateOverallVariation() ?: 0.0,
+            'dividends_amount' => self::calculateDividendsTotalAmount() ?: 0.0,
         ];
     }
 
@@ -103,5 +105,9 @@ class Dashboard {
 
         return round(((self::$amount_updated - self::$amount_contributed)/self::$amount_contributed)*100,
             self::AMOUNT_PRECISION);
+    }
+
+    private static function calculateDividendsTotalAmount(): ?float {
+        return StockDividendStatementLine::getTotalAmountPaid();
     }
 }

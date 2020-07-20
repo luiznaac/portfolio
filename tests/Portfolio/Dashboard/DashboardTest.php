@@ -33,6 +33,7 @@ class DashboardTest extends TestCase {
         $stock_positions = $this->prepareScenario();
         $stock_positions_by_type = $this->generateExpectedDataForStockPositions($stock_positions);
         [$amount_updated, $amount_contributed, $overall_variation] = $this->generateExpectedOverallData($stock_positions);
+        $dividends_amount = $this->generateExpectedDividends();
 
         $data = Dashboard::getData();
 
@@ -40,6 +41,18 @@ class DashboardTest extends TestCase {
         $this->assertEquals($amount_updated, $data['amount_updated']);
         $this->assertEquals($amount_contributed, $data['amount_contributed']);
         $this->assertEquals($overall_variation, $data['overall_variation']);
+        $this->assertEquals($dividends_amount, $data['dividends_amount']);
+    }
+
+    private function generateExpectedDividends(): float {
+        $stock_dividend_statement_lines = [
+            ['stock_dividend_id' => 1, 'quantity' => 10, 'amount_paid' => 5.7],
+            ['stock_dividend_id' => 2, 'quantity' => 10, 'amount_paid' => 5.9],
+        ];
+
+        $this->saveDividendLines($stock_dividend_statement_lines);
+
+        return 5.7 + 5.9;
     }
 
     private function generateExpectedDataForStockPositions(array $stock_positions): array {

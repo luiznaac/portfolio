@@ -1,8 +1,10 @@
 <?php
 
-namespace App\Model\Stock;
+namespace App\Model\Stock\Dividend;
 
 use App\Model\Order\Order;
+use App\Model\Stock\Stock;
+use App\Model\Stock\StockType;
 use App\Portfolio\Providers\StockDividendProvider;
 use App\Portfolio\Utils\BatchInsertOrUpdate;
 use App\Portfolio\Utils\Calendar;
@@ -10,7 +12,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * App\Model\Stock\StockDividend
+ * App\Model\Stock\Dividend\StockDividend
  *
  * @property int $id
  * @property int $stock_id
@@ -30,10 +32,18 @@ class StockDividend extends Model {
         'value',
     ];
 
-    public static function getStockDividendsStoredInRange(Stock $stock, Carbon $start_date, Carbon $end_date): array {
+    public static function getStockDividendsStoredInDatePaidRange(Stock $stock, Carbon $start_date, Carbon $end_date): array {
         return self::query()
             ->where('stock_id', $stock->id)
             ->whereBetween('date_paid', [$start_date, $end_date])
+            ->get()->toArray();
+    }
+
+    public static function getStockDividendsStoredInReferenceDateRange(Stock $stock, Carbon $start_date, Carbon $end_date): array {
+        return self::query()
+            ->where('stock_id', $stock->id)
+            ->whereBetween('reference_date', [$start_date, $end_date])
+            ->orderBy('reference_date')
             ->get()->toArray();
     }
 

@@ -1,10 +1,10 @@
 <?php
 
-namespace Tests\Model\Stock;
+namespace Tests\Model\Stock\Dividend;
 
 use App\Model\Order\Order;
 use App\Model\Stock\Stock;
-use App\Model\Stock\StockDividend;
+use App\Model\Stock\Dividend\StockDividend;
 use Carbon\Carbon;
 use Tests\TestCase;
 
@@ -27,15 +27,13 @@ class StockDividendTest extends TestCase {
         ];
 
         StockDividend::loadHistoricDividendsForAllStocks();
-        $stock_dividends = StockDividend::getStockDividendsStoredInRange($stock,  Carbon::today()->subMonths(6), Carbon::today());
+        $stock_dividends = StockDividend::getStockDividendsStoredInDatePaidRange($stock,  Carbon::today()->subMonths(6), Carbon::today());
 
         $this->assertStockDividends($expected_data, $stock_dividends);
     }
 
     public function testLoadHistoricDividendsForAllStocksWithAcao_ShouldLoadValues(): void {
-        $stock = new Stock();
-        $stock->symbol = 'FLRY3';
-        $stock->save();
+        $stock = Stock::getStockBySymbol('FLRY3');
         Carbon::setTestNow('2019-10-04 21:00:00');
         $this->createOrder($stock, '2019-04-04');
 
@@ -45,7 +43,7 @@ class StockDividendTest extends TestCase {
         ];
 
         StockDividend::loadHistoricDividendsForAllStocks();
-        $stock_dividends = StockDividend::getStockDividendsStoredInRange($stock,  Carbon::today()->subMonths(6), Carbon::today());
+        $stock_dividends = StockDividend::getStockDividendsStoredInDatePaidRange($stock,  Carbon::today()->subMonths(6), Carbon::today());
 
         $this->assertStockDividends($expected_data, $stock_dividends);
     }
