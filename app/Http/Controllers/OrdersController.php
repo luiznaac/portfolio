@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Model\Order\Order;
 use App\Model\Stock\Stock;
+use App\Portfolio\Utils\Calendar;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -34,6 +35,12 @@ class OrdersController extends Controller {
             }
 
             $date = Carbon::createFromFormat('Y-m-d', $request->input('date'));
+
+            if(!Calendar::isWorkingDay($date)) {
+                $status = 'error';
+                $message = $date->format('d/m/Y') . ' is not a weekday.';
+                return back()->with($status, $message);
+            }
 
             $order = Order::createOrder(
                 $symbol,
