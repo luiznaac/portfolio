@@ -46,13 +46,14 @@ class StockDividendStatementLine extends Model {
 
     public static function getOldestDateOfMissingStockDividendStatementLineForEachStock(): array {
         $query = <<<SQL
-SELECT MIN(reference_date) AS oldest_missing_date, stock_id
-FROM stock_dividends sd
-         LEFT JOIN stock_dividend_statement_lines dl on sd.id = dl.stock_dividend_id
-WHERE user_id = ?
+SELECT MIN(reference_date) AS oldest_missing_date, sd.stock_id
+FROM orders o
+    JOIN stock_dividends sd ON o.stock_id = sd.stock_id AND o.date <= reference_date
+    LEFT JOIN stock_dividend_statement_lines dl ON sd.id = dl.stock_dividend_id AND o.user_id = dl.user_id
+WHERE o.user_id = ?
   AND dl.id IS NULL
   AND sd.date_paid <= ?
-GROUP BY stock_id;
+GROUP BY sd.stock_id;
 SQL;
 
         $rows = DB::select($query, [auth()->id(), Calendar::getLastMarketWorkingDate()]);

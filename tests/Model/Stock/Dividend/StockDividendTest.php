@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Model\Stock;
+namespace Tests\Model\Stock\Dividend;
 
 use App\Model\Order\Order;
 use App\Model\Stock\Stock;
