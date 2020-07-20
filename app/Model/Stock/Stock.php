@@ -42,11 +42,11 @@ class Stock extends Model {
     }
 
     public function getStockDividends(): Collection {
-        return StockDividend::where('stock_id', $this->id)->orderBy('date_paid')->get();
+        return StockDividend::where('stock_id', $this->id)->orderByDesc('date_paid')->get();
     }
 
     public function getStockPrices(): Collection {
-        return StockPrice::where('stock_id', $this->id)->orderBy('date')->get();
+        return StockPrice::where('stock_id', $this->id)->orderByDesc('date')->get();
     }
 
     public function getStockPriceForDate(Carbon $date): ?float {
