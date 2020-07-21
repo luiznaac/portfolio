@@ -42,4 +42,11 @@ Route::post('/orders/delete', 'OrdersController@delete');
 Route::get('/positions/stocks', 'Pages\PositionsPagesController@showStocks');
 Route::get('/positions/stocks/{id}', 'Pages\PositionsPagesController@showStockDetailedPosition');
 
+// BONDS
+
+Route::get('/bonds/issuers', 'Pages\BondIssuersPagesController@index');
+Route::get('/bonds/issuers/create', 'Pages\BondIssuersPagesController@create');
+
+Route::post('/bonds/issuers/store', 'BondIssuersController@store');
+
 Auth::routes();
