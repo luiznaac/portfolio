@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $description
  */
 
-class BondType extends Model {
+class Index extends Model {
 
     public const SELIC_ID = 1;
     public const CDI_ID = 2;

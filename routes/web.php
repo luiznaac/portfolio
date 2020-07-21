@@ -44,9 +44,12 @@ Route::get('/positions/stocks/{id}', 'Pages\PositionsPagesController@showStockDe
 
 // BONDS
 
+Route::get('/bonds', 'Pages\BondsPagesController@index');
+Route::get('/bonds/create', 'Pages\BondsPagesController@create');
 Route::get('/bonds/issuers', 'Pages\BondIssuersPagesController@index');
 Route::get('/bonds/issuers/create', 'Pages\BondIssuersPagesController@create');
 
+Route::post('/bonds/store', 'BondsController@store');
 Route::post('/bonds/issuers/store', 'BondIssuersController@store');
 
 Auth::routes();
