@@ -101,5 +101,11 @@ class DatabaseSeeder extends Seeder
             ['id' => 6, 'type' => 'CRI', 'description' => 'Certificado de Recebíveis Imobiliários'],
             ['id' => 7, 'type' => 'CRA', 'description' => 'Certificado de Recebíveis do Agronegócio'],
         ]);
+
+        DB::table('indices')->insert([
+            ['id' => 1, 'index' => 'Selic', 'description' => 'Sistema Especial de Liquidação e Custódia'],
+            ['id' => 2, 'index' => 'CDI', 'description' => 'Certificado de Depósito Interbancário'],
+            ['id' => 3, 'index' => 'IPCA', 'description' => 'Índice Nacional de Preços ao Consumidor Amplo'],
+        ]);
     }
 }
