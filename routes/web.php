@@ -23,7 +23,7 @@ Route::post('/update', 'PagesHelperController@update');
 
 Route::get('/stocks', 'Pages\StocksPagesController@index');
 Route::get('/stocks/create', 'Pages\StocksPagesController@create');
-Route::get('/stocks/{id}', 'Pages\StocksPagesController@show');
+Route::get('/stocks/show/{id}', 'Pages\StocksPagesController@show');
 
 Route::post('/stocks/store', 'StocksController@store');
 Route::post('/stocks/update_infos', 'StocksController@updateInfos');
@@ -31,11 +31,11 @@ Route::post('/stocks/load-info-for-date', 'StocksController@loadInfoForDate');
 
 // ORDERS
 
-Route::get('/orders', 'Pages\OrdersPagesController@index');
-Route::get('/orders/create', 'Pages\OrdersPagesController@create');
+Route::get('/stocks/orders', 'Pages\OrdersPagesController@index');
+Route::get('/stocks/orders/create', 'Pages\OrdersPagesController@create');
 
-Route::post('/orders/store', 'OrdersController@store');
-Route::post('/orders/delete', 'OrdersController@delete');
+Route::post('/stocks/orders/store', 'OrdersController@store');
+Route::post('/stocks/orders/delete', 'OrdersController@delete');
 
 // POSITIONS
 

@@ -23,8 +23,8 @@
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" id="orders-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Orders</a>
                     <div class="dropdown-menu" aria-labelledby="dropdown">
-                        <a class="dropdown-item" href="/orders">Statement</a>
-                        <a class="dropdown-item" href="/orders/create">Register</a>
+                        <a class="dropdown-item" href="/stocks/orders">Statement</a>
+                        <a class="dropdown-item" href="/stocks/orders/create">Stock</a>
                     </div>
                 </li>
                 <li class="nav-item dropdown">

@@ -60,7 +60,7 @@ class OrdersController extends Controller {
             $message = $exception->getMessage();
         }
 
-        return redirect('/orders')->with($status, $message);
+        return redirect('/stocks/orders')->with($status, $message);
     }
 
     public function delete(Request $request) {
@@ -82,6 +82,6 @@ class OrdersController extends Controller {
             $message = $exception->getMessage();
         }
 
-        return redirect('/orders')->with($status, $message);
+        return redirect('/stocks/orders')->with($status, $message);
     }
 }

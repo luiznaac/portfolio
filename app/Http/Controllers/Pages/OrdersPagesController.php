@@ -8,7 +8,7 @@ use Illuminate\View\View;
 
 class OrdersPagesController extends Controller
 {
-    const DEFAULT_DIR = 'pages.orders';
+    const DEFAULT_DIR = 'pages.stocks.orders';
 
     public function __construct() {
         $this->middleware('auth');
