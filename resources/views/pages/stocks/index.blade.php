@@ -14,7 +14,7 @@
             <tbody>
             @foreach($stocks as $stock)
                 <tr>
-                    <td><a href="/stocks/{{$stock->id}}">{{$stock->symbol}}</a></td>
+                    <td><a href="/stocks/show/{{$stock->id}}">{{$stock->symbol}}</a></td>
                     <td>
                         @if(isset($stock->stock_type_id))
                             {{$stock_types[$stock->stock_type_id]['type']}}

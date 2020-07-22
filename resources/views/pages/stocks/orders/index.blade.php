@@ -44,5 +44,5 @@
         </table>
     </div>
 
-    <a href="/orders/create" class="btn btn-primary">Register Order</a>
+    <a href="/stocks/orders/create" class="btn btn-primary">Register Order</a>
 @endsection
