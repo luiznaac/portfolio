@@ -40,7 +40,7 @@ class Bond extends Model {
         $bond = new self();
         $bond->bond_issuer_id = $bond_issuer->id;
         $bond->bond_type_id = $bond_type->id;
-        $bond->index_id = $index->id;
+        $bond->index_id = $index ? $index->id : null;
         $bond->index_rate = $index_rate;
         $bond->interest_rate = $interest_rate;
         $bond->maturity_date = $maturity_date;
