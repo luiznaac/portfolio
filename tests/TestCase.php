@@ -2,6 +2,7 @@
 
 namespace Tests;
 
+use App\Model\Bond\Bond;
 use App\Model\Order\Order;
 use App\Model\Stock\Dividend\StockDividend;
 use App\Model\Stock\Dividend\StockDividendStatementLine;
@@ -76,6 +77,15 @@ abstract class TestCase extends BaseTestCase
 
             StockDividend::query()->insert($item);
         }
+    }
+
+    public function saveBonds(array $data): array {
+        $created_bonds = [];
+        foreach ($data as $item) {
+            $created_bonds[] = Bond::query()->create($item);
+        }
+
+        return $created_bonds;
     }
 
     private function extractStockAndUnsetStockSymbol(array &$item): void {

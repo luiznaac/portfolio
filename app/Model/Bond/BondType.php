@@ -29,4 +29,17 @@ class BondType extends Model {
     public const LCA_TYPE = 'LCA';
     public const CRI_TYPE = 'CRI';
     public const CRA_TYPE = 'CRA';
+
+    private const ID_TYPE = [
+        self::CDB_ID => self::CDB_TYPE,
+        self::LC_ID => self::LC_TYPE,
+        self::LCI_ID => self::LCI_TYPE,
+        self::LCA_ID => self::LCA_TYPE,
+        self::CRI_ID => self::CRI_TYPE,
+        self::CRA_ID => self::CRA_TYPE,
+    ];
+
+    public static function getType(int $bond_type_id): string {
+        return self::ID_TYPE[$bond_type_id];
+    }
 }

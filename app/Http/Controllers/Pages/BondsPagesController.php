@@ -20,7 +20,9 @@ class BondsPagesController extends Controller
 
     public function index(): View {
         $data = [
-            'bonds' => Bond::query()->orderBy('bond_type_id')->get(),
+            'bonds' => Bond::query()
+                ->orderBy('bond_type_id')
+                ->orderBy('bond_issuer_id')->get(),
         ];
 
         return view(self::DEFAULT_DIR . ".index")

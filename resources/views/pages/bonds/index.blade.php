@@ -6,8 +6,7 @@
         <table class="table">
             <thead>
             <tr>
-                <th>Issuer</th>
-                <th>Type</th>
+                <th>Name</th>
                 <th>Rate of Return</th>
                 <th>Maturity Date</th>
             </tr>
@@ -15,9 +14,8 @@
             <tbody>
             @foreach($bonds as $bond)
                 <tr>
-                    <td>{{$bond->bond_issuer_id}}</td>
-                    <td>{{$bond->bond_type_id}}</td>
-                    <td>{{$bond->index_id}}</td>
+                    <td>{{$bond->getBondName()}}</td>
+                    <td>{{$bond->getReturnRateString()}}</td>
                     <td>{{$bond->maturity_date}}</td>
                 </tr>
             @endforeach
