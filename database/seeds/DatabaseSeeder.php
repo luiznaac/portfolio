@@ -91,5 +91,21 @@ class DatabaseSeeder extends Seeder
             ['stock_id' => 3, 'type' => 'Dividendo', 'date_paid' => '2019-09-25', 'reference_date' => '2019-09-18', 'value' => 0.57],
             ['stock_id' => 3, 'type' => 'Dividendo', 'date_paid' => '2019-10-25', 'reference_date' => '2019-10-18', 'value' => 0.59],
         ]);
+
+        DB::table('bond_types')->insert([
+            ['id' => 1, 'type' => 'Tesouro Direto', 'description' => 'Tesouro Direto'],
+            ['id' => 2, 'type' => 'CDB', 'description' => 'Certificado de Depósito Bancário'],
+            ['id' => 3, 'type' => 'LC', 'description' => 'Letra de Câmbio'],
+            ['id' => 4, 'type' => 'LCI', 'description' => 'Letra de Crédito Imobiliário'],
+            ['id' => 5, 'type' => 'LCA', 'description' => 'Letra de Crédito do Agronegócio'],
+            ['id' => 6, 'type' => 'CRI', 'description' => 'Certificado de Recebíveis Imobiliários'],
+            ['id' => 7, 'type' => 'CRA', 'description' => 'Certificado de Recebíveis do Agronegócio'],
+        ]);
+
+        DB::table('indices')->insert([
+            ['id' => 1, 'index' => 'Selic', 'description' => 'Sistema Especial de Liquidação e Custódia'],
+            ['id' => 2, 'index' => 'CDI', 'description' => 'Certificado de Depósito Interbancário'],
+            ['id' => 3, 'index' => 'IPCA', 'description' => 'Índice Nacional de Preços ao Consumidor Amplo'],
+        ]);
     }
 }

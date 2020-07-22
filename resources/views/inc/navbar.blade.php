@@ -33,6 +33,13 @@
                         <a class="dropdown-item" href="/positions/stocks">Stocks</a>
                     </div>
                 </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" id="positions-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Bonds</a>
+                    <div class="dropdown-menu" aria-labelledby="dropdown">
+                        <a class="dropdown-item" href="/bonds">Listed</a>
+                        <a class="dropdown-item" href="/bonds/issuers">Issuers</a>
+                    </div>
+                </li>
                 @if($helper::shouldShowUpdateButton())
                 {!! Form::open(['action' => 'PagesHelperController@update']) !!}
                     <li class="nav-item">
