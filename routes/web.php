@@ -37,6 +37,12 @@ Route::get('/stocks/orders/create', 'Pages\OrdersPagesController@create');
 Route::post('/stocks/orders/store', 'OrdersController@store');
 Route::post('/stocks/orders/delete', 'OrdersController@delete');
 
+Route::get('/bonds/orders', 'Pages\BondOrdersPagesController@index');
+Route::get('/bonds/orders/create', 'Pages\BondOrdersPagesController@create');
+
+Route::post('/bonds/orders/store', 'BondOrdersController@store');
+Route::post('/bonds/orders/delete', 'BondOrdersController@delete');
+
 // POSITIONS
 
 Route::get('/positions/stocks', 'Pages\PositionsPagesController@showStocks');

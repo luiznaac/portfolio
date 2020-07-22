@@ -25,6 +25,7 @@
                     <div class="dropdown-menu" aria-labelledby="dropdown">
                         <a class="dropdown-item" href="/stocks/orders">Statement</a>
                         <a class="dropdown-item" href="/stocks/orders/create">Stock</a>
+                        <a class="dropdown-item" href="/bonds/orders/create">Bond</a>
                     </div>
                 </li>
                 <li class="nav-item dropdown">

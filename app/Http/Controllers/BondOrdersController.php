@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Model\Order\Order;
-use App\Model\Stock\Stock;
+use App\Model\Bond\Bond;
+use App\Model\Bond\BondOrder;
 use App\Portfolio\Utils\Calendar;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
-class OrdersController extends Controller {
+class BondOrdersController extends Controller {
 
     public function __construct() {
         $this->middleware('auth');
@@ -17,20 +17,18 @@ class OrdersController extends Controller {
     public function store(Request $request)
     {
         $this->validate($request,[
-            'symbol' => 'required',
+            'bond_id' => 'required',
             'date' => 'required|date',
             'type' => 'required',
-            'quantity' => 'required|numeric',
-            'price' => 'required|numeric',
-            'cost' => 'required|numeric',
+            'amount' => 'required|numeric',
         ]);
 
         try {
-            $symbol = $request->input('symbol');
+            $bond_id = $request->input('bond_id');
 
-            if(!Stock::isValidSymbol($symbol)) {
+            if($bond_id == 0) {
                 $status = 'error';
-                $message = "$symbol is not a valid stock.";
+                $message = "You must select a bond.";
                 return back()->with($status, $message);
             }
 
@@ -42,25 +40,21 @@ class OrdersController extends Controller {
                 return back()->with($status, $message);
             }
 
-            $order = Order::createOrder(
-                $symbol,
+            BondOrder::createOrder(
+                Bond::find($bond_id),
                 $date,
                 $request->input('type'),
-                $request->input('quantity'),
-                $request->input('price'),
-                $request->input('cost')
+                $request->input('amount')
             );
 
-            $stock = Stock::find($order->stock_id);
-
             $status = 'ok';
-            $message = "Order for $stock->symbol registered";
+            $message = "Bond order registered";
         } catch (\Exception $exception) {
             $status = 'error';
             $message = $exception->getMessage();
         }
 
-        return redirect('/stocks/orders')->with($status, $message);
+        return redirect('/bonds/orders')->with($status, $message);
     }
 
     public function delete(Request $request) {
@@ -69,8 +63,8 @@ class OrdersController extends Controller {
         ]);
 
         try {
-            /** @var Order $order */
-            $order = Order::getBaseQuery()
+            /** @var BondOrder $order */
+            $order = BondOrder::getBaseQuery()
                 ->where('id', $request->input('id'))
                 ->get()->first();
             $order->delete();
@@ -82,6 +76,6 @@ class OrdersController extends Controller {
             $message = $exception->getMessage();
         }
 
-        return redirect('/stocks/orders')->with($status, $message);
+        return redirect('/bonds/orders')->with($status, $message);
     }
 }
