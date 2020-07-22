@@ -23,8 +23,9 @@
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" id="orders-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Orders</a>
                     <div class="dropdown-menu" aria-labelledby="dropdown">
-                        <a class="dropdown-item" href="/stocks/orders">Statement</a>
+                        <a class="dropdown-item" href="/stocks/orders">Stock Statement</a>
                         <a class="dropdown-item" href="/stocks/orders/create">Stock</a>
+                        <a class="dropdown-item" href="/bonds/orders">Bond Statement</a>
                         <a class="dropdown-item" href="/bonds/orders/create">Bond</a>
                     </div>
                 </li>
