@@ -83,7 +83,9 @@ class StatusInvestAPI implements PriceAPI, StockTypeAPI, StockExistsAPI, Dividen
     private static function getPrices(Stock $stock, string $type, Carbon $start_date, Carbon $end_date): array {
         $endpoint_path = self::buildGetPriceEndpointPath($stock->symbol, $type, $start_date, $end_date);
 
-        $response = Http::timeout(self::TIMEOUT)->get(self::API . $endpoint_path);
+        $response = Http::timeout(self::TIMEOUT)
+            ->withoutVerifying()
+            ->get(self::API . $endpoint_path);
         return $response->json()['data']['prices'];
     }
 
@@ -105,14 +107,18 @@ class StatusInvestAPI implements PriceAPI, StockTypeAPI, StockExistsAPI, Dividen
     private static function getStockDividends(Stock $stock, string $type, Carbon $start_date, Carbon $end_date): array {
         $endpoint_path = self::buildGetDividendEndpointPath($stock->symbol, $type, $start_date, $end_date);
 
-        $response = Http::timeout(self::TIMEOUT)->get(self::API . $endpoint_path);
+        $response = Http::timeout(self::TIMEOUT)
+            ->withoutVerifying()
+            ->get(self::API . $endpoint_path);
 
         return $response->json();
     }
 
     private static function getSearchEndpointResultsForText(string $text): array {
         $endpoint_path = self::buildSearchEndpointPath($text);
-        $response = Http::timeout(self::TIMEOUT)->get(self::API . $endpoint_path);
+        $response = Http::timeout(self::TIMEOUT)
+            ->withoutVerifying()
+            ->get(self::API . $endpoint_path);
 
         return $response->json();
     }
@@ -140,7 +146,9 @@ class StatusInvestAPI implements PriceAPI, StockTypeAPI, StockExistsAPI, Dividen
             $times_tried += 1;
 
             try {
-                $response = Http::timeout(self::TIMEOUT)->get(self::API . $endpoint_path);
+                $response = Http::timeout(self::TIMEOUT)
+                    ->withoutVerifying()
+                    ->get(self::API . $endpoint_path);
                 $data = $response->json();
 
                 if ($data['totalEvents'] > 0) {

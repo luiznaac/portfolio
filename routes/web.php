@@ -25,9 +25,7 @@ Route::get('/stocks', 'Pages\StocksPagesController@index');
 Route::get('/stocks/create', 'Pages\StocksPagesController@create');
 Route::get('/stocks/show/{id}', 'Pages\StocksPagesController@show');
 
-Route::post('/stocks/store', 'StocksController@store');
 Route::post('/stocks/update_infos', 'StocksController@updateInfos');
-Route::post('/stocks/load-info-for-date', 'StocksController@loadInfoForDate');
 
 // ORDERS
 

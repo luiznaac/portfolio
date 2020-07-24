@@ -38,42 +38,6 @@ class StockPrice extends Model {
         return self::getStockPricesStoredInRange($stock, $start_date, $end_date);
     }
 
-    public static function loadPriceForDateAndStore(Stock $stock, Carbon $date): ?self {
-        $price = StockPriceProvider::getPriceForDate($stock, $date);
-
-        if(!$price) {
-            return null;
-        }
-
-        /** @var StockPrice $stock_price */
-        $stock_price = self::query()->updateOrCreate(
-            [
-                'stock_id'  => $stock->id,
-                'date'      => $date->toDateString(),
-            ],
-            [
-                'price' => $price,
-            ]
-        );
-
-        return $stock_price;
-    }
-
-    public static function loadPricesForDatesAndStore(Stock $stock, Carbon $start_date, Carbon $end_date): void {
-        $prices = StockPriceProvider::getPricesForRange($stock, $start_date, $end_date);
-
-        $data = [];
-        foreach ($prices as $date => $price) {
-            $data[] = [
-                    'stock_id'  => $stock->id,
-                    'date'      => $date,
-                    'price' => $price,
-            ];
-        }
-
-        BatchInsertOrUpdate::execute('stock_prices', $data);
-    }
-
     private static function getStockPricesStoredInRange(Stock $stock, Carbon $start_date, Carbon $end_date): array {
         return self::query()
             ->where('stock_id', $stock->id)
@@ -101,6 +65,21 @@ class StockPrice extends Model {
         $dates_stored = self::extractDatesStoredInRange($stock_prices_stored_in_range);
 
         return array_values(array_diff($expected_dates, $dates_stored));
+    }
+
+    private static function loadPricesForDatesAndStore(Stock $stock, Carbon $start_date, Carbon $end_date): void {
+        $prices = StockPriceProvider::getPricesForRange($stock, $start_date, $end_date);
+
+        $data = [];
+        foreach ($prices as $date => $price) {
+            $data[] = [
+                'stock_id'  => $stock->id,
+                'date'      => $date,
+                'price' => $price,
+            ];
+        }
+
+        BatchInsertOrUpdate::execute('stock_prices', $data);
     }
 
     private static function extractDatesStoredInRange(array $stock_prices_stored_in_range): array {
