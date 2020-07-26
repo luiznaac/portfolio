@@ -3,11 +3,13 @@
 namespace Tests;
 
 use App\Model\Bond\Bond;
+use App\Model\Holiday\Holiday;
 use App\Model\Order\Order;
 use App\Model\Stock\Dividend\StockDividend;
 use App\Model\Stock\Dividend\StockDividendStatementLine;
 use App\Model\Stock\Position\StockPosition;
 use App\Model\Stock\Stock;
+use App\Portfolio\Consolidator\ConsolidatorDateProvider;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\Concerns\InteractsWithAuthentication;
@@ -19,6 +21,12 @@ abstract class TestCase extends BaseTestCase
     use CreatesApplication;
     use DatabaseTransactions;
     use InteractsWithAuthentication;
+
+    protected function setUp(): void {
+        parent::setUp();
+        Holiday::clearCache();
+        ConsolidatorDateProvider::clearCache();
+    }
 
     public function loginWithFakeUser(): User {
         /** @var User $user */

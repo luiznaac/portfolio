@@ -3,11 +3,13 @@
 namespace App\Model\Stock\Position;
 
 use App\Model\Stock\Stock;
+use App\Portfolio\Utils\Calendar;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 /**
  * App\Model\Stock\StockPosition
@@ -70,6 +72,30 @@ class StockPosition extends Model {
             ->where('stock_id', $stock->id)
             ->whereBetween('date', [$start_date, $end_date])
             ->get();
+    }
+
+    public static function getLastDateOfOutdatedStockPositionsForEachStock(): array {
+        $query = <<<SQL
+SELECT stock_id, last_date
+FROM (SELECT MAX(date) AS last_date, stock_id
+      FROM stock_positions sp
+      WHERE user_id = ?
+      GROUP BY stock_id) last_positions
+WHERE last_date < ?;
+SQL;
+
+        $rows = DB::select($query, [
+                auth()->id(),
+                Calendar::getLastMarketWorkingDate()->toDateString()
+            ]
+        );
+
+        $data = [];
+        foreach ($rows as $row) {
+            $data[$row->stock_id] = $row->last_date;
+        }
+
+        return $data;
     }
 
     private static function getConsolidatedStockIds(): array {

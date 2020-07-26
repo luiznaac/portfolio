@@ -2,7 +2,6 @@
 
 namespace App\Portfolio\Consolidator;
 
-use App\Model\Log\Log;
 use App\Model\Order\Order;
 use App\Model\Stock\Dividend\StockDividend;
 use App\Model\Stock\Dividend\StockDividendStatementLine;
@@ -14,11 +13,7 @@ use App\Portfolio\Utils\Calendar;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
-/**
- * @runTestsInSeparateProcesses
- * @preserveGlobalState disabled
- */
-class StockConsolidator {
+class StockPositionConsolidator implements ConsolidatorInterface {
 
     /** @var Stock $stock */
     private static $stock;
@@ -28,11 +23,9 @@ class StockConsolidator {
     private static $dividend_lines_buffer = [];
 
     public static function consolidate(): void {
-        Log::log('debug', __CLASS__.'::'.__FUNCTION__, 'starting at:' . Carbon::now()->toDateTimeString());
         self::clear();
         self::consolidateStockPositions();
         self::consolidateDividends();
-        Log::log('debug', __CLASS__.'::'.__FUNCTION__, 'finishing at:' . Carbon::now()->toDateTimeString());
     }
 
     private static function getStockDatesToBeUpdated(): array {

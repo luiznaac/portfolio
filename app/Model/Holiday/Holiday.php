@@ -37,6 +37,10 @@ class Holiday extends Model {
         }
     }
 
+    public static function clearCache(): void {
+        self::$cached_holidays = [];
+    }
+
     private static function getHolidaysForYearFromCache(Carbon $date): array {
         if(!isset(self::$cached_holidays[$date->year])) {
             self::cacheHolidaysForYear($date);

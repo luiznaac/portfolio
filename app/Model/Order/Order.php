@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 /**
  * App\Model\Order\Order
@@ -159,6 +160,28 @@ class Order extends Model {
     public function delete() {
         parent::delete();
         self::touchLastOrder($this);
+    }
+
+    public static function getOldestDateOfLastInsertedOrdersForEachStock(): array {
+        $query = <<<SQL
+SELECT o.stock_id, MIN(o.date) AS order_date
+FROM orders o
+         LEFT JOIN stock_positions sp ON o.stock_id = sp.stock_id AND o.user_id = sp.user_id
+WHERE o.user_id = ?
+  AND (o.updated_at >
+       (SELECT MAX(updated_at) FROM stock_positions sp2 WHERE sp2.stock_id = sp.stock_id AND sp2.user_id = sp.user_id)
+    OR sp.id IS NULL)
+GROUP BY o.stock_id;
+SQL;
+
+        $rows = DB::select($query, [auth()->id()]);
+
+        $data = [];
+        foreach ($rows as $row) {
+            $data[$row->stock_id] = $row->order_date;
+        }
+
+        return $data;
     }
 
     private static function touchLastOrder(Order $order): void {

@@ -7,10 +7,6 @@ use App\Portfolio\Utils\Calendar;
 use Carbon\Carbon;
 use Tests\TestCase;
 
-/**
- * @runTestsInSeparateProcesses
- * @preserveGlobalState disabled
- */
 class CalendarTest extends TestCase {
 
     public function dataProviderForTestGetWorkingDaysDatesForRange(): array {
