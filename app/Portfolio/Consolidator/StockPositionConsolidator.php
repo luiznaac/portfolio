@@ -3,8 +3,6 @@
 namespace App\Portfolio\Consolidator;
 
 use App\Model\Order\Order;
-use App\Model\Stock\Dividend\StockDividend;
-use App\Model\Stock\Dividend\StockDividendStatementLine;
 use App\Model\Stock\Position\StockPosition;
 use App\Model\Stock\Stock;
 use App\Model\Stock\StockPrice;
@@ -15,24 +13,10 @@ use Illuminate\Support\Facades\DB;
 
 class StockPositionConsolidator implements ConsolidatorInterface {
 
-    /** @var Stock $stock */
-    private static $stock;
     private static $prices;
     private static $positions_buffer = [];
-    private static $dividend_lines_buffer = [];
 
     public static function consolidate(): void {
-        self::consolidateStockPositions();
-        self::consolidateDividends();
-    }
-
-    public static function shouldConsolidate(): bool {
-        return !empty(ConsolidatorDateProvider::getStockPositionDatesToBeUpdated())
-            || !empty(self::getStockPositionIdsToRemove())
-            || !empty(ConsolidatorDateProvider::getStockDividendDatesToBeUpdated());
-    }
-
-    private static function consolidateStockPositions(): void {
         self::removePositionsWithoutOrders();
         $stocks_dates = ConsolidatorDateProvider::getStockPositionDatesToBeUpdated();
 
@@ -47,26 +31,11 @@ class StockPositionConsolidator implements ConsolidatorInterface {
         self::touchLastStockPosition();
     }
 
-    private static function consolidateDividends(): void {
-        self::removeDividendStatementLinesWithoutOrders();
-        $stock_dividends_dates = ConsolidatorDateProvider::getStockDividendDatesToBeUpdated();
-
-        foreach ($stock_dividends_dates as $stock_id => $date) {
-            $stock = Stock::find($stock_id);
-            $date = Carbon::parse($date);
-
-            self::consolidateDividendsForStock($stock, $date);
-        }
-
-        self::saveDividendLinesBuffer();
-    }
-
     private static function consolidateStockPositionsForStock(Stock $stock, Carbon $start_date) {
-        self::$stock = $stock;
         $end_date = Calendar::getLastMarketWorkingDate();
         $dates = Calendar::getWorkingDaysDatesForRange($start_date, $end_date);
-        $grouped_orders = self::getOrdersGroupedByDateInRange($start_date, $end_date);
-        self::loadAndCachePricesBeforeProcessing($dates);
+        $grouped_orders = self::getOrdersGroupedByDateInRange($stock, $start_date, $end_date);
+        self::loadAndCachePricesBeforeProcessing($stock, $dates);
 
         foreach ($dates as $date) {
             $position = $position ?? self::getStockPositionOrEmpty($stock, $start_date);
@@ -84,64 +53,8 @@ class StockPositionConsolidator implements ConsolidatorInterface {
         }
     }
 
-    private static function consolidateDividendsForStock(Stock $stock, Carbon $start_date) {
-        $stock_dividends = self::getStockDividends($stock, $start_date);
-        if (empty($stock_dividends)) {
-            return;
-        }
-
-        $stock_positions = self::getStockPositionsForDates($stock, array_keys($stock_dividends));
-
-        foreach ($stock_dividends as $date => $dividend_info) {
-            $quantity = $stock_positions[$date]['quantity'];
-
-            $dividend_line = [
-                'stock_dividend_id' => $dividend_info['id'],
-                'quantity' => $quantity,
-                'amount_paid' => $quantity * $dividend_info['value'],
-            ];
-
-            self::$dividend_lines_buffer[] = $dividend_line;
-        }
-    }
-
-    private static function getStockDividends(Stock $stock, Carbon $start_date) {
-        $stock_dividends = StockDividend::getStockDividendsStoredInReferenceDateRange($stock, $start_date, Calendar::getLastMarketWorkingDate());
-
-        $data = [];
-        /** @var StockDividend $stock_dividend */
-        foreach ($stock_dividends as $stock_dividend) {
-            $data[$stock_dividend['reference_date']] = [
-                'id' => $stock_dividend['id'],
-                'value' => $stock_dividend['value'],
-            ];
-        }
-
-        return $data;
-    }
-
-    private static function getStockPositionsForDates(Stock $stock, array $dates): array {
-        $start_date = Carbon::parse($dates[0]);
-        $end_date = Carbon::parse($dates[sizeof($dates)-1]);
-        $stock_positions = StockPosition::getPositionsForStockInRange($stock, $start_date, $end_date);
-
-        $data = [];
-        /** @var StockPosition $stock_position */
-        foreach ($stock_positions as $stock_position) {
-            if (!in_array($stock_position->date, $dates)) {
-                continue;
-            }
-
-            $data[$stock_position->date] = [
-                'quantity' => $stock_position->quantity,
-            ];
-        }
-
-        return $data;
-    }
-
-    private static function getOrdersGroupedByDateInRange(Carbon $start_date, Carbon $end_date): array {
-        $orders = Order::getAllOrdersForStockInRage(self::$stock, $start_date, $end_date);
+    private static function getOrdersGroupedByDateInRange(Stock $stock, Carbon $start_date, Carbon $end_date): array {
+        $orders = Order::getAllOrdersForStockInRage($stock, $start_date, $end_date);
 
         $grouped_orders = [];
         /** @var Order $order */
@@ -152,7 +65,7 @@ class StockPositionConsolidator implements ConsolidatorInterface {
         return $grouped_orders;
     }
 
-    private static function loadAndCachePricesBeforeProcessing(array $dates): void {
+    private static function loadAndCachePricesBeforeProcessing(Stock $stock, array $dates): void {
         if(sizeof($dates) < 1) {
             return;
         }
@@ -160,7 +73,7 @@ class StockPositionConsolidator implements ConsolidatorInterface {
         $start_date = Carbon::parse($dates[0]);
         $end_date = Carbon::parse($dates[sizeof($dates)-1]);
 
-        $stock_prices = StockPrice::getStockPricesForDateRange(self::$stock, $start_date, $end_date);
+        $stock_prices = StockPrice::getStockPricesForDateRange($stock, $start_date, $end_date);
 
         self::$prices = [];
         /** @var StockPrice $stock_price */
@@ -229,28 +142,10 @@ class StockPositionConsolidator implements ConsolidatorInterface {
         self::$positions_buffer = [];
     }
 
-    private static function saveDividendLinesBuffer(): void {
-        $data = [];
-        foreach (self::$dividend_lines_buffer as $line) {
-            $line['user_id'] = auth()->id();
-
-            $data[] = $line;
-        }
-
-        BatchInsertOrUpdate::execute('stock_dividend_statement_lines', $data);
-        self::$dividend_lines_buffer = [];
-    }
-
     private static function removePositionsWithoutOrders(): void {
         $stock_position_ids_to_remove = self::getStockPositionIdsToRemove();
 
         StockPosition::getBaseQuery()->whereIn('id', $stock_position_ids_to_remove)->delete();
-    }
-
-    private static function removeDividendStatementLinesWithoutOrders(): void {
-        $dividend_statement_line_ids_to_remove = self::getDividendStatementLineIdsToRemove();
-
-        StockDividendStatementLine::getBaseQuery()->whereIn('id', $dividend_statement_line_ids_to_remove)->delete();
     }
 
     private static function getStockPositionIdsToRemove(): array {
@@ -268,27 +163,6 @@ SQL;
         $data = [];
         foreach ($rows as $row) {
             $data[] = $row->stock_position_id;
-        }
-
-        return $data;
-    }
-
-    private static function getDividendStatementLineIdsToRemove(): array {
-        $query = <<<SQL
-SELECT dl.id AS stock_dividend_statement_line_id
-FROM stock_dividend_statement_lines dl
-    LEFT JOIN stock_dividends sd ON dl.stock_dividend_id = sd.id
-    LEFT JOIN orders o ON sd.stock_id = o.stock_id AND dl.user_id = o.user_id
-WHERE dl.user_id = ?
-  AND (o.id IS NULL
-    OR sd.reference_date < (SELECT MIN(date) FROM orders o2 WHERE sd.stock_id = o2.stock_id AND dl.user_id = o2.user_id));
-SQL;
-
-        $rows = DB::select($query, [auth()->id()]);
-
-        $data = [];
-        foreach ($rows as $row) {
-            $data[] = $row->stock_dividend_statement_line_id;
         }
 
         return $data;

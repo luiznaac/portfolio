@@ -10,6 +10,7 @@ use App\Model\Stock\Dividend\StockDividendStatementLine;
 use App\Model\Stock\Position\StockPosition;
 use App\Model\Stock\Stock;
 use App\Portfolio\Consolidator\ConsolidatorDateProvider;
+use App\Portfolio\Utils\Calendar;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\Concerns\InteractsWithAuthentication;
@@ -39,6 +40,11 @@ abstract class TestCase extends BaseTestCase
         $this->be($user);
 
         return $user;
+    }
+
+    public function setTestNowForB3DateTime(string $date_time): void {
+        $now_int_utc = Carbon::parse($date_time, Calendar::B3_TIMEZONE)->utc();
+        Carbon::setTestNow($now_int_utc);
     }
 
     public function saveStockPositions(array $data): void {
