@@ -10,6 +10,10 @@ use App\Portfolio\Utils\PagesHelper;
 use Carbon\Carbon;
 use Tests\TestCase;
 
+/**
+ * @runTestsInSeparateProcesses
+ * @preserveGlobalState disabled
+ */
 class PagesHelperTest extends TestCase {
 
     private $user;
@@ -64,7 +68,7 @@ class PagesHelperTest extends TestCase {
             ],
             'Stock position date on last working day pre market close' => [
                 'today' => '2020-07-10 15:30:00',
-                'order' => ['updated_at' => '2020-07-09'],
+                'order' => ['date' => '2020-07-09', 'updated_at' => '2020-07-09'],
                 'stock_positions' => [
                     [
                         'date' => '2020-07-09',
@@ -112,7 +116,7 @@ class PagesHelperTest extends TestCase {
         $order_1->updated_at = $order['updated_at'];
         $order_1->store(
             Stock::getStockBySymbol('SQIA3'),
-            Carbon::now(),
+            isset($order['date']) ? Carbon::parse($order['date']) : Carbon::now(),
             $type = 'buy',
             $quantity = 10,
             $price = 90.22,

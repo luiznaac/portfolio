@@ -14,6 +14,10 @@ use App\Portfolio\Utils\Calendar;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * @runTestsInSeparateProcesses
+ * @preserveGlobalState disabled
+ */
 class StockConsolidator {
 
     /** @var Stock $stock */
@@ -25,14 +29,13 @@ class StockConsolidator {
 
     public static function consolidate(): void {
         Log::log('debug', __CLASS__.'::'.__FUNCTION__, 'starting at:' . Carbon::now()->toDateTimeString());
+        self::clear();
         self::consolidateStockPositions();
         self::consolidateDividends();
-
-        self::clear();
         Log::log('debug', __CLASS__.'::'.__FUNCTION__, 'finishing at:' . Carbon::now()->toDateTimeString());
     }
 
-    public static function getStockDatesToBeUpdated(): array {
+    private static function getStockDatesToBeUpdated(): array {
         return self::$dates_updated ?? self::$dates_updated = self::calculateStockDatesToBeUpdated();
     }
 

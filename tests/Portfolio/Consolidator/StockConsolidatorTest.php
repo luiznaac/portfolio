@@ -92,122 +92,6 @@ class StockConsolidatorTest extends TestCase {
         $this->user = $this->loginWithFakeUser();
     }
 
-    public function dataProviderForTestGetStockDatesToBeUpdated(): array {
-        return [
-            'Everything is updated - should return empty array' => [
-                'now' => '2020-07-09 23:00:00',
-                'stock_positions' => [
-                    ['stock_symbol' => 'SQIA3', 'date' => '2020-07-09', 'updated_at' => '2020-07-09 23:01:00'],
-                    ['stock_symbol' => 'XPML11', 'date' => '2020-07-09', 'updated_at' => '2020-07-09 23:01:00'],
-                ],
-                'orders' => [
-                    ['stock_symbol' => 'SQIA3', 'date' => '2020-07-01', 'updated_at' => '2020-07-09 23:00:00', 'type' => 'buy'],
-                    ['stock_symbol' => 'XPML11', 'date' => '2020-07-01', 'updated_at' => '2020-07-09 23:00:00', 'type' => 'buy'],
-                ],
-                'expected_dates' => [],
-            ],
-            'One stock position is outdated - should return stock position date' => [
-                'now' => '2020-07-09 23:00:00',
-                'stock_positions' => [
-                    ['stock_symbol' => 'SQIA3', 'date' => '2020-07-08', 'updated_at' => '2020-07-08 23:01:00'],
-                    ['stock_symbol' => 'XPML11', 'date' => '2020-07-09', 'updated_at' => '2020-07-09 23:01:00'],
-                ],
-                'orders' => [
-                    ['stock_symbol' => 'SQIA3', 'date' => '2020-07-01', 'updated_at' => '2020-07-08 23:00:00', 'type' => 'buy'],
-                    ['stock_symbol' => 'XPML11', 'date' => '2020-07-01', 'updated_at' => '2020-07-09 23:00:00', 'type' => 'buy'],
-                ],
-                'expected_dates' => [
-                    'SQIA3' => '2020-07-08',
-                ],
-            ],
-            'Two stock positions are outdated - should return stock positions dates' => [
-                'now' => '2020-07-09 23:00:00',
-                'stock_positions' => [
-                    ['stock_symbol' => 'SQIA3', 'date' => '2020-07-08', 'updated_at' => '2020-07-08 23:01:00'],
-                    ['stock_symbol' => 'XPML11', 'date' => '2020-07-07', 'updated_at' => '2020-07-07 23:01:00'],
-                ],
-                'orders' => [
-                    ['stock_symbol' => 'SQIA3', 'date' => '2020-07-01', 'updated_at' => '2020-07-07 23:00:00', 'type' => 'buy'],
-                    ['stock_symbol' => 'XPML11', 'date' => '2020-07-01', 'updated_at' => '2020-07-07 23:00:00', 'type' => 'buy'],
-                ],
-                'expected_dates' => [
-                    'SQIA3' => '2020-07-08',
-                    'XPML11' => '2020-07-07',
-                ],
-            ],
-            'Positions updated but has an order before last reference date - should return order date' => [
-                'now' => '2020-07-09 23:00:00',
-                'stock_positions' => [
-                    ['stock_symbol' => 'SQIA3', 'date' => '2020-07-09', 'updated_at' => '2020-07-09 23:01:00'],
-                    ['stock_symbol' => 'XPML11', 'date' => '2020-07-09', 'updated_at' => '2020-07-09 23:01:00'],
-                ],
-                'orders' => [
-                    ['stock_symbol' => 'SQIA3', 'date' => '2020-07-01', 'updated_at' => '2020-07-09 23:02:00', 'type' => 'buy'],
-                    ['stock_symbol' => 'XPML11', 'date' => '2020-07-01', 'updated_at' => '2020-07-09 23:00:00', 'type' => 'buy'],
-                ],
-                'expected_dates' => [
-                    'SQIA3' => '2020-07-01',
-                ],
-            ],
-            'Positions outdated and has an order before last reference date - should return order date' => [
-                'now' => '2020-07-09 23:00:00',
-                'stock_positions' => [
-                    ['stock_symbol' => 'SQIA3', 'date' => '2020-07-07', 'updated_at' => '2020-07-07 23:01:00'],
-                    ['stock_symbol' => 'XPML11', 'date' => '2020-07-09', 'updated_at' => '2020-07-09 23:01:00'],
-                ],
-                'orders' => [
-                    ['stock_symbol' => 'SQIA3', 'date' => '2020-07-01', 'updated_at' => '2020-07-09 23:02:00', 'type' => 'buy'],
-                    ['stock_symbol' => 'XPML11', 'date' => '2020-07-01', 'updated_at' => '2020-07-09 23:00:00', 'type' => 'buy'],
-                ],
-                'expected_dates' => [
-                    'SQIA3' => '2020-07-01',
-                ],
-            ],
-            'Positions outdated and has an order after last reference date - should return position date' => [
-                'now' => '2020-07-09 23:00:00',
-                'stock_positions' => [
-                    ['stock_symbol' => 'SQIA3', 'date' => '2020-07-07', 'updated_at' => '2020-07-07 23:01:00'],
-                    ['stock_symbol' => 'XPML11', 'date' => '2020-07-09', 'updated_at' => '2020-07-09 23:01:00'],
-                ],
-                'orders' => [
-                    ['stock_symbol' => 'SQIA3', 'date' => '2020-07-08', 'updated_at' => '2020-07-09 23:02:00', 'type' => 'buy'],
-                    ['stock_symbol' => 'XPML11', 'date' => '2020-07-01', 'updated_at' => '2020-07-09 23:00:00', 'type' => 'buy'],
-                ],
-                'expected_dates' => [
-                    'SQIA3' => '2020-07-07',
-                ],
-            ],
-            'No positions for stock but with order - should return order date' => [
-                'now' => '2020-07-09 23:00:00',
-                'stock_positions' => [
-                    ['stock_symbol' => 'XPML11', 'date' => '2020-07-09', 'updated_at' => '2020-07-09 23:01:00'],
-                ],
-                'orders' => [
-                    ['stock_symbol' => 'SQIA3', 'date' => '2020-07-08', 'updated_at' => '2020-07-09 23:02:00', 'type' => 'buy'],
-                    ['stock_symbol' => 'XPML11', 'date' => '2020-07-01', 'updated_at' => '2020-07-09 23:00:00', 'type' => 'buy'],
-                ],
-                'expected_dates' => [
-                    'SQIA3' => '2020-07-08',
-                ],
-            ],
-        ];
-    }
-
-    /**
-     * @dataProvider dataProviderForTestGetStockDatesToBeUpdated
-     */
-
-    public function testGetStockDatesToBeUpdated(string $now, array $stock_positions, array $orders, array $expected_dates): void {
-        Carbon::setTestNow($now);
-        $this->saveStockPositions($stock_positions);
-        $this->saveOrders($orders);
-        $this->translateStockSymbolsToIdsForDates($expected_dates);
-
-        $stock_dates = StockConsolidator::getStockDatesToBeUpdated();
-
-        $this->assertEquals($expected_dates, $stock_dates);
-    }
-
     public function dataProviderForTestConsolidate_StockPositions(): array {
         return [
             'Without orders - should not create positions' => [
@@ -432,14 +316,6 @@ class StockConsolidatorTest extends TestCase {
     private function setTestNowForB3DateTime(string $date_time): void {
         $now_int_utc = Carbon::parse($date_time, Calendar::B3_TIMEZONE)->utc();
         Carbon::setTestNow($now_int_utc);
-    }
-
-    private function translateStockSymbolsToIdsForDates(array &$expected_dates): void {
-        foreach ($expected_dates as $symbol => $expected_date) {
-            $stock = Stock::getStockBySymbol($symbol);
-            unset($expected_dates[$symbol]);
-            $expected_dates[$stock->id] = $expected_date;
-        }
     }
 
     private function translateStockSymbolsToIdsForStockPositions(array &$expected_positions): void {

@@ -22,11 +22,6 @@ class Stock extends Model {
 
     protected $fillable = ['symbol'];
 
-    public function store(string $symbol): void {
-        $this->symbol = $symbol;
-        $this->save();
-    }
-
     public static function isValidSymbol(string $symbol): bool {
         $stock = self::where('symbol', $symbol)->get()->first();
 
@@ -47,19 +42,6 @@ class Stock extends Model {
 
     public function getStockPrices(): Collection {
         return StockPrice::where('stock_id', $this->id)->orderByDesc('date')->get();
-    }
-
-    public function getStockPriceForDate(Carbon $date): ?float {
-        $stock_price = StockPrice::query()
-            ->where('stock_id', $this->id)
-            ->where('date', $date->toDateString())
-            ->get()->first();
-
-        if(!$stock_price) {
-            $stock_price = StockPrice::loadPriceForDateAndStore($this, $date);
-        }
-
-        return $stock_price ? $stock_price->price : null;
     }
 
     public function getStockType(): StockType {
