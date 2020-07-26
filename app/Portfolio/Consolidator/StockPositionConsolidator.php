@@ -18,42 +18,23 @@ class StockPositionConsolidator implements ConsolidatorInterface {
     /** @var Stock $stock */
     private static $stock;
     private static $prices;
-    private static $dates_updated;
     private static $positions_buffer = [];
     private static $dividend_lines_buffer = [];
 
     public static function consolidate(): void {
-        self::clear();
         self::consolidateStockPositions();
         self::consolidateDividends();
     }
 
-    private static function getStockDatesToBeUpdated(): array {
-        return self::$dates_updated ?? self::$dates_updated = self::calculateStockDatesToBeUpdated();
-    }
-
-    private static function calculateStockDatesToBeUpdated() {
-        $stock_ids_orders_dates = self::getOldestDateOfLastInsertedOrdersForEachStock();
-        $stock_ids_positions_dates = self::getLastDateOfOutdatedStockPositionsForEachStock();
-
-        return self::mergeDatesConsideringTheOldestOne($stock_ids_orders_dates, $stock_ids_positions_dates);
-    }
-
-    private static function getStockDividendsDatesToBeUpdated(): array {
-        $oldest_missing_dividend_dates = StockDividendStatementLine::getOldestDateOfMissingStockDividendStatementLineForEachStock();
-
-        return self::mergeDatesConsideringTheOldestOne($oldest_missing_dividend_dates, self::getStockDatesToBeUpdated());
-    }
-
     public static function shouldConsolidate(): bool {
-        return !empty(self::getStockDatesToBeUpdated())
+        return !empty(ConsolidatorDateProvider::getStockPositionDatesToBeUpdated())
             || !empty(self::getStockPositionIdsToRemove())
-            || !empty(self::getStockDividendsDatesToBeUpdated());
+            || !empty(ConsolidatorDateProvider::getStockDividendDatesToBeUpdated());
     }
 
     private static function consolidateStockPositions(): void {
         self::removePositionsWithoutOrders();
-        $stocks_dates = self::getStockDatesToBeUpdated();
+        $stocks_dates = ConsolidatorDateProvider::getStockPositionDatesToBeUpdated();
 
         foreach ($stocks_dates as $stock_id => $date) {
             $stock = Stock::find($stock_id);
@@ -68,7 +49,7 @@ class StockPositionConsolidator implements ConsolidatorInterface {
 
     private static function consolidateDividends(): void {
         self::removeDividendStatementLinesWithoutOrders();
-        $stock_dividends_dates = self::getStockDividendsDatesToBeUpdated();
+        $stock_dividends_dates = ConsolidatorDateProvider::getStockDividendDatesToBeUpdated();
 
         foreach ($stock_dividends_dates as $stock_id => $date) {
             $stock = Stock::find($stock_id);
@@ -319,76 +300,5 @@ SQL;
         if($last_stock_position) {
             $last_stock_position->touch();
         }
-    }
-
-    private static function getOldestDateOfLastInsertedOrdersForEachStock(): array {
-        $query = <<<SQL
-SELECT o.stock_id, MIN(o.date) AS order_date
-FROM orders o
-         LEFT JOIN stock_positions sp ON o.stock_id = sp.stock_id AND o.user_id = sp.user_id
-WHERE o.user_id = ?
-  AND (o.updated_at >
-       (SELECT MAX(updated_at) FROM stock_positions sp2 WHERE sp2.stock_id = sp.stock_id AND sp2.user_id = sp.user_id)
-    OR sp.id IS NULL)
-GROUP BY o.stock_id;
-SQL;
-
-        $rows = DB::select($query, [auth()->id()]);
-
-        $data = [];
-        foreach ($rows as $row) {
-            $data[$row->stock_id] = $row->order_date;
-        }
-
-        return $data;
-    }
-
-    private static function getLastDateOfOutdatedStockPositionsForEachStock(): array {
-        $query = <<<SQL
-SELECT stock_id, last_date
-FROM (SELECT MAX(date) AS last_date, stock_id
-      FROM stock_positions sp
-      WHERE user_id = ?
-      GROUP BY stock_id) last_positions
-WHERE last_date < ?;
-SQL;
-
-        $rows = DB::select($query, [
-                auth()->id(),
-                Calendar::getLastMarketWorkingDate()->toDateString()
-            ]
-        );
-
-        $data = [];
-        foreach ($rows as $row) {
-            $data[$row->stock_id] = $row->last_date;
-        }
-
-        return $data;
-    }
-
-    private static function mergeDatesConsideringTheOldestOne(array $stock_ids_dates_1, array $stock_ids_dates_2): array {
-        $ids = array_merge(array_keys($stock_ids_dates_1), array_keys($stock_ids_dates_2));
-
-        $data = [];
-        foreach ($ids as $id) {
-            if (isset($stock_ids_dates_1[$id]) && isset($stock_ids_dates_2[$id])) {
-                $date_1 = Carbon::parse($stock_ids_dates_1[$id]);
-                $date_2 = Carbon::parse($stock_ids_dates_2[$id]);
-                $data[$id] = $date_1->lte($date_2) ? $date_1->toDateString() : $date_2->toDateString();
-
-                continue;
-            }
-
-            $data[$id] = $stock_ids_dates_1[$id] ?? $stock_ids_dates_2[$id];
-        }
-
-        return $data;
-    }
-
-    private static function clear(): void {
-        self::$positions_buffer = [];
-        self::$dividend_lines_buffer = [];
-        self::$dates_updated = null;
     }
 }

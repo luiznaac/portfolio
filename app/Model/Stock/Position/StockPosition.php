@@ -74,30 +74,6 @@ class StockPosition extends Model {
             ->get();
     }
 
-    public static function getLastDateOfOutdatedStockPositionsForEachStock(): array {
-        $query = <<<SQL
-SELECT stock_id, last_date
-FROM (SELECT MAX(date) AS last_date, stock_id
-      FROM stock_positions sp
-      WHERE user_id = ?
-      GROUP BY stock_id) last_positions
-WHERE last_date < ?;
-SQL;
-
-        $rows = DB::select($query, [
-                auth()->id(),
-                Calendar::getLastMarketWorkingDate()->toDateString()
-            ]
-        );
-
-        $data = [];
-        foreach ($rows as $row) {
-            $data[$row->stock_id] = $row->last_date;
-        }
-
-        return $data;
-    }
-
     private static function getConsolidatedStockIds(): array {
         $cursor = self::getBaseQuery()
             ->select('stock_id', 'symbol')->distinct()

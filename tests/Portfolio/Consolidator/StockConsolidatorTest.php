@@ -6,7 +6,7 @@ use App\Model\Order\Order;
 use App\Model\Stock\Dividend\StockDividendStatementLine;
 use App\Model\Stock\Position\StockPosition;
 use App\Model\Stock\Stock;
-use App\Portfolio\Consolidator\StockConsolidator;
+use App\Portfolio\Consolidator\StockPositionConsolidator;
 use App\Portfolio\Utils\Calendar;
 use Carbon\Carbon;
 use Tests\TestCase;
@@ -239,7 +239,7 @@ class StockConsolidatorTest extends TestCase {
         $this->translateStockSymbolsToIdsForStockPositions($expected_positions);
         $this->fillUserId($expected_positions);
 
-        StockConsolidator::consolidate();
+        StockPositionConsolidator::consolidate();
 
         $this->assertStockPositions(array_reverse($expected_positions));
     }
@@ -308,7 +308,7 @@ class StockConsolidatorTest extends TestCase {
         $this->saveOrders($orders);
         $this->fillUserId($expected_dividend_lines);
 
-        StockConsolidator::consolidate();
+        StockPositionConsolidator::consolidate();
 
         $this->assertStockDividendStatementLines(array_reverse($expected_dividend_lines));
     }
