@@ -3,6 +3,8 @@
 namespace App\Model\Order;
 
 use App\Model\Stock\Stock;
+use App\Portfolio\Consolidator\ConsolidatorStateMachine;
+use App\Portfolio\Utils\Calendar;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -88,6 +90,11 @@ class Order extends Model {
             $cost
         );
 
+        $last_market_working_date = Calendar::getLastMarketWorkingDate();
+
+        if($date->lt($last_market_working_date)) {
+            ConsolidatorStateMachine::getConsolidatorStateMachine()->changeToNotConsolidatedState();
+        }
         return $order;
     }
 
@@ -159,6 +166,7 @@ class Order extends Model {
     public function delete() {
         parent::delete();
         self::touchLastOrder($this);
+        ConsolidatorStateMachine::getConsolidatorStateMachine()->changeToNotConsolidatedState();
     }
 
     private static function touchLastOrder(Order $order): void {

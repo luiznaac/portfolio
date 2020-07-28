@@ -11,6 +11,8 @@ class ConsolidatorCoordinator {
         foreach ($consolidators as $consolidator) {
             $consolidator::consolidate();
         }
+
+        ConsolidatorStateMachine::getConsolidatorStateMachine()->changeToConsolidatedState();
     }
 
     private static function getConsolidators(): array {
