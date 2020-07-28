@@ -3,15 +3,13 @@
 namespace Tests\Portfolio\Consolidator;
 
 use App\Model\Order\Order;
-use App\Model\Stock\Dividend\StockDividendStatementLine;
 use App\Model\Stock\Position\StockPosition;
 use App\Model\Stock\Stock;
-use App\Portfolio\Consolidator\StockConsolidator;
-use App\Portfolio\Utils\Calendar;
+use App\Portfolio\Consolidator\StockPositionConsolidator;
 use Carbon\Carbon;
 use Tests\TestCase;
 
-class StockConsolidatorTest extends TestCase {
+class StockPositionConsolidatorTest extends TestCase {
 
     private $user;
 
@@ -92,7 +90,22 @@ class StockConsolidatorTest extends TestCase {
         $this->user = $this->loginWithFakeUser();
     }
 
-    public function dataProviderForTestConsolidate_StockPositions(): array {
+    /**
+     * @dataProvider dataProviderForTestConsolidate
+     */
+    public function testConsolidate_StockPositions(string $now, array $stock_positions, array $orders, array $expected_positions): void {
+        $this->setTestNowForB3DateTime($now);
+        $this->saveStockPositions($stock_positions);
+        $this->saveOrders($orders);
+        $this->translateStockSymbolsToIdsForStockPositions($expected_positions);
+        $this->fillUserId($expected_positions);
+
+        StockPositionConsolidator::consolidate();
+
+        $this->assertStockPositions(array_reverse($expected_positions));
+    }
+
+    public function dataProviderForTestConsolidate(): array {
         return [
             'Without orders - should not create positions' => [
                 'now' => '2020-07-03 15:00:00',
@@ -228,96 +241,6 @@ class StockConsolidatorTest extends TestCase {
         ];
     }
 
-    /**
-     * @dataProvider dataProviderForTestConsolidate_StockPositions
-     */
-
-    public function testConsolidate_StockPositions(string $now, array $stock_positions, array $orders, array $expected_positions): void {
-        $this->setTestNowForB3DateTime($now);
-        $this->saveStockPositions($stock_positions);
-        $this->saveOrders($orders);
-        $this->translateStockSymbolsToIdsForStockPositions($expected_positions);
-        $this->fillUserId($expected_positions);
-
-        StockConsolidator::consolidate();
-
-        $this->assertStockPositions(array_reverse($expected_positions));
-    }
-
-    public function dataProviderForTestConsolidate_Dividends(): array {
-        return [
-            'Dividend paid - should create line' => [
-                'now' => '2019-09-25 18:00:00',
-                'dividend_lines' => [],
-                'orders' => [
-                    ['stock_symbol' => 'XPML11', 'date' => '2019-09-18', 'type' => 'buy', 'quantity' => 10, 'price' => 102.5, 'cost' => 0],
-                ],
-                'expected_dividend_lines' => [
-                    ['stock_dividend_id' => 1, 'quantity' => 10, 'amount_paid' => 5.7],
-                ],
-            ],
-            'Dividends paid - should create lines' => [
-                'now' => '2019-10-25 18:01:00',
-                'dividend_lines' => [],
-                'orders' => [
-                    ['stock_symbol' => 'XPML11', 'date' => '2019-09-18', 'type' => 'buy', 'quantity' => 10, 'price' => 102.5, 'cost' => 0],
-                    ['stock_symbol' => 'XPML11', 'date' => '2019-09-19', 'type' => 'buy', 'quantity' => 10, 'price' => 102.5, 'cost' => 0],
-                ],
-                'expected_dividend_lines' => [
-                    ['stock_dividend_id' => 1, 'quantity' => 10, 'amount_paid' => 5.7],
-                    ['stock_dividend_id' => 2, 'quantity' => 20, 'amount_paid' => 11.8],
-                ],
-            ],
-            'Without orders - should not create dividend lines' => [
-                'now' => '2019-09-18 18:00:00',
-                'dividend_lines' => [],
-                'orders' => [],
-                'expected_dividend_lines' => [],
-            ],
-            'Dividend not yet paid - should not create lines' => [
-                'now' => '2019-09-24 18:00:00',
-                'dividend_lines' => [],
-                'orders' => [
-                    ['stock_symbol' => 'XPML11', 'date' => '2019-09-13', 'type' => 'buy', 'quantity' => 10, 'price' => 102.5, 'cost' => 0],
-                ],
-                'expected_dividend_lines' => [],
-            ],
-            'Dividend lines without orders - should delete lines' => [
-                'now' => '2019-09-24 18:00:00',
-                'dividend_lines' => [
-                    ['stock_dividend_id' => 1, 'quantity' => 10, 'amount_paid' => 5.7],
-                    ['stock_dividend_id' => 2, 'quantity' => 10, 'amount_paid' => 5.9],
-                ],
-                'orders' => [
-                    ['stock_symbol' => 'XPML11', 'date' => '2019-09-19', 'type' => 'buy', 'quantity' => 10, 'price' => 102.5, 'cost' => 0],
-                ],
-                'expected_dividend_lines' => [
-                    ['stock_dividend_id' => 2, 'quantity' => 10, 'amount_paid' => 5.9],
-                ],
-            ],
-        ];
-    }
-
-    /**
-     * @dataProvider dataProviderForTestConsolidate_Dividends
-     */
-
-    public function testConsolidate_Dividends(string $now, array $dividend_lines, array $orders, array $expected_dividend_lines): void {
-        $this->setTestNowForB3DateTime($now);
-        $this->saveDividendLines($dividend_lines);
-        $this->saveOrders($orders);
-        $this->fillUserId($expected_dividend_lines);
-
-        StockConsolidator::consolidate();
-
-        $this->assertStockDividendStatementLines(array_reverse($expected_dividend_lines));
-    }
-
-    private function setTestNowForB3DateTime(string $date_time): void {
-        $now_int_utc = Carbon::parse($date_time, Calendar::B3_TIMEZONE)->utc();
-        Carbon::setTestNow($now_int_utc);
-    }
-
     private function translateStockSymbolsToIdsForStockPositions(array &$expected_positions): void {
         foreach ($expected_positions as &$position) {
             $stock = Stock::getStockBySymbol($position['stock_symbol']);
@@ -352,26 +275,6 @@ class StockConsolidatorTest extends TestCase {
             $this->assertEquals($expected_stock_position['amount'], $created_stock_position->amount);
             $this->assertEquals($expected_stock_position['contributed_amount'], $created_stock_position->contributed_amount);
             $this->assertEquals($expected_stock_position['average_price'], $created_stock_position->average_price);
-        }
-    }
-
-    private function assertStockDividendStatementLines(array $expected_dividend_lines): void {
-        $created_dividend_lines = StockDividendStatementLine::getBaseQuery()
-            ->whereIn('stock_dividend_id', array_map(function ($line) {
-                return $line['stock_dividend_id'];
-            }, $expected_dividend_lines))
-            ->get();
-
-        $this->assertCount(sizeof($expected_dividend_lines), $created_dividend_lines);
-        /** @var StockDividendStatementLine $expected_dividend_line */
-        foreach ($expected_dividend_lines as $expected_dividend_line) {
-            /** @var StockDividendStatementLine $created_dividend_line */
-            $created_dividend_line = $created_dividend_lines->pop();
-
-            $this->assertEquals($expected_dividend_line['user_id'], $created_dividend_line->user_id);
-            $this->assertEquals($expected_dividend_line['stock_dividend_id'], $created_dividend_line->stock_dividend_id);
-            $this->assertEquals($expected_dividend_line['quantity'], $created_dividend_line->quantity);
-            $this->assertEquals($expected_dividend_line['amount_paid'], $created_dividend_line->amount_paid);
         }
     }
 }

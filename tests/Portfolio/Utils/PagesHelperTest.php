@@ -10,10 +10,6 @@ use App\Portfolio\Utils\PagesHelper;
 use Carbon\Carbon;
 use Tests\TestCase;
 
-/**
- * @runTestsInSeparateProcesses
- * @preserveGlobalState disabled
- */
 class PagesHelperTest extends TestCase {
 
     private $user;

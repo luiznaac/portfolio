@@ -3,11 +3,14 @@
 namespace Tests;
 
 use App\Model\Bond\Bond;
+use App\Model\Holiday\Holiday;
 use App\Model\Order\Order;
 use App\Model\Stock\Dividend\StockDividend;
 use App\Model\Stock\Dividend\StockDividendStatementLine;
 use App\Model\Stock\Position\StockPosition;
 use App\Model\Stock\Stock;
+use App\Portfolio\Consolidator\ConsolidatorDateProvider;
+use App\Portfolio\Utils\Calendar;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\Concerns\InteractsWithAuthentication;
@@ -20,6 +23,12 @@ abstract class TestCase extends BaseTestCase
     use DatabaseTransactions;
     use InteractsWithAuthentication;
 
+    protected function setUp(): void {
+        parent::setUp();
+        Holiday::clearCache();
+        ConsolidatorDateProvider::clearCache();
+    }
+
     public function loginWithFakeUser(): User {
         /** @var User $user */
         $user = User::query()->create([
@@ -31,6 +40,11 @@ abstract class TestCase extends BaseTestCase
         $this->be($user);
 
         return $user;
+    }
+
+    public function setTestNowForB3DateTime(string $date_time): void {
+        $now_int_utc = Carbon::parse($date_time, Calendar::B3_TIMEZONE)->utc();
+        Carbon::setTestNow($now_int_utc);
     }
 
     public function saveStockPositions(array $data): void {
@@ -64,6 +78,7 @@ abstract class TestCase extends BaseTestCase
     public function saveDividendLines(array $data): void {
         foreach ($data as $item) {
             $item['user_id'] = $item['user_id'] ?? auth()->id();
+            $this->extractDividendByReferenceDateIfSet($item);
             $this->setTimestamps($item);
 
             StockDividendStatementLine::query()->insert($item);
@@ -88,10 +103,34 @@ abstract class TestCase extends BaseTestCase
         return $created_bonds;
     }
 
+    public function translateStockSymbolsToIdsForDates(array &$expected_dates): void {
+        foreach ($expected_dates as $symbol => $expected_date) {
+            $stock = Stock::getStockBySymbol($symbol);
+            unset($expected_dates[$symbol]);
+            $expected_dates[$stock->id] = $expected_date;
+        }
+    }
+
     private function extractStockAndUnsetStockSymbol(array &$item): void {
         $stock = Stock::getStockBySymbol($item['stock_symbol']);
         $item['stock_id'] = $stock->id;
 
+        unset($item['stock_symbol']);
+    }
+
+    private function extractDividendByReferenceDateIfSet(array &$item): void {
+        if(!isset($item['stock_symbol'])) {
+            return;
+        }
+
+        $stock = Stock::getStockBySymbol($item['stock_symbol']);
+        $stock_dividend = StockDividend::query()
+            ->where('stock_id', $stock->id)
+            ->where('reference_date', $item['reference_date'])
+            ->get()->first();
+        $item['stock_dividend_id'] = $stock_dividend->id;
+
+        unset($item['reference_date']);
         unset($item['stock_symbol']);
     }
 
