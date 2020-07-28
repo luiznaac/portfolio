@@ -13,7 +13,7 @@ class ConsolidatorDateProvider {
     public static function getOldestLastReferenceDate(): ?Carbon {
         $date = self::calculateOldestLastReferenceDate();
 
-        return $date ? null : Carbon::parse($date);
+        return $date ? Carbon::parse($date) : null;
     }
 
     public static function getStockPositionDatesToBeUpdated(): array {
