@@ -5,6 +5,7 @@ namespace App\Model\Stock\Dividend;
 use App\Model\Order\Order;
 use App\Model\Stock\Stock;
 use App\Model\Stock\StockType;
+use App\Portfolio\Consolidator\ConsolidatorStateMachine;
 use App\Portfolio\Providers\StockDividendProvider;
 use App\Portfolio\Utils\BatchInsertOrUpdate;
 use App\Portfolio\Utils\Calendar;
@@ -67,6 +68,8 @@ class StockDividend extends Model {
 
             self::loadDividendsForDatesAndStore($stock, $start_date, $end_date);
         }
+
+        ConsolidatorStateMachine::changeAllMachinesToNotConsolidatedState();
     }
 
     private static function loadDividendsForDatesAndStore(Stock $stock, Carbon $start_date, Carbon $end_date): void {

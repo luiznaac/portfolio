@@ -5,6 +5,7 @@ namespace Tests\Portfolio\Utils;
 use App\Model\Order\Order;
 use App\Model\Stock\Position\StockPosition;
 use App\Model\Stock\Stock;
+use App\Portfolio\Consolidator\ConsolidatorStateMachine;
 use App\Portfolio\Utils\Calendar;
 use App\Portfolio\Utils\PagesHelper;
 use Carbon\Carbon;
@@ -33,23 +34,11 @@ class PagesHelperTest extends TestCase {
                 'stock_positions' => [],
                 'expected_result' => true,
             ],
-            'No order and with stock positions' => [
-                'today' => '2020-07-10',
-                'order' => [],
-                'stock_positions' => [['updated_at' => '2020-07-10']],
-                'expected_result' => true,
-            ],
             'Order after stock position' => [
                 'today' => '2020-07-09',
                 'order' => ['updated_at' => '2020-07-11'],
                 'stock_positions' => [['updated_at' => '2020-07-10']],
                 'expected_result' => true,
-            ],
-            'Order before stock position' => [
-                'today' => '2020-07-09',
-                'order' => ['updated_at' => '2020-07-08'],
-                'stock_positions' => [['updated_at' => '2020-07-09']],
-                'expected_result' => false,
             ],
             'Stock position date before last working day post market close' => [
                 'today' => '2020-07-10 18:30:00',
@@ -108,11 +97,9 @@ class PagesHelperTest extends TestCase {
             return;
         }
 
-        $order_1 = new Order();
-        $order_1->updated_at = $order['updated_at'];
-        $order_1->store(
-            Stock::getStockBySymbol('SQIA3'),
-            isset($order['date']) ? Carbon::parse($order['date']) : Carbon::now(),
+        Order::createOrder(
+            'SQIA3',
+            isset($order['date']) ? Carbon::parse($order['date']) : Carbon::now()->subDays(2),
             $type = 'buy',
             $quantity = 10,
             $price = 90.22,

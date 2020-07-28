@@ -85,6 +85,8 @@ class Stock extends Model {
                 $stock->loadStockType();
             }
         }
+
+        StockDividend::loadHistoricDividendsForAllStocks();
     }
 
     private function loadStockName(): void {

@@ -16,7 +16,6 @@ class StocksController extends Controller {
     public function updateInfos() {
         try {
             Stock::updateInfosForAllStocks();
-            StockDividend::loadHistoricDividendsForAllStocks();
 
             $status = 'ok';
             $message = "Infos updated";

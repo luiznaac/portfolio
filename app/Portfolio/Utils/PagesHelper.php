@@ -4,13 +4,15 @@ namespace App\Portfolio\Utils;
 
 use App\Model\Stock\Stock;
 use App\Portfolio\Consolidator\ConsolidatorCoordinator;
-use App\Portfolio\Consolidator\ConsolidatorHelper;
-use App\Portfolio\Consolidator\StockPositionConsolidator;
+use App\Portfolio\Consolidator\ConsolidatorStateMachine;
 
 class PagesHelper {
 
     public static function shouldUpdatePositions(): bool {
-        return ConsolidatorHelper::shouldConsolidate();
+        $consolidator_state_machine = ConsolidatorStateMachine::getConsolidatorStateMachine();
+        $consolidator_state_machine->updateState();
+
+        return !$consolidator_state_machine->isConsolidated();
     }
 
     public static function update(): void {

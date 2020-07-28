@@ -2,7 +2,6 @@
 
 namespace App\Portfolio\Consolidator;
 
-use App\Model\Stock\Dividend\StockDividendStatementLine;
 use App\Portfolio\Utils\Calendar;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -10,6 +9,12 @@ use Illuminate\Support\Facades\DB;
 class ConsolidatorDateProvider {
 
     private static $stock_dates;
+
+    public static function getOldestLastReferenceDate(): ?Carbon {
+        $date = self::calculateOldestLastReferenceDate();
+
+        return $date ? null : Carbon::parse($date);
+    }
 
     public static function getStockPositionDatesToBeUpdated(): array {
         return self::$stock_dates ?? self::$stock_dates = self::calculateStockPositionDatesToBeUpdated();
@@ -21,6 +26,20 @@ class ConsolidatorDateProvider {
 
     public static function clearCache(): void {
         self::$stock_dates = null;
+    }
+
+    private static function calculateOldestLastReferenceDate(): ?string {
+        $query = <<<SQL
+SELECT MIN(last_date) AS oldest_last_date
+FROM (SELECT MAX(date) AS last_date
+      FROM stock_positions sp
+      WHERE user_id = ?
+      GROUP BY stock_id) last_positions;
+SQL;
+
+        $record = DB::select($query, [auth()->id()])[0];
+
+        return $record->oldest_last_date;
     }
 
     private static function calculateStockPositionDatesToBeUpdated(): array {
