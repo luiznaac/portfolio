@@ -160,6 +160,7 @@ class Order extends Model {
             ->where('stock_id', $stock->id)
             ->whereBetween('date', [$start_date, $end_date])
             ->orderBy('date')
+            ->orderBy('type')
             ->get();
     }
 
@@ -167,6 +168,14 @@ class Order extends Model {
         parent::delete();
         self::touchLastOrder($this);
         ConsolidatorStateMachine::getConsolidatorStateMachine()->changeToNotConsolidatedState();
+    }
+
+    public static function getTypeModifier(string $type): int {
+        if($type == 'sell') {
+            return -1;
+        }
+
+        return 1;
     }
 
     private static function touchLastOrder(Order $order): void {
@@ -190,14 +199,6 @@ class Order extends Model {
         if($next_order) {
             $next_order->touch();
         }
-    }
-
-    private static function getTypeModifier(string $type): int {
-        if($type == 'sell') {
-            return -1;
-        }
-
-        return 1;
     }
 
     private function calculateAveragePrice(): float {
