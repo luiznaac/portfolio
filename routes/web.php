@@ -56,4 +56,8 @@ Route::get('/bonds/issuers/create', 'Pages\BondIssuersPagesController@create');
 Route::post('/bonds/store', 'BondsController@store');
 Route::post('/bonds/issuers/store', 'BondIssuersController@store');
 
+// CONSOLIDATOR
+
+Route::get('/force-consolidation', 'ConsolidatorController@force');
+
 Auth::routes();

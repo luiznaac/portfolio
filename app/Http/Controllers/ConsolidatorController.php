@@ -4,27 +4,27 @@ namespace App\Http\Controllers;
 
 use App\Model\Stock\Stock;
 use App\Model\Stock\Dividend\StockDividend;
+use App\Portfolio\Utils\PagesHelper;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
-class StocksController extends Controller {
+class ConsolidatorController extends Controller {
 
     public function __construct() {
         $this->middleware('auth');
     }
 
-    public function updateInfos() {
+    public function force() {
         try {
-            Stock::updateInfosForAllStocks();
-            StockDividend::loadHistoricDividendsForAllStocks();
+            PagesHelper::update();
 
             $status = 'ok';
-            $message = "Infos updated";
+            $message = "Everything was updated!";
         } catch (\Exception $exception) {
             $status = 'error';
             $message = $exception->getMessage();
         }
 
-        return redirect('/stocks')->with($status, $message);
+        return redirect('/')->with($status, $message);
     }
 }
