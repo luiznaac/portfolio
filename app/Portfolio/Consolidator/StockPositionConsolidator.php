@@ -93,13 +93,26 @@ class StockPositionConsolidator implements ConsolidatorInterface {
 
     private static function sumOrdersToPosition(array $orders, array $position): array {
         foreach ($orders as $order) {
-            $position['quantity'] =
-                (isset($position['quantity']) ? $position['quantity'] : 0) + $order['quantity'];
-            $position['contributed_amount'] =
-                (isset($position['contributed_amount']) ? $position['contributed_amount'] : 0) + $order['quantity'] * $order['price'] + $order['cost'];
+            $position = self::handleCalculationAccordinglyOrderType($order, $position);
+
+            $position['average_price'] = $position['contributed_amount']/$position['quantity'];
         }
 
-        $position['average_price'] = $position['contributed_amount']/$position['quantity'];
+        return $position;
+    }
+
+    private static function handleCalculationAccordinglyOrderType(Order $order, array $position): array {
+        $position['quantity'] =
+            (isset($position['quantity']) ? $position['quantity'] : 0) + $order['quantity'] * Order::getTypeModifier($order['type']);
+
+        if($order->type == 'buy') {
+            $position['contributed_amount'] =
+                (isset($position['contributed_amount']) ? $position['contributed_amount'] : 0) + $order['quantity'] * $order['price'] + $order['cost'];
+
+            return $position;
+        }
+
+        $position['contributed_amount'] = $position['contributed_amount'] - $position['average_price'] * $order['quantity'];
 
         return $position;
     }

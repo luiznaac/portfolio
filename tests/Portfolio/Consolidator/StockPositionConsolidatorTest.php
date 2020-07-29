@@ -238,6 +238,19 @@ class StockPositionConsolidatorTest extends TestCase {
                     ['stock_symbol' => 'BOVA11', 'date' => '2020-07-03', 'quantity' => 23, 'amount' => 2143.37, 'contributed_amount' => 2097.56, 'average_price' => 91.20],
                 ],
             ],
+            'With sell orders' => [
+                'now' => '2020-06-30 15:00:00',
+                'stock_positions' => [],
+                'orders' => [
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'type' => 'buy', 'quantity' => 20, 'price' => 90.22, 'cost' => 7.50],
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'type' => 'sell', 'quantity' => 5, 'price' => 91.22, 'cost' => 7.50],
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-29', 'type' => 'sell', 'quantity' => 10, 'price' => 92.22, 'cost' => 7.50],
+                ],
+                'expected_positions' => [
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'quantity' => 15, 'amount' => 1353.3, 'contributed_amount' => 1358.92, 'average_price' => 90.59],
+                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-29', 'quantity' => 5, 'amount' => 461.5, 'contributed_amount' => 452.98, 'average_price' => 90.59],
+                ],
+            ],
         ];
     }
 
