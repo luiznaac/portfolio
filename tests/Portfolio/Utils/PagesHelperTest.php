@@ -20,25 +20,25 @@ class PagesHelperTest extends TestCase {
         $this->user = $this->loginWithFakeUser();
     }
 
-    public function dataProviderForTestShouldUpdatePositions(): array {
+    public function dataProviderForTestUpdateAndGetConsolidationState(): array {
         return [
             'No orders and no stock positions' => [
                 'today' => '2020-07-10',
                 'order' => [],
                 'stock_positions' => [],
-                'expected_result' => false,
+                'expected_result' => 0,
             ],
             'With order and no stock positions' => [
                 'today' => '2020-07-10',
                 'order' => ['updated_at' => '2020-07-10'],
                 'stock_positions' => [],
-                'expected_result' => true,
+                'expected_result' => 1,
             ],
             'Order after stock position' => [
                 'today' => '2020-07-09',
                 'order' => ['updated_at' => '2020-07-11'],
                 'stock_positions' => [['updated_at' => '2020-07-10']],
-                'expected_result' => true,
+                'expected_result' => 1,
             ],
             'Stock position date before last working day post market close' => [
                 'today' => '2020-07-10 18:30:00',
@@ -49,7 +49,7 @@ class PagesHelperTest extends TestCase {
                         'updated_at' => '2020-07-09'
                     ],
                 ],
-                'expected_result' => true,
+                'expected_result' => 1,
             ],
             'Stock position date on last working day pre market close' => [
                 'today' => '2020-07-10 15:30:00',
@@ -60,7 +60,7 @@ class PagesHelperTest extends TestCase {
                         'updated_at' => '2020-07-10'
                     ],
                 ],
-                'expected_result' => false,
+                'expected_result' => 0,
             ],
             'Most recent stock position updated at is not the last position and has order after last stock position updated' => [
                 'today' => '2020-07-11 15:30:00',
@@ -75,21 +75,21 @@ class PagesHelperTest extends TestCase {
                         'updated_at' => '2020-07-10 15:00:58'
                     ],
                 ],
-                'expected_result' => true,
+                'expected_result' => 1,
             ],
         ];
     }
 
     /**
-     * @dataProvider dataProviderForTestShouldUpdatePositions
+     * @dataProvider dataProviderForTestUpdateAndGetConsolidationState
      */
-    public function testShouldUpdatePositions(string $today, array $order, array $stock_positions, bool $expected_result): void {
+    public function testUpdateAndGetConsolidationState(string $today, array $order, array $stock_positions, int $expected_result): void {
         $today_in_utc = Carbon::parse($today, Calendar::B3_TIMEZONE)->utc();
         Carbon::setTestNow($today_in_utc);
         $this->createOrder($order);
         $this->createStockPositions($stock_positions);
 
-        $this->assertEquals($expected_result, PagesHelper::shouldUpdatePositions());
+        $this->assertEquals($expected_result, PagesHelper::updateAndGetConsolidationState());
     }
 
     private function createOrder(array $order): void {

@@ -42,12 +42,20 @@
                         <a class="dropdown-item" href="/bonds/issuers">Issuers</a>
                     </div>
                 </li>
-                @if($helper::shouldShowUpdateButton())
-                {!! Form::open(['action' => 'PagesHelperController@update']) !!}
-                    <li class="nav-item">
-                        {{Form::submit('Consolidate', ['class' => 'nav-link btn btn-danger btn-sm'])}}
-                    </li>
+                @if($helper::getConsolidationState() == 0)
+                <li class="nav-item">
+                    <button type="button" class="nav-link btn btn-success btn-sm" disabled>Consolidated</button>
+                </li>
+                @elseif($helper::getConsolidationState() == 1)
+                {!! Form::open(['action' => 'ConsolidatorController@consolidate']) !!}
+                <li class="nav-item">
+                    {{Form::submit('Consolidate', ['class' => 'nav-link btn btn-danger btn-sm'])}}
+                </li>
                 {!! Form::close() !!}
+                @else
+                <li class="nav-item">
+                    <button type="button" class="nav-link btn btn-info btn-sm" disabled>Consolidating</button>
+                </li>
                 @endif
                 @endauth
             </ul>

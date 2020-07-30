@@ -20,6 +20,7 @@ class ConsolidatorStateMachine extends Model {
 
     private const CONSOLIDATED_STATE = 0;
     private const NOT_CONSOLIDATED_STATE = 1;
+    private const CONSOLIDATING_STATE = 2;
 
     public static function getBaseQuery(): Builder {
         /** @var User $user */
@@ -49,7 +50,7 @@ class ConsolidatorStateMachine extends Model {
     }
 
     public function updateState(): void {
-        if($this->state == self::NOT_CONSOLIDATED_STATE) {
+        if($this->state != self::CONSOLIDATED_STATE) {
             return;
         }
 
@@ -85,12 +86,13 @@ class ConsolidatorStateMachine extends Model {
         $this->save();
     }
 
-    public function changeToNotConsolidatedState(): void {
-        $this->state = self::NOT_CONSOLIDATED_STATE;
+    public function changeToConsolidatingState(): void {
+        $this->state = self::CONSOLIDATING_STATE;
         $this->save();
     }
 
-    public function isConsolidated(): bool {
-        return $this->state == self::CONSOLIDATED_STATE;
+    public function changeToNotConsolidatedState(): void {
+        $this->state = self::NOT_CONSOLIDATED_STATE;
+        $this->save();
     }
 }

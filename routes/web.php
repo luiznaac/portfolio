@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', 'Pages\DashboardPagesController@index');
 
-Route::post('/update', 'PagesHelperController@update');
+Route::post('/consolidate', 'ConsolidatorController@consolidate');
 
 // STOCKS
 

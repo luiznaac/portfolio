@@ -12,21 +12,7 @@ class PagesHelperController extends Controller
         $this->middleware('auth');
     }
 
-    public function update(Request $request) {
-        try {
-            PagesHelper::update();
-
-            $status = 'ok';
-            $message = 'Everything was updated!';
-        } catch (\Exception $exception) {
-            $status = 'error';
-            $message = $exception->getMessage();
-        }
-
-        return back()->with($status, $message);
-    }
-
-    public static function shouldShowUpdateButton(): bool {
-        return PagesHelper::shouldUpdatePositions();
+    public static function getConsolidationState(): int {
+        return PagesHelper::updateAndGetConsolidationState();
     }
 }
