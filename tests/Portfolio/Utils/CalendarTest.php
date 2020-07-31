@@ -177,6 +177,16 @@ class CalendarTest extends TestCase {
         ], $years);
     }
 
+    public function testGetStartOfAllMonthsForRange(): void {
+        $start_date = Carbon::parse('2020-01-01');
+        $end_date = Carbon::parse('2020-07-01');
+        $months = Calendar::getStartOfAllMonthsForRange($start_date, $end_date);
+
+        $this->assertEquals([
+            '2020-01-01', '2020-02-01', '2020-03-01', '2020-04-01', '2020-05-01', '2020-06-01', '2020-07-01'
+        ], $months);
+    }
+
     private function createHoliday(string $date): void {
         Holiday::query()->insert([
             'date' => $date,

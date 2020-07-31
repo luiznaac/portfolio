@@ -70,4 +70,16 @@ class Calendar {
 
         return $years;
     }
+
+    public static function getStartOfAllMonthsForRange(Carbon $start_date, Carbon $end_date): array {
+        $date = clone $start_date;
+
+        $dates = [];
+        while ($date->lte($end_date)) {
+            $dates[] = $date->startOfMonth()->toDateString();
+            $date->addMonth();
+        }
+
+        return $dates;
+    }
 }
