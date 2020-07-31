@@ -26,7 +26,10 @@ class StockPrice extends Model {
         'price',
     ];
 
+    private static $missing_dates;
+
     public static function getStockPricesForDateRange(Stock $stock, Carbon $start_date, Carbon $end_date): array {
+        self::clearCache();
         $stock_prices_stored_in_range = self::getStockPricesStoredInRange($stock, $start_date, $end_date);
 
         if(!self::hasMissingData($stock_prices_stored_in_range, $start_date, $end_date)) {
@@ -61,6 +64,10 @@ class StockPrice extends Model {
     }
 
     private static function getMissingDates(array $stock_prices_stored_in_range, Carbon $start_date, Carbon $end_date): array {
+        return self::$missing_dates ?? self::$missing_dates = self::calculateMissingDates($stock_prices_stored_in_range, $start_date, $end_date);
+    }
+
+    private static function calculateMissingDates(array $stock_prices_stored_in_range, Carbon $start_date, Carbon $end_date): array {
         $expected_dates = Calendar::getWorkingDaysDatesForRange($start_date, $end_date);
         $dates_stored = self::extractDatesStoredInRange($stock_prices_stored_in_range);
 
@@ -96,5 +103,9 @@ class StockPrice extends Model {
         });
 
         return $dates;
+    }
+
+    private static function clearCache(): void {
+        self::$missing_dates = null;
     }
 }
