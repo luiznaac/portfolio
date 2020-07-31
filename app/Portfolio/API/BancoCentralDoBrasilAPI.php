@@ -35,7 +35,7 @@ class BancoCentralDoBrasilAPI implements IndexAPI {
     }
 
     private static function buildGetIndexValueEndpointPath(Index $index, Carbon $start_date, Carbon $end_date) {
-        $index_code = self::API_INDEX_TYPES[Index::getIndexAbbr($index->id)];
+        $index_code = self::API_INDEX_TYPES[$index->getAbbr()];
 
         $endpoint_path = str_replace(':index_code', $index_code, self::INDEX_ENDPOINT);
         $endpoint_path = str_replace(':start_date', $start_date->format('d/m/Y'), $endpoint_path);
