@@ -19,10 +19,12 @@ class StocksPagesController extends Controller
     public function index(): View {
         $stocks = Stock::query()->orderBy('symbol')->get();
         foreach ($stocks as $stock) {
-            $stock->last_price = StockPrice::query()
+            $stock_price = StockPrice::query()
                 ->where('stock_id', $stock->id)
                 ->orderByDesc('date')
-                ->first()->price;
+                ->first();
+
+            $stock->last_price = $stock_price ? $stock_price->price : 'Not loaded';
         }
 
         $data = [
