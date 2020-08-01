@@ -12,6 +12,7 @@
                 <th>Avg. Price Paid</th>
                 <th>Amount Contributed</th>
                 <th>Amount Now</th>
+                <th>Last Price</th>
             </tr>
             </thead>
             <tbody>
@@ -23,6 +24,7 @@
                     <td>{{$position->average_price}}</td>
                     <td>{{$position->contributed_amount}}</td>
                     <td>{{$position->amount}}</td>
+                    <td>{{$stocks[$position->stock_id]->last_price}}</td>
                 </tr>
             @endforeach
 

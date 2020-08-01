@@ -2,14 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Model\Stock\Stock;
-use App\Model\Stock\Dividend\StockDividend;
 use App\Portfolio\Consolidator\ConsolidatorStateMachine;
-use App\Portfolio\Utils\PagesHelper;
-use Carbon\Carbon;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
-use Symfony\Component\Process\Process;
 
 class ConsolidatorController extends Controller {
 

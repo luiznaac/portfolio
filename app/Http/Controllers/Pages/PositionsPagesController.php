@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Model\Order\Order;
 use App\Model\Stock\Position\StockPosition;
 use App\Model\Stock\Stock;
+use App\Model\Stock\StockPrice;
 use Illuminate\View\View;
 
 class PositionsPagesController extends Controller
@@ -23,6 +24,10 @@ class PositionsPagesController extends Controller
         $stocks = [];
         foreach ($stock_positions as $stock_position) {
             $stocks[$stock_position->stock_id] = Stock::find($stock_position->stock_id);
+            $stocks[$stock_position->stock_id]->last_price = StockPrice::query()
+                ->where('stock_id', $stock_position->stock_id)
+                ->orderByDesc('date')
+                ->first()->price;
         }
 
         $data = [

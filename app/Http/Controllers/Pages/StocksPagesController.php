@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Pages;
 
 use App\Http\Controllers\Controller;
 use App\Model\Stock\Stock;
+use App\Model\Stock\StockPrice;
 use App\Model\Stock\StockType;
 use Illuminate\View\View;
 
@@ -16,8 +17,16 @@ class StocksPagesController extends Controller
     }
 
     public function index(): View {
+        $stocks = Stock::query()->orderBy('symbol')->get();
+        foreach ($stocks as $stock) {
+            $stock->last_price = StockPrice::query()
+                ->where('stock_id', $stock->id)
+                ->orderByDesc('date')
+                ->first()->price;
+        }
+
         $data = [
-            'stocks' => Stock::query()->orderBy('symbol')->get(),
+            'stocks' => $stocks,
             'stock_types' => StockType::getStockTypesFromCache(),
         ];
 

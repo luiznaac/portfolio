@@ -9,6 +9,7 @@
                 <th>Symbol</th>
                 <th>Type</th>
                 <th>Name</th>
+                <th>Last Price</th>
             </tr>
             </thead>
             <tbody>
@@ -21,6 +22,7 @@
                         @endif
                     </td>
                     <td>{{$stock->name}}</td>
+                    <td>{{$stock->last_price}}</td>
                 </tr>
             @endforeach
 
