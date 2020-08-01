@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 class ConsolidatorDateProvider {
 
     private static $stock_dates;
+    private static $bond_dates;
 
     public static function getOldestLastReferenceDate(): ?Carbon {
         $date = self::calculateOldestLastReferenceDate();
@@ -24,8 +25,13 @@ class ConsolidatorDateProvider {
         return self::calculateStockDividendDatesToBeUpdated();
     }
 
+    public static function getBondPositionDatesToBeUpdated(): array {
+        return self::$bond_dates ?? self::$bond_dates = self::calculateBondPositionDatesToBeUpdated();
+    }
+
     public static function clearCache(): void {
         self::$stock_dates = null;
+        self::$bond_dates = null;
     }
 
     private static function calculateOldestLastReferenceDate(): ?string {
@@ -123,20 +129,73 @@ SQL;
         return $data;
     }
 
-    private static function mergeDatesConsideringTheOldestOne(array $stock_ids_dates_1, array $stock_ids_dates_2): array {
-        $ids = array_merge(array_keys($stock_ids_dates_1), array_keys($stock_ids_dates_2));
+    private static function calculateBondPositionDatesToBeUpdated(): array {
+        $bond_ids_orders_dates = self::getOldestDateOfLastInsertedOrdersForEachBond();
+        $bond_ids_positions_dates = self::getLastDateOfOutdatedBondPositionsForEachBond();
+
+        return self::mergeDatesConsideringTheOldestOne($bond_ids_orders_dates, $bond_ids_positions_dates);
+    }
+
+    private static function getOldestDateOfLastInsertedOrdersForEachBond(): array {
+        $query = <<<SQL
+SELECT o.bond_id, MIN(o.date) AS order_date
+FROM bond_orders o
+         LEFT JOIN bond_positions bp ON o.bond_id = bp.bond_id AND o.user_id = bp.user_id
+WHERE o.user_id = ?
+  AND (o.updated_at >
+       (SELECT MAX(updated_at) FROM bond_positions bp2 WHERE bp2.bond_id = bp.bond_id AND bp2.user_id = bp.user_id)
+    OR bp.id IS NULL)
+GROUP BY o.bond_id;
+SQL;
+
+        $rows = DB::select($query, [auth()->id()]);
+
+        $data = [];
+        foreach ($rows as $row) {
+            $data[$row->bond_id] = $row->order_date;
+        }
+
+        return $data;
+    }
+
+    private static function getLastDateOfOutdatedBondPositionsForEachBond(): array {
+        $query = <<<SQL
+SELECT bond_id, last_date
+FROM (SELECT MAX(date) AS last_date, bond_id
+      FROM bond_positions bp
+      WHERE user_id = ?
+      GROUP BY bond_id) last_positions
+WHERE last_date < ?;
+SQL;
+
+        $rows = DB::select($query, [
+                auth()->id(),
+                Calendar::getLastMarketWorkingDate()->toDateString()
+            ]
+        );
+
+        $data = [];
+        foreach ($rows as $row) {
+            $data[$row->bond_id] = $row->last_date;
+        }
+
+        return $data;
+    }
+
+    private static function mergeDatesConsideringTheOldestOne(array $ids_dates_1, array $ids_dates_2): array {
+        $ids = array_merge(array_keys($ids_dates_1), array_keys($ids_dates_2));
 
         $data = [];
         foreach ($ids as $id) {
-            if (isset($stock_ids_dates_1[$id]) && isset($stock_ids_dates_2[$id])) {
-                $date_1 = Carbon::parse($stock_ids_dates_1[$id]);
-                $date_2 = Carbon::parse($stock_ids_dates_2[$id]);
+            if (isset($ids_dates_1[$id]) && isset($ids_dates_2[$id])) {
+                $date_1 = Carbon::parse($ids_dates_1[$id]);
+                $date_2 = Carbon::parse($ids_dates_2[$id]);
                 $data[$id] = $date_1->lte($date_2) ? $date_1->toDateString() : $date_2->toDateString();
 
                 continue;
             }
 
-            $data[$id] = $stock_ids_dates_1[$id] ?? $stock_ids_dates_2[$id];
+            $data[$id] = $ids_dates_1[$id] ?? $ids_dates_2[$id];
         }
 
         return $data;

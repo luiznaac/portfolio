@@ -14,6 +14,23 @@ class ConsolidatorDateProviderTest extends TestCase {
     }
 
     /**
+     * @dataProvider dataProviderForTestGetBondDatesToBeUpdated
+     */
+    public function testGetBondDatesToBeUpdated(string $now, array $bonds, array $bond_positions, array $orders, array $expected_dates): void {
+        Carbon::setTestNow($now);
+        $bonds_names = $this->saveBondsWithNames($bonds);
+        $this->translateBondNamesToIds($bond_positions, $bonds_names);
+        $this->translateBondNamesToIds($orders, $bonds_names);
+        $this->saveBondPositions($bond_positions);
+        $this->saveBondOrders($orders);
+        $this->translateBondNamesToIdsForDates($expected_dates, $bonds_names);
+
+        $bond_dates = ConsolidatorDateProvider::getBondPositionDatesToBeUpdated();
+
+        $this->assertEquals($expected_dates, $bond_dates);
+    }
+
+    /**
      * @dataProvider dataProviderForTestGetStockDividendDatesToBeUpdated
      */
     public function testGetStockDividendDatesToBeUpdated(string $now, array $stock_dividends, array $dividend_lines, array $orders, array $stock_positions, array $expected_dates): void {
@@ -41,6 +58,135 @@ class ConsolidatorDateProviderTest extends TestCase {
         $stock_dates = ConsolidatorDateProvider::getStockPositionDatesToBeUpdated();
 
         $this->assertEquals($expected_dates, $stock_dates);
+    }
+
+    public function dataProviderForTestGetBondDatesToBeUpdated(): array {
+        return [
+            'Everything is updated - should return empty array' => [
+                'now' => '2020-07-09 23:00:00',
+                'bonds' => [
+                    ['bond_name' => 'Bond 1'],
+                    ['bond_name' => 'Bond 2'],
+                ],
+                'bond_positions' => [
+                    ['bond_name' => 'Bond 1', 'date' => '2020-07-09', 'updated_at' => '2020-07-09 23:01:00'],
+                    ['bond_name' => 'Bond 2', 'date' => '2020-07-09', 'updated_at' => '2020-07-09 23:01:00'],
+                ],
+                'orders' => [
+                    ['bond_name' => 'Bond 1', 'date' => '2020-07-01', 'updated_at' => '2020-07-09 23:00:00', 'type' => 'buy'],
+                    ['bond_name' => 'Bond 2', 'date' => '2020-07-01', 'updated_at' => '2020-07-09 23:00:00', 'type' => 'buy'],
+                ],
+                'expected_dates' => [],
+            ],
+            'One bond position is outdated - should return bond position date' => [
+                'now' => '2020-07-09 23:00:00',
+                'bonds' => [
+                    ['bond_name' => 'Bond 1'],
+                    ['bond_name' => 'Bond 2'],
+                ],
+                'bond_positions' => [
+                    ['bond_name' => 'Bond 1', 'date' => '2020-07-08', 'updated_at' => '2020-07-08 23:01:00'],
+                    ['bond_name' => 'Bond 2', 'date' => '2020-07-09', 'updated_at' => '2020-07-09 23:01:00'],
+                ],
+                'orders' => [
+                    ['bond_name' => 'Bond 1', 'date' => '2020-07-01', 'updated_at' => '2020-07-08 23:00:00', 'type' => 'buy'],
+                    ['bond_name' => 'Bond 2', 'date' => '2020-07-01', 'updated_at' => '2020-07-09 23:00:00', 'type' => 'buy'],
+                ],
+                'expected_dates' => [
+                    'Bond 1' => '2020-07-08',
+                ],
+            ],
+            'Two bond positions are outdated - should return bond positions dates' => [
+                'now' => '2020-07-09 23:00:00',
+                'bonds' => [
+                    ['bond_name' => 'Bond 1'],
+                    ['bond_name' => 'Bond 2'],
+                ],
+                'bond_positions' => [
+                    ['bond_name' => 'Bond 1', 'date' => '2020-07-08', 'updated_at' => '2020-07-08 23:01:00'],
+                    ['bond_name' => 'Bond 2', 'date' => '2020-07-07', 'updated_at' => '2020-07-07 23:01:00'],
+                ],
+                'orders' => [
+                    ['bond_name' => 'Bond 1', 'date' => '2020-07-01', 'updated_at' => '2020-07-07 23:00:00', 'type' => 'buy'],
+                    ['bond_name' => 'Bond 2', 'date' => '2020-07-01', 'updated_at' => '2020-07-07 23:00:00', 'type' => 'buy'],
+                ],
+                'expected_dates' => [
+                    'Bond 1' => '2020-07-08',
+                    'Bond 2' => '2020-07-07',
+                ],
+            ],
+            'Positions updated but has an order before last reference date - should return order date' => [
+                'now' => '2020-07-09 23:00:00',
+                'bonds' => [
+                    ['bond_name' => 'Bond 1'],
+                    ['bond_name' => 'Bond 2'],
+                ],
+                'bond_positions' => [
+                    ['bond_name' => 'Bond 1', 'date' => '2020-07-09', 'updated_at' => '2020-07-09 23:01:00'],
+                    ['bond_name' => 'Bond 2', 'date' => '2020-07-09', 'updated_at' => '2020-07-09 23:01:00'],
+                ],
+                'orders' => [
+                    ['bond_name' => 'Bond 1', 'date' => '2020-07-01', 'updated_at' => '2020-07-09 23:02:00', 'type' => 'buy'],
+                    ['bond_name' => 'Bond 2', 'date' => '2020-07-01', 'updated_at' => '2020-07-09 23:00:00', 'type' => 'buy'],
+                ],
+                'expected_dates' => [
+                    'Bond 1' => '2020-07-01',
+                ],
+            ],
+            'Positions outdated and has an order before last reference date - should return order date' => [
+                'now' => '2020-07-09 23:00:00',
+                'bonds' => [
+                    ['bond_name' => 'Bond 1'],
+                    ['bond_name' => 'Bond 2'],
+                ],
+                'bond_positions' => [
+                    ['bond_name' => 'Bond 1', 'date' => '2020-07-07', 'updated_at' => '2020-07-07 23:01:00'],
+                    ['bond_name' => 'Bond 2', 'date' => '2020-07-09', 'updated_at' => '2020-07-09 23:01:00'],
+                ],
+                'orders' => [
+                    ['bond_name' => 'Bond 1', 'date' => '2020-07-01', 'updated_at' => '2020-07-09 23:02:00', 'type' => 'buy'],
+                    ['bond_name' => 'Bond 2', 'date' => '2020-07-01', 'updated_at' => '2020-07-09 23:00:00', 'type' => 'buy'],
+                ],
+                'expected_dates' => [
+                    'Bond 1' => '2020-07-01',
+                ],
+            ],
+            'Positions outdated and has an order after last reference date - should return position date' => [
+                'now' => '2020-07-09 23:00:00',
+                'bonds' => [
+                    ['bond_name' => 'Bond 1'],
+                    ['bond_name' => 'Bond 2'],
+                ],
+                'bond_positions' => [
+                    ['bond_name' => 'Bond 1', 'date' => '2020-07-07', 'updated_at' => '2020-07-07 23:01:00'],
+                    ['bond_name' => 'Bond 2', 'date' => '2020-07-09', 'updated_at' => '2020-07-09 23:01:00'],
+                ],
+                'orders' => [
+                    ['bond_name' => 'Bond 1', 'date' => '2020-07-08', 'updated_at' => '2020-07-09 23:02:00', 'type' => 'buy'],
+                    ['bond_name' => 'Bond 2', 'date' => '2020-07-01', 'updated_at' => '2020-07-09 23:00:00', 'type' => 'buy'],
+                ],
+                'expected_dates' => [
+                    'Bond 1' => '2020-07-07',
+                ],
+            ],
+            'No positions for bond but with order - should return order date' => [
+                'now' => '2020-07-09 23:00:00',
+                'bonds' => [
+                    ['bond_name' => 'Bond 1'],
+                    ['bond_name' => 'Bond 2'],
+                ],
+                'bond_positions' => [
+                    ['bond_name' => 'Bond 2', 'date' => '2020-07-09', 'updated_at' => '2020-07-09 23:01:00'],
+                ],
+                'orders' => [
+                    ['bond_name' => 'Bond 1', 'date' => '2020-07-08', 'updated_at' => '2020-07-09 23:02:00', 'type' => 'buy'],
+                    ['bond_name' => 'Bond 2', 'date' => '2020-07-01', 'updated_at' => '2020-07-09 23:00:00', 'type' => 'buy'],
+                ],
+                'expected_dates' => [
+                    'Bond 1' => '2020-07-08',
+                ],
+            ],
+        ];
     }
 
     public function dataProviderForTestGetStockDividendDatesToBeUpdated(): array {

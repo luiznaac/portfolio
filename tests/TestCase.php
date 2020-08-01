@@ -3,6 +3,9 @@
 namespace Tests;
 
 use App\Model\Bond\Bond;
+use App\Model\Bond\BondIssuer;
+use App\Model\Bond\BondOrder;
+use App\Model\Bond\BondPosition;
 use App\Model\Holiday\Holiday;
 use App\Model\Order\Order;
 use App\Model\Stock\Dividend\StockDividend;
@@ -103,12 +106,72 @@ abstract class TestCase extends BaseTestCase
         return $created_bonds;
     }
 
+    public function saveBondsWithNames(array $data): array {
+        $created_bonds = [];
+        foreach ($data as $item) {
+            $bond_name = $item['bond_name'];
+            unset($item['bond_name']);
+            $item['bond_issuer_id'] = $this->createBondIssuer()->id;
+            $item['bond_type_id'] = rand(2, 7);
+            $item['index_id'] = rand(1, 3);
+            $item['index_rate'] = rand(80, 120);
+            $item['interest_rate'] = rand(0, 15);
+            $item['maturity_date'] = Carbon::now();
+
+            $created_bonds[$bond_name] = Bond::query()->create($item);
+        }
+
+        return $created_bonds;
+    }
+
+    public function saveBondPositions(array $data): void {
+        foreach ($data as $item) {
+            $item['user_id'] = $item['user_id'] ?? auth()->id();
+            $item['amount'] = $item['amount'] ?? rand(1000, 100000);
+            $item['contributed_amount'] = $item['contributed_amount'] ?? (rand(1000, 100000) + $item['amount']);
+            $this->setTimestamps($item);
+
+            BondPosition::query()->insert($item);
+        }
+    }
+
+    public function saveBondOrders(array $data): void {
+        foreach ($data as $item) {
+            $item['user_id'] = $item['user_id'] ?? auth()->id();
+            $item['amount'] = $item['amount'] ?? rand(1000, 100000);
+            $this->setTimestamps($item);
+
+            BondOrder::query()->insert($item);
+        }
+    }
+
+    public function translateBondNamesToIds(array &$data, array $bonds_names): void {
+        foreach ($data as &$item) {
+            $bond_name = $item['bond_name'];
+            unset($item['bond_name']);
+            $item['bond_id'] = $bonds_names[$bond_name]->id;
+        }
+    }
+
+    public function translateBondNamesToIdsForDates(array &$expected_dates, array $bonds_names): void {
+        foreach ($expected_dates as $bond_name => $expected_date) {
+            unset($expected_dates[$bond_name]);
+            $expected_dates[$bonds_names[$bond_name]->id] = $expected_date;
+        }
+    }
+
     public function translateStockSymbolsToIdsForDates(array &$expected_dates): void {
         foreach ($expected_dates as $symbol => $expected_date) {
             $stock = Stock::getStockBySymbol($symbol);
             unset($expected_dates[$symbol]);
             $expected_dates[$stock->id] = $expected_date;
         }
+    }
+
+    private function createBondIssuer(): BondIssuer {
+        return BondIssuer::query()->create([
+            'name' => bin2hex(random_bytes(10)),
+        ]);
     }
 
     private function extractStockAndUnsetStockSymbol(array &$item): void {

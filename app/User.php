@@ -53,6 +53,10 @@ class User extends Authenticatable
         return $this->hasMany('App\Model\Bond\BondOrder');
     }
 
+    public function bondPositions() {
+        return $this->hasMany('App\Model\Bond\BondPosition');
+    }
+
     public function consolidatorStateMachine() {
         return $this->hasOne('App\Portfolio\Consolidator\ConsolidatorStateMachine');
     }
