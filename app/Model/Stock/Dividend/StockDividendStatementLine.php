@@ -36,7 +36,7 @@ class StockDividendStatementLine extends Model {
         return $this->belongsTo('App\User');
     }
 
-    public static function getTotalAmountPaid(): float {
+    public static function getTotalAmountPaid(): ?float {
         return self::getBaseQuery()->sum('amount_paid');
     }
 }
