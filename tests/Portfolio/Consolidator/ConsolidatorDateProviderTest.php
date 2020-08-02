@@ -23,7 +23,7 @@ class ConsolidatorDateProviderTest extends TestCase {
         $this->translateBondNamesToIds($orders, $bonds_names);
         $this->saveBondPositions($bond_positions);
         $this->saveBondOrders($orders);
-        $this->translateBondNamesToIdsForDates($expected_dates, $bonds_names);
+        $this->translateBondNamesToIdsForKeys($expected_dates, $bonds_names);
 
         $bond_dates = ConsolidatorDateProvider::getBondPositionDatesToBeUpdated();
 
