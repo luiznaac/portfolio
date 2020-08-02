@@ -47,9 +47,11 @@ class BondsPagesController extends Controller
     }
 
     private function buildBondTypesArray(): array {
-        $bond_types = BondType::all();
+        $bond_types = BondType::getAll();
+        $bond_types[0] = '';
+        ksort($bond_types);
 
-        return $this->generateArray($bond_types, 'type');
+        return $bond_types;
     }
 
     private function buildIndicesArray(): array {

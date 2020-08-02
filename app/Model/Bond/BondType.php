@@ -42,4 +42,8 @@ class BondType extends Model {
     public static function getType(int $bond_type_id): string {
         return self::ID_TYPE[$bond_type_id];
     }
+
+    public static function getAll(): array {
+        return self::ID_TYPE;
+    }
 }
