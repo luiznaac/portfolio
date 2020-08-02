@@ -30,27 +30,6 @@ class IndexValueTest extends TestCase {
         $this->assertIndexValues($expected_data, $index_values);
     }
 
-    public function testGetIndexValueForDateRangeWithTwoMissingValuesInRangeWithMonthlyFrequencyIndex_ShouldLoadAndReturnValues(): void {
-        $index = Index::find(Index::IPCA_ID);
-        $date = Carbon::parse('2020-01-01');
-
-        $expected_data = [
-            0 => ['index_id' => $index->id, 'date' => '2020-01-01', 'value' => 1],
-            2 => ['index_id' => $index->id, 'date' => '2020-03-01', 'value' => 1],
-            4 => ['index_id' => $index->id, 'date' => '2020-05-01', 'value' => 1],
-        ];
-
-        IndexValue::query()->insert($expected_data);
-
-        $expected_data[1] = ['index_id' => $index->id, 'date' => '2020-02-01', 'value' => 0.25];
-        $expected_data[2] = ['index_id' => $index->id, 'date' => '2020-03-01', 'value' => 0.07];
-        $expected_data[3] = ['index_id' => $index->id, 'date' => '2020-04-01', 'value' => -0.31];
-
-        $index_values = IndexValue::getValuesForDateRange($index, $date, (clone $date)->addMonths(4));
-
-        $this->assertIndexValues($expected_data, $index_values);
-    }
-
     public function testGetIndexValueForDateRangeWithOneMissingValueInRange_ShouldLoadAndReturnValues(): void {
         $index = Index::find(Index::SELIC_ID);
         $date = Carbon::parse('2020-01-06');
@@ -72,15 +51,20 @@ class IndexValueTest extends TestCase {
 
     public function testGetStockPricesForDateRangeWithoutStoredPrices_ShouldLoadAndReturnValues(): void {
         $index = Index::find(Index::IPCA_ID);
-        $date = Carbon::parse('2020-02-01');
+        $date = Carbon::parse('2020-06-25');
 
         $expected_data = [
-            ['index_id' => $index->id, 'date' => '2020-02-01', 'value' => 0.25],
-            ['index_id' => $index->id, 'date' => '2020-03-01', 'value' => 0.07],
-            ['index_id' => $index->id, 'date' => '2020-04-01', 'value' => -0.31],
+            ['index_id' => $index->id, 'date' => '2020-06-25', 'value' => 0.00738154],
+            ['index_id' => $index->id, 'date' => '2020-06-26', 'value' => 0.00738154],
+            ['index_id' => $index->id, 'date' => '2020-06-29', 'value' => 0.00738154],
+            ['index_id' => $index->id, 'date' => '2020-06-30', 'value' => 0.00738154],
+            ['index_id' => $index->id, 'date' => '2020-07-01', 'value' => 0.00837235],
+            ['index_id' => $index->id, 'date' => '2020-07-02', 'value' => 0.00837235],
+            ['index_id' => $index->id, 'date' => '2020-07-03', 'value' => 0.00837235],
+            ['index_id' => $index->id, 'date' => '2020-07-06', 'value' => 0.00837235],
         ];
 
-        $index_values = IndexValue::getValuesForDateRange($index, $date, (clone $date)->addMonths(2));
+        $index_values = IndexValue::getValuesForDateRange($index, $date, (clone $date)->addDays(11));
 
         $this->assertIndexValues($expected_data, $index_values);
     }

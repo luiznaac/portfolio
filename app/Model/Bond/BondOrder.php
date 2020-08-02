@@ -2,9 +2,12 @@
 
 namespace App\Model\Bond;
 
+use App\Portfolio\Consolidator\ConsolidatorStateMachine;
+use App\Portfolio\Utils\Calendar;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -45,6 +48,12 @@ class BondOrder extends Model {
             'type' => $type,
             'amount' => $amount,
         ]);
+
+        $last_market_working_date = Calendar::getLastMarketWorkingDate();
+
+        if($date->lt($last_market_working_date)) {
+            ConsolidatorStateMachine::getConsolidatorStateMachine()->changeToNotConsolidatedState();
+        }
     }
 
     public static function getBaseQuery(): Builder {
@@ -52,5 +61,14 @@ class BondOrder extends Model {
         $user = User::find(auth()->id());
 
         return $user->bondOrders()->getQuery();
+    }
+
+    public static function getAllOrdersForBondInRange(Bond $bond, Carbon $start_date, Carbon $end_date): Collection {
+        return self::getBaseQuery()
+            ->where('bond_id', $bond->id)
+            ->whereBetween('date', [$start_date, $end_date])
+            ->orderBy('date')
+            ->orderBy('type')
+            ->get();
     }
 }

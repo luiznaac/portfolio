@@ -13,13 +13,20 @@
             <!-- Left Side Of Navbar -->
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                @auth
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" id="stocks-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Stocks</a>
                     <div class="dropdown-menu" aria-labelledby="dropdown">
                         <a class="dropdown-item" href="/stocks">Listed</a>
                     </div>
                 </li>
-                @auth
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" id="positions-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Bonds</a>
+                    <div class="dropdown-menu" aria-labelledby="dropdown">
+                        <a class="dropdown-item" href="/bonds">Listed</a>
+                        <a class="dropdown-item" href="/bonds/issuers">Issuers</a>
+                    </div>
+                </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" id="orders-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Orders</a>
                     <div class="dropdown-menu" aria-labelledby="dropdown">
@@ -33,13 +40,7 @@
                     <a class="nav-link dropdown-toggle" id="positions-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Positions</a>
                     <div class="dropdown-menu" aria-labelledby="dropdown">
                         <a class="dropdown-item" href="/positions/stocks">Stocks</a>
-                    </div>
-                </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" id="positions-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Bonds</a>
-                    <div class="dropdown-menu" aria-labelledby="dropdown">
-                        <a class="dropdown-item" href="/bonds">Listed</a>
-                        <a class="dropdown-item" href="/bonds/issuers">Issuers</a>
+                        <a class="dropdown-item" href="/positions/bonds">Bonds</a>
                     </div>
                 </li>
                 @if($helper::getConsolidationState() == 0)

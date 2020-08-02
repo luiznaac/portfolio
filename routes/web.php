@@ -46,6 +46,9 @@ Route::post('/bonds/orders/delete', 'BondOrdersController@delete');
 Route::get('/positions/stocks', 'Pages\PositionsPagesController@showStocks');
 Route::get('/positions/stocks/{id}', 'Pages\PositionsPagesController@showStockDetailedPosition');
 
+Route::get('/positions/bonds', 'Pages\PositionsPagesController@showBonds');
+Route::get('/positions/bonds/{id}', 'Pages\PositionsPagesController@showBondDetailedPosition');
+
 // BONDS
 
 Route::get('/bonds', 'Pages\BondsPagesController@index');
