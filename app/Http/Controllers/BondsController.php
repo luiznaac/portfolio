@@ -6,7 +6,6 @@ use App\Model\Bond\Bond;
 use App\Model\Bond\BondIssuer;
 use App\Model\Bond\BondType;
 use App\Model\Index\Index;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class BondsController extends Controller {
@@ -19,7 +18,7 @@ class BondsController extends Controller {
         $this->validate($request,[
             'bond_issuer_id' => 'required',
             'bond_type_id' => 'required',
-            'maturity_date' => 'required',
+            'days' => 'required|integer|gt:30',
         ]);
 
         try {
@@ -44,15 +43,15 @@ class BondsController extends Controller {
             $index = Index::find($index_id);
             $index_rate = $request->input('index_rate');
             $interest_rate = $request->input('interest_rate');
-            $maturity_date = Carbon::parse($request->input('maturity_date'));
+            $days = $request->input('days');
 
-            $bond = Bond::store(
+            Bond::store(
                 $bond_issuer,
                 $bond_type,
                 $index,
                 $index_rate,
                 $interest_rate,
-                $maturity_date
+                $days
             );
 
             $status = 'ok';

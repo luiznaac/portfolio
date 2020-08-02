@@ -38,8 +38,8 @@
             </div>
             <div class="row">
                 <div class="col-md-3">
-                    {{Form::label('maturity_date', 'Maturity Date')}}
-                    {{Form::date('maturity_date', '', ['class' => 'form-control', 'placeholder' => 'Maturity Date'])}}
+                    {{Form::label('days', 'Days')}}
+                    {{Form::number('days', '', ['class' => 'form-control', 'placeholder' => 'Days'])}}
                 </div>
             </div>
         </div>
