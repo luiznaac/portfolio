@@ -2,146 +2,85 @@
 
 namespace Tests\Model\Stock\Position;
 
-use App\Model\Stock\Position\StockPosition;
-use App\Model\Stock\Stock;
 use App\Portfolio\Dashboard\Dashboard;
-use Carbon\Carbon;
 use Tests\TestCase;
 
 class DashboardTest extends TestCase {
 
-    private $user;
-
     protected function setUp(): void {
         parent::setUp();
-        $this->user = $this->loginWithFakeUser();
-
-        $this->createStockPosition(
-            Stock::getStockBySymbol('BOVA11'),
-            Carbon::parse('2020-06-30')
-        );
-
-        $this->createStockPosition(
-            Stock::getStockBySymbol('SQIA3'),
-            Carbon::parse('2020-07-01')
-        );
-
-        $this->user = $this->loginWithFakeUser();
+        $this->loginWithFakeUser();
     }
 
-    public function testGetStockData(): void {
-        $stock_positions = $this->prepareScenario();
-        $stock_positions_by_type = $this->generateExpectedDataForStockPositions($stock_positions);
-        [$amount_updated, $amount_contributed, $overall_variation] = $this->generateExpectedOverallData($stock_positions);
-        $dividends_amount = $this->generateExpectedDividends();
+    public function testGetStockData_New(): void {
+        $scenario_data = $this->prepareScenario();
+        $bond_allocations = ['Bond 1' => 33.33, 'Bond 2' => 33.32, 'Bond 3' => 33.35];
+        $bond_results = ['Bond 1' => 6.4, 'Bond 2' => 5.3, 'Bond 3' => 7.3];
+        $bond_variations = ['Bond 1' => 0.32, 'Bond 2' => 0.26, 'Bond 3' => 0.36];
+        $this->translateBondNamesToIdsForKeys($bond_allocations, $scenario_data['bond_names']);
+        $this->translateBondNamesToIdsForKeys($bond_results, $scenario_data['bond_names']);
+        $this->translateBondNamesToIdsForKeys($bond_variations, $scenario_data['bond_names']);
 
         $data = Dashboard::getData();
 
-        $this->assertEquals($stock_positions_by_type, $data['stock_positions_by_type']);
-        $this->assertEquals($amount_updated, $data['amount_updated']);
-        $this->assertEquals($amount_contributed, $data['amount_contributed']);
-        $this->assertEquals($overall_variation, $data['overall_variation']);
-        $this->assertEquals($dividends_amount, $data['dividends_amount']);
-    }
-
-    private function generateExpectedDividends(): float {
-        $stock_dividend_statement_lines = [
-            ['stock_dividend_id' => 1, 'quantity' => 10, 'amount_paid' => 5.7],
-            ['stock_dividend_id' => 2, 'quantity' => 10, 'amount_paid' => 5.9],
-        ];
-
-        $this->saveDividendLines($stock_dividend_statement_lines);
-
-        return 5.7 + 5.9;
-    }
-
-    private function generateExpectedDataForStockPositions(array $stock_positions): array {
-        $stock_positions_by_type = [];
-        /** @var StockPosition $stock_position */
-        foreach ($stock_positions as $stock_position) {
-            $stock = Stock::find($stock_position->stock_id);
-            $stock_positions_by_type[$stock->stock_type_id]['positions'][] = [
-                'position' => $stock_position,
-                'percentage' => 33.33,
-                'gross_result' => 5.0,
-                'gross_result_percentage' => 50.0,
-            ];
-            $stock_positions_by_type[$stock->stock_type_id]['percentage'] = 33.33;
-        }
-
-        return $stock_positions_by_type;
-    }
-
-    private function generateExpectedOverallData(array $stock_positions): array {
-        $amount_updated = 0.0;
-        $amount_contributed = 0.0;
-        /** @var StockPosition $stock_position */
-        foreach ($stock_positions as $stock_position) {
-            $amount_updated += $stock_position->amount;
-            $amount_contributed += $stock_position->contributed_amount;
-        }
-
-        $overall_variation = round((($amount_updated - $amount_contributed)/$amount_contributed)*100, 2);
-
-        return [$amount_updated, $amount_contributed, $overall_variation];
+        $this->assertEquals(9000, $data['contributed_amount']);
+        $this->assertEquals(9026, $data['updated_amount']);
+        $this->assertEquals(11.6, $data['dividends_amount']);
+        $this->assertEquals(0.29, $data['overall_variation']);
+        $this->assertEquals(33.31, $data['stock_allocation']);
+        $this->assertEquals(66.69, $data['bond_allocation']);
+        $this->assertEquals([1 => 49.93, 2 => 16.71, 3 => 33.37], $data['stock_type_allocations']);
+        $this->assertEquals([1 => 16.71, 2 => 49.93, 3 => 33.37], $data['stock_allocations']);
+        $this->assertEquals($bond_allocations, $data['bond_allocations']);
+        $this->assertResultsAndVariations([
+            'results' => [1 => 2.4, 2 => 1.3, 3 => 3.3],
+            'variations' => [1 => 0.48, 2 => 0.09, 3 => 0.33]
+        ], $data['stock_positions_list'], 'stock');
+        $this->assertResultsAndVariations([
+            'results' => $bond_results,
+            'variations' => $bond_variations
+        ], $data['bond_positions_list'], 'bond');
     }
 
     private function prepareScenario(): array {
-        $stock_1 = Stock::getStockBySymbol('BOVA11');
-        $stock_2 = Stock::getStockBySymbol('SQIA3');
-        $stock_3 = Stock::getStockBySymbol('XPML11');
+       $this->saveStockPositions([
+           ['stock_symbol' => 'SQIA3', 'date' => '2020-07-01', 'contributed_amount' => 1500, 'quantity' => 10, 'amount' => 1501.30],
+           ['stock_symbol' => 'BOVA11', 'date' => '2020-07-01', 'contributed_amount' => 500, 'quantity' => 10, 'amount' => 502.40],
+           ['stock_symbol' => 'XPML11', 'date' => '2020-07-01', 'contributed_amount' => 1000, 'quantity' => 10, 'amount' => 1003.30],
+       ]);
+       $this->saveDividendLines([
+           ['stock_dividend_id' => 1, 'quantity' => 10, 'amount_paid' => 5.7],
+           ['stock_dividend_id' => 2, 'quantity' => 10, 'amount_paid' => 5.9],
+       ]);
 
-        $date_1 = Carbon::parse('2020-06-26');
-        $date_2 = Carbon::parse('2020-06-29');
+       $bond_names = $this->saveBondsWithNames([
+           ['bond_name' => 'Bond 1'],
+           ['bond_name' => 'Bond 2'],
+           ['bond_name' => 'Bond 3'],
+       ]);
+       $bond_positions = [
+           ['bond_name' => 'Bond 1', 'date' => '2020-07-01', 'contributed_amount' => 2000, 'amount' => 2006.40],
+           ['bond_name' => 'Bond 2', 'date' => '2020-07-01', 'contributed_amount' => 2000, 'amount' => 2005.30],
+           ['bond_name' => 'Bond 3', 'date' => '2020-07-01', 'contributed_amount' => 2000, 'amount' => 2007.30],
+       ];
+       $this->translateBondNamesToIds($bond_positions, $bond_names);
+       $this->saveBondPositions($bond_positions);
 
-        $this->createStockPosition(
-            $stock_1,
-            $date_1
-        );
-
-        $stock_1_position_2 = $this->createStockPosition(
-            $stock_1,
-            $date_2
-        );
-
-        $this->createStockPosition(
-            $stock_2,
-            $date_1
-        );
-
-        $stock_2_position_2 = $this->createStockPosition(
-            $stock_2,
-            $date_2
-        );
-
-        $this->createStockPosition(
-            $stock_3,
-            $date_1
-        );
-
-        $stock_3_position_2 = $this->createStockPosition(
-            $stock_3,
-            $date_2
-        );
-
-        return [
-            StockPosition::find($stock_1_position_2->id),
-            StockPosition::find($stock_2_position_2->id),
-            StockPosition::find($stock_3_position_2->id)
-        ];
+       return ['bond_names' => $bond_names];
     }
 
-    private function createStockPosition(Stock $stock, Carbon $date): StockPosition {
-        $position = new StockPosition();
-        $position->user_id = $this->user->id;
-        $position->stock_id = $stock->id;
-        $position->date = $date->toDateString();
-        $position->quantity = 10;
-        $position->amount = 15;
-        $position->contributed_amount = 10;
-        $position->average_price = 1;
-        $position->save();
+    private function assertResultsAndVariations(array $expected_data, $positions_list, string $product): void {
+        $results = [];
+        $variations = [];
 
-        return $position;
+        foreach ($positions_list as $type => $positions) {
+            foreach ($positions as $position) {
+                $results[$position[$product . '_id']] = $position['result'];
+                $variations[$position[$product . '_id']] = $position['variation'];
+            }
+        }
+
+        $this->assertEquals($expected_data['results'], $results);
+        $this->assertEquals($expected_data['variations'], $variations);
     }
 }

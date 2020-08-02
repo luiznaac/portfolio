@@ -13,7 +13,7 @@
                     </div>
                     <div class="row d-flex justify-content-center">
                         <div class="text-center">
-                            <p style="font-size: 1.5rem">{{'R$' . $amount_contributed}}</p>
+                            <p style="font-size: 1.5rem">{{'R$' . $contributed_amount}}</p>
                         </div>
                     </div>
                 </div>
@@ -25,19 +25,19 @@
                     </div>
                     <div class="row d-flex justify-content-center">
                         <div class="text-center">
-                        @if($amount_updated < 0)
-                            <p class="text-danger" style="font-size: 1.5rem">{{'R$' . $amount_updated}}</p>
+                        @if($updated_amount < 0)
+                            <p class="text-danger" style="font-size: 1.5rem">{{'R$' . $updated_amount}}</p>
                         @else
-                            <p class="text-success" style="font-size: 1.5rem">{{'R$' . $amount_updated}}</p>
+                            <p class="text-success" style="font-size: 1.5rem">{{'R$' . $updated_amount}}</p>
                         @endif
                         </div>
                     </div>
                     <div class="row d-flex justify-content-center">
                         <div class="text-center">
-                            @if($amount_updated < 0)
-                                <p class="text-danger" style="font-size: 0.8rem">{{'R$' . ($amount_updated - $amount_contributed)}}</p>
+                            @if($updated_amount < 0)
+                                <p class="text-danger" style="font-size: 0.8rem">{{'R$' . ($updated_amount - $contributed_amount)}}</p>
                             @else
-                                <p class="text-success" style="font-size: 0.8rem">{{'R$' . ($amount_updated - $amount_contributed)}}</p>
+                                <p class="text-success" style="font-size: 0.8rem">{{'R$' . ($updated_amount - $contributed_amount)}}</p>
                             @endif
                         </div>
                     </div>
@@ -73,6 +73,9 @@
             </div>
         </div>
         <div class="row">
+            <h2>{{$stock_allocation . '%'}} - Stocks</h2>
+        </div>
+        <div class="row">
             <table class="table">
                 <thead>
                 <tr>
@@ -84,30 +87,71 @@
                 </tr>
                 </thead>
                 <tbody>
-                @foreach($stock_positions_by_type as $stock_type_id => $stock_positions_and_percentage)
+                @foreach($stock_positions_list as $stock_type_id => $stock_positions)
                     <tr>
-                        <td colspan="5"><b>{{$stock_positions_and_percentage['percentage'] . '% - ' . $stock_types[$stock_type_id]['description']}}</b></td>
+                        <td colspan="5"><b>{{$stock_type_allocations[$stock_type_id] . '% - ' . $stock_types[$stock_type_id]['description']}}</b></td>
                     </tr>
-                    @foreach($stock_positions_and_percentage['positions'] as $stock_position)
+                    @foreach($stock_positions as $stock_position)
                     <tr>
-                        <td>{{$stock_position['percentage']. '%'}}</td>
-                        <td>{{$stocks[$stock_position['position']->stock_id]['symbol']}}</td>
-                        <td>{{'R$' . $stock_position['position']->amount}}</td>
+                        <td>{{$stock_allocations[$stock_position['stock_id']]. '%'}}</td>
+                        <td>{{$stock_position['symbol']}}</td>
+                        <td>{{'R$' . $stock_position['amount']}}</td>
                         <td>
-                        @if($stock_position['gross_result'] < 0)
-                            <p class="text-danger">{{'R$' . $stock_position['gross_result']}}</p>
+                        @if($stock_position['amount'] - $stock_position['contributed_amount'] < 0)
+                            <p class="text-danger">{{'R$' . ($stock_position['amount'] - $stock_position['contributed_amount'])}}</p>
                         @else
-                            <p class="text-success">{{'R$' . $stock_position['gross_result']}}</p>
+                            <p class="text-success">{{'R$' . ($stock_position['amount'] - $stock_position['contributed_amount'])}}</p>
                         @endif
                         </td>
                         <td>
-                            @if($stock_position['gross_result'] < 0)
-                                <p class="text-danger">{{$stock_position['gross_result_percentage'] . '%'}}</p>
+                            @if($stock_position['amount'] - $stock_position['contributed_amount'] < 0)
+                                <p class="text-danger">{{round((($stock_position['amount'] - $stock_position['contributed_amount'])/$stock_position['contributed_amount'])*100, 2) . '%'}}</p>
                             @else
-                                <p class="text-success">{{$stock_position['gross_result_percentage'] . '%'}}</p>
+                                <p class="text-success">{{round((($stock_position['amount'] - $stock_position['contributed_amount'])/$stock_position['contributed_amount'])*100, 2) . '%'}}</p>
                             @endif
                         </td>
                     </tr>
+                    @endforeach
+                @endforeach
+                </tbody>
+            </table>
+        </div>
+        <div class="row">
+            <h2>{{$bond_allocation . '%'}} - Bonds</h2>
+        </div>
+        <div class="row">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Percentage</th>
+                    <th>Bond</th>
+                    <th>Total Updated</th>
+                    <th>Result</th>
+                    <th>Variation</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach($bond_positions_list as $bond_type_id => $bond_positions)
+                    @foreach($bond_positions as $bond_position)
+                        <tr>
+                            <td>{{$bond_allocations[$bond_position['bond_id']]. '%'}}</td>
+                            <td>{{$bond_position['bond_name']}}</td>
+                            <td>{{'R$' . $bond_position['amount']}}</td>
+                            <td>
+                                @if($bond_position['result'] < 0)
+                                    <p class="text-danger">{{'R$' . $bond_position['result']}}</p>
+                                @else
+                                    <p class="text-success">{{'R$' . $bond_position['result']}}</p>
+                                @endif
+                            </td>
+                            <td>
+                                @if($bond_position['variation'] < 0)
+                                    <p class="text-danger">{{$bond_position['variation'] . '%'}}</p>
+                                @else
+                                    <p class="text-success">{{$bond_position['variation'] . '%'}}</p>
+                                @endif
+                            </td>
+                        </tr>
                     @endforeach
                 @endforeach
                 </tbody>

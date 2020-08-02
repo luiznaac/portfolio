@@ -72,6 +72,18 @@ class Bond extends Model {
         return $return_rate;
     }
 
+    public static function getAllBondsFromCache(): array {
+        $bonds = self::query()->get();
+
+        $bonds_cache = [];
+        /** @var Bond $bond */
+        foreach ($bonds as $bond) {
+            $bonds_cache[$bond->id] = $bond;
+        }
+
+        return $bonds_cache;
+    }
+
     private function getBondIssuer(): BondIssuer{
         return BondIssuer::find($this->bond_issuer_id);
     }

@@ -153,10 +153,10 @@ abstract class TestCase extends BaseTestCase
         }
     }
 
-    public function translateBondNamesToIdsForDates(array &$expected_dates, array $bonds_names): void {
-        foreach ($expected_dates as $bond_name => $expected_date) {
-            unset($expected_dates[$bond_name]);
-            $expected_dates[$bonds_names[$bond_name]->id] = $expected_date;
+    public function translateBondNamesToIdsForKeys(array &$data, array $bonds_names): void {
+        foreach ($data as $bond_name => $expected_date) {
+            unset($data[$bond_name]);
+            $data[$bonds_names[$bond_name]->id] = $expected_date;
         }
     }
 
