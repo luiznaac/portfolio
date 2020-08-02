@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Pages;
 
 use App\Http\Controllers\Controller;
+use App\Model\Bond\Bond;
+use App\Model\Bond\BondPosition;
 use App\Model\Order\Order;
 use App\Model\Stock\Position\StockPosition;
 use App\Model\Stock\Stock;
@@ -13,6 +15,7 @@ class PositionsPagesController extends Controller
 {
     const DEFAULT_DIR = 'pages.positions';
     const STOCKS_SUBDIR = '.stocks';
+    const BONDS_SUBDIR = '.bonds';
 
     public function __construct() {
         $this->middleware('auth');
@@ -49,6 +52,36 @@ class PositionsPagesController extends Controller
         ];
 
         return view(self::DEFAULT_DIR . self::STOCKS_SUBDIR . ".detailed")
+            ->with($data);
+    }
+
+    public function showBonds() {
+        $bond_positions = BondPosition::getLastBondPositions();
+
+        $bonds = [];
+        foreach ($bond_positions as $bond_position) {
+            $bonds[$bond_position->bond_id] = Bond::find($bond_position->bond_id);
+        }
+
+        $data = [
+            'bonds' => $bonds,
+            'bond_positions' => $bond_positions,
+        ];
+
+        return view(self::DEFAULT_DIR . self::BONDS_SUBDIR . ".positions")
+            ->with($data);
+    }
+
+    public function showBondDetailedPosition(int $id) {
+        /** @var Bond $bond */
+        $bond = Bond::find($id);
+
+        $data = [
+            'bond' => $bond,
+            'bond_positions' => BondPosition::getPositionsForBond($bond),
+        ];
+
+        return view(self::DEFAULT_DIR . self::BONDS_SUBDIR . ".detailed")
             ->with($data);
     }
 }

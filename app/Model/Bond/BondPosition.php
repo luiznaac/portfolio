@@ -3,7 +3,6 @@
 namespace App\Model\Bond;
 
 use App\User;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -42,17 +41,21 @@ class BondPosition extends Model {
         return $this->belongsTo('App\User');
     }
 
+    public static function getLastBondPositions(): array {
+        $bond_ids = self::getConsolidatedBondIds();
+
+        $last_bond_positions = [];
+        foreach ($bond_ids as $bond_id) {
+            $last_bond_positions[] = self::getLastPositionForBond($bond_id);
+        }
+
+        return $last_bond_positions;
+    }
+
     public static function getPositionsForBond(Bond $bond): Collection {
         return self::getBaseQuery()
             ->where('bond_id', $bond->id)
             ->orderByDesc('date')
-            ->get();
-    }
-
-    public static function getPositionsForBondInRange(Bond $bond, Carbon $start_date, Carbon $end_date): Collection {
-        return self::getBaseQuery()
-            ->where('bond_id', $bond->id)
-            ->whereBetween('date', [$start_date, $end_date])
             ->get();
     }
 
@@ -68,5 +71,13 @@ class BondPosition extends Model {
         }
 
         return $bond_ids;
+    }
+
+    private static function getLastPositionForBond(int $bond_id): BondPosition {
+        return self::getBaseQuery()
+            ->where('bond_id', $bond_id)
+            ->orderByDesc('date')
+            ->limit(1)
+            ->get()->first();
     }
 }

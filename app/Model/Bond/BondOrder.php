@@ -2,6 +2,8 @@
 
 namespace App\Model\Bond;
 
+use App\Portfolio\Consolidator\ConsolidatorStateMachine;
+use App\Portfolio\Utils\Calendar;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -46,6 +48,12 @@ class BondOrder extends Model {
             'type' => $type,
             'amount' => $amount,
         ]);
+
+        $last_market_working_date = Calendar::getLastMarketWorkingDate();
+
+        if($date->lt($last_market_working_date)) {
+            ConsolidatorStateMachine::getConsolidatorStateMachine()->changeToNotConsolidatedState();
+        }
     }
 
     public static function getBaseQuery(): Builder {
