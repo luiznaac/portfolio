@@ -7,6 +7,7 @@ use App\Model\Bond\BondOrder;
 use App\Model\Bond\BondPosition;
 use App\Model\Index\Index;
 use App\Model\Index\IndexValue;
+use App\Model\Log\Log;
 use App\Portfolio\Utils\BatchInsertOrUpdate;
 use App\Portfolio\Utils\Calendar;
 use Carbon\Carbon;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 
 class BondPositionConsolidator implements ConsolidatorInterface {
 
+    private const ENTITY_NAME = 'BondPositionConsolidator';
     private static $positions_buffer = [];
 
     public static function consolidate(): void {
@@ -24,7 +26,11 @@ class BondPositionConsolidator implements ConsolidatorInterface {
             $bond = Bond::find($bond_id);
             $date = Carbon::parse($date);
 
-            self::consolidateBondPositions($bond, $date);
+            try {
+                self::consolidateBondPositions($bond, $date);
+            } catch(\Throwable $e) {
+                Log::log(Log::EXCEPTION_TYPE, self::ENTITY_NAME.'::'.__FUNCTION__, $e->getMessage());
+            }
         }
 
         self::savePositionsBuffer();

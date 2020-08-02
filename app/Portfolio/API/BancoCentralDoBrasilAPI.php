@@ -12,7 +12,7 @@ class BancoCentralDoBrasilAPI implements IndexAPI {
     private const API = 'https://api.bcb.gov.br';
     private const INDEX_ENDPOINT = '/dados/serie/bcdata.sgs.:index_code/dados?dataInicial=:start_date&dataFinal=:end_date';
 
-    private const TIMEOUT = 3;
+    private const TIMEOUT = 10;
 
     private const API_INDEX_TYPES = [
         Index::SELIC_INDEX => 11,
