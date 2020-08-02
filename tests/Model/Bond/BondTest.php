@@ -12,16 +12,16 @@ class BondTest extends TestCase {
 
     public function dataProviderForTestGetBondNameAndGetReturnRateString(): array {
         return [
-            'CDB Banco Maxima - JUN/2022 - 105% CDI' => [
+            'CDB Banco Maxima - 365 days - 105% CDI' => [
                 'bond_data' => [
                     'bond_issuer_name' => 'Banco Maxima',
                     'bond_type_id' => BondType::CDB_ID,
                     'index_id' => Index::CDI_ID,
                     'index_rate' => 105,
                     'interest_rate' => null,
-                    'maturity_date' => '2022-07-03',
+                    'days' => '365',
                 ],
-                'expected_name' => 'CDB Banco Maxima - JUN/2022',
+                'expected_name' => 'CDB Banco Maxima - 365 days',
                 'expected_return_rate_string' => '105% CDI',
             ],
             'CDB Banco Semear - JUL/2023 - 99% CDI + 2%' => [
@@ -31,9 +31,9 @@ class BondTest extends TestCase {
                     'index_id' => Index::CDI_ID,
                     'index_rate' => 99,
                     'interest_rate' => 2,
-                    'maturity_date' => '2023-07-21',
+                    'days' => '730',
                 ],
-                'expected_name' => 'CDB Banco Semear - JUL/2023',
+                'expected_name' => 'CDB Banco Semear - 730 days',
                 'expected_return_rate_string' => '99% CDI + 2%',
             ],
             'CDB Banco Maxima - JUL/2023 - 12%' => [
@@ -43,9 +43,9 @@ class BondTest extends TestCase {
                     'index_id' => null,
                     'index_rate' => null,
                     'interest_rate' => 12,
-                    'maturity_date' => '2023-07-21',
+                    'days' => '1095',
                 ],
-                'expected_name' => 'CDB Banco Semear - JUL/2023',
+                'expected_name' => 'CDB Banco Semear - 1095 days',
                 'expected_return_rate_string' => '12%',
             ],
         ];

@@ -8,7 +8,7 @@
             <tr>
                 <th>Name</th>
                 <th>Rate of Return</th>
-                <th>Maturity Date</th>
+                <th>Maturity</th>
             </tr>
             </thead>
             <tbody>
@@ -16,7 +16,7 @@
                 <tr>
                     <td>{{$bond->getBondName()}}</td>
                     <td>{{$bond->getReturnRateString()}}</td>
-                    <td>{{$bond->maturity_date}}</td>
+                    <td>{{$bond->days . ' days'}}</td>
                 </tr>
             @endforeach
 

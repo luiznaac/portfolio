@@ -116,7 +116,7 @@ abstract class TestCase extends BaseTestCase
             $item['index_id'] = array_key_exists('index_id', $item) ? $item['index_id'] : rand(1, 3);
             $item['index_rate'] = array_key_exists('index_rate', $item) ? $item['index_rate'] : rand(80, 120);
             $item['interest_rate'] = array_key_exists('interest_rate', $item) ? $item['interest_rate'] : rand(0, 15);
-            $item['maturity_date'] = Carbon::now();
+            $item['days'] = rand(30, 1460);
 
             $created_bonds[$bond_name] = Bond::query()->create($item);
         }

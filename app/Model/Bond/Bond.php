@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $index_id
  * @property float $index_rate
  * @property float $interest_rate
- * @property string $maturity_date
+ * @property int $days
  */
 
 class Bond extends Model {
@@ -26,7 +26,7 @@ class Bond extends Model {
         'index_id',
         'index_rate',
         'interest_rate',
-        'maturity_date',
+        'days',
     ];
 
     public static function store(
@@ -35,7 +35,7 @@ class Bond extends Model {
         ?Index $index,
         ?float $index_rate,
         ?float $interest_rate,
-        Carbon $maturity_date
+        int $days
     ): self {
         $bond = new self();
         $bond->bond_issuer_id = $bond_issuer->id;
@@ -43,7 +43,7 @@ class Bond extends Model {
         $bond->index_id = $index ? $index->id : null;
         $bond->index_rate = $index_rate;
         $bond->interest_rate = $interest_rate;
-        $bond->maturity_date = $maturity_date;
+        $bond->days = $days;
         $bond->save();
 
         return $bond;
@@ -52,9 +52,8 @@ class Bond extends Model {
     public function getBondName(): string {
         $bond_type = BondType::getType($this->bond_type_id);
         $bond_issuer_name = $this->getBondIssuer()->name;
-        $month_year = $this->getMonthYear();
 
-        return "$bond_type $bond_issuer_name - $month_year";
+        return "$bond_type $bond_issuer_name - $this->days days";
     }
 
     public function getReturnRateString(): string {
@@ -86,15 +85,5 @@ class Bond extends Model {
 
     private function getBondIssuer(): BondIssuer{
         return BondIssuer::find($this->bond_issuer_id);
-    }
-
-    private function getMonthYear(): string {
-        $date = Carbon::parse($this->maturity_date);
-
-        if ($date->day < 8) {
-            $date->subMonth();
-        }
-
-        return strtoupper($date->format('M/Y'));
     }
 }
