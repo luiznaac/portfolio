@@ -38,7 +38,7 @@ class BondPositionConsolidator implements ConsolidatorInterface {
     }
 
     private static function consolidateBondPositions(Bond $bond, Carbon $start_date) {
-        $end_date = Calendar::getLastMarketWorkingDate();
+        $end_date = Calendar::getLastMarketWorkingDate()->subDay();
         $dates = Calendar::getWorkingDaysDatesForRange($start_date, $end_date);
         $grouped_orders = self::getOrdersGroupedByDateInRange($bond, $start_date, $end_date);
         $index_values = self::getIndexValues($bond, $dates);
