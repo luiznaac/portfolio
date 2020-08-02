@@ -50,7 +50,7 @@ class BondPositionConsolidatorTest extends TestCase {
                 'expected_positions' => [],
             ],
             'Oldest order is not the oldest position - should delete positions and update' => [
-                'now' => '2020-07-08 18:00:00',
+                'now' => '2020-07-09 18:00:00',
                 'bonds' => [
                     ['bond_name' => 'Bond 1', 'index_id' => Index::CDI_ID, 'index_rate' => 105, 'interest_rate' => null],
                     ['bond_name' => 'Bond 2'],
@@ -80,7 +80,7 @@ class BondPositionConsolidatorTest extends TestCase {
                 'expected_positions' => [],
             ],
             'After market close and new bond in portfolio - should create from order date until now market date' => [
-                'now' => '2020-07-10 18:00:00',
+                'now' => '2020-07-13 18:00:00',
                 'bonds' => [
                     ['bond_name' => 'Bond 1', 'index_id' => Index::CDI_ID, 'index_rate' => 105, 'interest_rate' => null],
                     ['bond_name' => 'Bond 2', 'index_id' => null, 'index_rate' => null, 'interest_rate' => 12.5],
