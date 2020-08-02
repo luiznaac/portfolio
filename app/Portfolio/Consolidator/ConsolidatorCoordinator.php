@@ -17,6 +17,7 @@ class ConsolidatorCoordinator {
         return [
             StockPositionConsolidator::class,
             StockDividendConsolidator::class,
+            BondPositionConsolidator::class,
         ];
     }
 }
