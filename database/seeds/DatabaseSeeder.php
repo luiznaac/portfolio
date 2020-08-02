@@ -107,5 +107,19 @@ class DatabaseSeeder extends Seeder
             ['id' => 2, 'index' => 'CDI', 'description' => 'Certificado de Depósito Interbancário'],
             ['id' => 3, 'index' => 'IPCA', 'description' => 'Índice Nacional de Preços ao Consumidor Amplo'],
         ]);
+
+        DB::table('index_values')->insert([
+            ['index_id' => 1, 'date' => '2020-07-06', 'value' => 0.008442],
+            ['index_id' => 1, 'date' => '2020-07-07', 'value' => 0.008442],
+            ['index_id' => 1, 'date' => '2020-07-08', 'value' => 0.008442],
+            ['index_id' => 1, 'date' => '2020-07-09', 'value' => 0.008442],
+            ['index_id' => 1, 'date' => '2020-07-10', 'value' => 0.008442],
+
+            ['index_id' => 2, 'date' => '2020-07-06', 'value' => 0.008442],
+            ['index_id' => 2, 'date' => '2020-07-07', 'value' => 0.008442],
+            ['index_id' => 2, 'date' => '2020-07-08', 'value' => 0.008442],
+            ['index_id' => 2, 'date' => '2020-07-09', 'value' => 0.008442],
+            ['index_id' => 2, 'date' => '2020-07-10', 'value' => 0.008442],
+        ]);
     }
 }

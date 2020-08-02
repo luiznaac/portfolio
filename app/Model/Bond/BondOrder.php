@@ -5,6 +5,7 @@ namespace App\Model\Bond;
 use App\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -52,5 +53,14 @@ class BondOrder extends Model {
         $user = User::find(auth()->id());
 
         return $user->bondOrders()->getQuery();
+    }
+
+    public static function getAllOrdersForBondInRange(Bond $bond, Carbon $start_date, Carbon $end_date): Collection {
+        return self::getBaseQuery()
+            ->where('bond_id', $bond->id)
+            ->whereBetween('date', [$start_date, $end_date])
+            ->orderBy('date')
+            ->orderBy('type')
+            ->get();
     }
 }
