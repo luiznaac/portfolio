@@ -39,7 +39,9 @@ Route::get('/bonds/orders', 'Pages\BondOrdersPagesController@index');
 Route::get('/bonds/orders/create', 'Pages\BondOrdersPagesController@create');
 
 Route::post('/bonds/orders/store', 'BondOrdersController@store');
+Route::post('/bonds/orders/store-treasury', 'BondOrdersController@storeTreasury');
 Route::post('/bonds/orders/delete', 'BondOrdersController@delete');
+Route::post('/bonds/orders/delete-treasury', 'BondOrdersController@deleteTreasury');
 
 // POSITIONS
 
