@@ -97,17 +97,17 @@
                         <td>{{$stock_position['symbol']}}</td>
                         <td>{{'R$' . $stock_position['amount']}}</td>
                         <td>
-                        @if($stock_position['amount'] - $stock_position['contributed_amount'] < 0)
-                            <p class="text-danger">{{'R$' . ($stock_position['amount'] - $stock_position['contributed_amount'])}}</p>
+                        @if($stock_position['result'] < 0)
+                            <p class="text-danger">{{'R$' . $stock_position['result']}}</p>
                         @else
-                            <p class="text-success">{{'R$' . ($stock_position['amount'] - $stock_position['contributed_amount'])}}</p>
+                            <p class="text-success">{{'R$' . $stock_position['result']}}</p>
                         @endif
                         </td>
                         <td>
-                            @if($stock_position['amount'] - $stock_position['contributed_amount'] < 0)
-                                <p class="text-danger">{{round((($stock_position['amount'] - $stock_position['contributed_amount'])/$stock_position['contributed_amount'])*100, 2) . '%'}}</p>
+                            @if($stock_position['amount'] < 0)
+                                <p class="text-danger">{{$stock_position['variation'] . '%'}}</p>
                             @else
-                                <p class="text-success">{{round((($stock_position['amount'] - $stock_position['contributed_amount'])/$stock_position['contributed_amount'])*100, 2) . '%'}}</p>
+                                <p class="text-success">{{$stock_position['variation'] . '%'}}</p>
                             @endif
                         </td>
                     </tr>
