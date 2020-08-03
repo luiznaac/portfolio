@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Model\Bond\Bond;
 use App\Model\Bond\BondIssuer;
 use App\Model\Bond\BondType;
+use App\Model\Bond\Treasury\TreasuryBond;
 use App\Model\Index\Index;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class BondsController extends Controller {
@@ -52,6 +54,41 @@ class BondsController extends Controller {
                 $index_rate,
                 $interest_rate,
                 $days
+            );
+
+            $status = 'ok';
+            $message = "Bond Created";
+        } catch (\Exception $exception) {
+            $status = 'error';
+            $message = $exception->getMessage();
+        }
+
+        return redirect('/bonds')->with($status, $message);
+    }
+
+    public function storeTreasury(Request $request) {
+        $this->validate($request,[
+            'maturity_date' => 'required',
+        ]);
+
+        try {
+            $index_id = $request->input('index_id');
+            $interest_rate = $request->input('interest_rate');
+
+            if ($index_id == 0 && (!$interest_rate || $interest_rate <= 0)) {
+                $status = 'error';
+                $message = 'Index or extra interest rate was not set. You have to set at least one';
+                return back()->with($status, $message);
+            }
+
+            $index = Index::find($index_id);
+            $interest_rate = $request->input('interest_rate');
+            $maturity_date = Carbon::parse($request->input('maturity_date'));
+
+            TreasuryBond::store(
+                $index,
+                $interest_rate,
+                $maturity_date
             );
 
             $status = 'ok';

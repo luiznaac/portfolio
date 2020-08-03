@@ -28,13 +28,11 @@ class TreasuryBond extends Model {
 
     public static function store(
         ?Index $index,
-        ?float $index_rate,
         ?float $interest_rate,
         Carbon $maturity_date
     ): self {
         $treasury_bond = new self();
         $treasury_bond->index_id = $index ? $index->id : null;
-        $treasury_bond->index_rate = $index_rate;
         $treasury_bond->interest_rate = $interest_rate;
         $treasury_bond->maturity_date = $maturity_date;
         $treasury_bond->save();

@@ -57,6 +57,7 @@ Route::get('/bonds/issuers', 'Pages\BondIssuersPagesController@index');
 Route::get('/bonds/issuers/create', 'Pages\BondIssuersPagesController@create');
 
 Route::post('/bonds/store', 'BondsController@store');
+Route::post('/bonds/store-treasury', 'BondsController@storeTreasury');
 Route::post('/bonds/issuers/store', 'BondIssuersController@store');
 
 // CONSOLIDATOR
