@@ -16,7 +16,7 @@ class OrdersPagesController extends Controller
 
     public function index(): View {
         $data = [
-            'orders' => Order::getBaseQuery()->get(),
+            'orders' => Order::getBaseQuery()->orderByDesc('date')->get(),
         ];
 
         return view(self::DEFAULT_DIR . ".index")
