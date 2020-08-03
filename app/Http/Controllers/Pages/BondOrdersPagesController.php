@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Pages;
 use App\Http\Controllers\Controller;
 use App\Model\Bond\Bond;
 use App\Model\Bond\BondOrder;
+use App\Portfolio\Utils\ReturnRate;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\View\View;
 
@@ -64,6 +65,12 @@ class BondOrdersPagesController extends Controller
     }
 
     private function generateBondName(Bond $bond): string {
-        return $bond->getBondName() . ' - ' . $bond->getReturnRateString();
+        $return_rate_string = ReturnRate::getReturnRateString(
+            $bond->index_id,
+            $bond->index_rate,
+            $bond->interest_rate
+        );
+
+        return $bond->getBondName() . ' - ' . $return_rate_string;
     }
 }

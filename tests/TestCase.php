@@ -6,6 +6,7 @@ use App\Model\Bond\Bond;
 use App\Model\Bond\BondIssuer;
 use App\Model\Bond\BondOrder;
 use App\Model\Bond\BondPosition;
+use App\Model\Bond\Treasury\TreasuryBond;
 use App\Model\Holiday\Holiday;
 use App\Model\Order\Order;
 use App\Model\Stock\Dividend\StockDividend;
@@ -143,6 +144,15 @@ abstract class TestCase extends BaseTestCase
 
             BondOrder::query()->insert($item);
         }
+    }
+
+    public function saveTreasuryBonds(array $data): array {
+        $created_treasury_bonds = [];
+        foreach ($data as $item) {
+            $created_treasury_bonds[] = TreasuryBond::query()->create($item);
+        }
+
+        return $created_treasury_bonds;
     }
 
     public function translateBondNamesToIds(array &$data, array $bonds_names): void {
