@@ -10,6 +10,7 @@ use App\Model\Bond\Treasury\TreasuryBondPosition;
 use App\Model\Stock\Dividend\StockDividendStatementLine;
 use App\Model\Stock\Position\StockPosition;
 use App\Model\Stock\Stock;
+use App\Portfolio\Utils\ReturnRate;
 
 class Dashboard {
 
@@ -164,7 +165,9 @@ class Dashboard {
         $list = [];
         foreach ($bond_positions as $bond_position) {
             $bond_type = $bonds[$bond_position['bond_id']]['bond_type_id'];
-            $bond_position['bond_name'] = $bonds[$bond_position['bond_id']]->getBondName();
+            $bond = $bonds[$bond_position['bond_id']];
+            $return_rate = ReturnRate::getReturnRateString($bond['index_id'], $bond['index_rate'], $bond['interest_rate']);
+            $bond_position['bond_name'] = $bond->getBondName() . ' - ' . $return_rate;
             $bond_position['result'] = self::calculatePositionResult($bond_position->toArray());
             $bond_position['variation'] = self::calculatePositionVariation($bond_position->toArray());
             $list[$bond_type][] = $bond_position;
