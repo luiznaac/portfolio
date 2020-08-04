@@ -10,6 +10,7 @@ class ConsolidatorDateProvider {
 
     private static $stock_dates;
     private static $bond_dates;
+    private static $treasury_bond_dates;
 
     public static function getOldestLastReferenceDate(): ?Carbon {
         $date = self::calculateOldestLastReferenceDate();
@@ -29,9 +30,14 @@ class ConsolidatorDateProvider {
         return self::$bond_dates ?? self::$bond_dates = self::calculateBondPositionDatesToBeUpdated();
     }
 
+    public static function getTreasuryBondPositionDatesToBeUpdated(): array {
+        return self::$treasury_bond_dates ?? self::$treasury_bond_dates = self::calculateTreasuryBondPositionDatesToBeUpdated();
+    }
+
     public static function clearCache(): void {
         self::$stock_dates = null;
         self::$bond_dates = null;
+        self::$treasury_bond_dates = null;
     }
 
     private static function calculateOldestLastReferenceDate(): ?string {
@@ -177,6 +183,59 @@ SQL;
         $data = [];
         foreach ($rows as $row) {
             $data[$row->bond_id] = $row->last_date;
+        }
+
+        return $data;
+    }
+
+    private static function calculateTreasuryBondPositionDatesToBeUpdated(): array {
+        $treasury_bond_ids_orders_dates = self::getOldestDateOfLastInsertedOrdersForEachTreasuryBond();
+        $treasury_bond_ids_positions_dates = self::getLastDateOfOutdatedBondPositionsForEachTreasuryBond();
+
+        return self::mergeDatesConsideringTheOldestOne($treasury_bond_ids_orders_dates, $treasury_bond_ids_positions_dates);
+    }
+
+    private static function getOldestDateOfLastInsertedOrdersForEachTreasuryBond(): array {
+        $query = <<<SQL
+SELECT o.treasury_bond_id, MIN(o.date) AS order_date
+FROM treasury_bond_orders o
+         LEFT JOIN treasury_bond_positions tbp ON o.treasury_bond_id = tbp.treasury_bond_id AND o.user_id = tbp.user_id
+WHERE o.user_id = ?
+  AND (o.updated_at >
+       (SELECT MAX(updated_at) FROM treasury_bond_positions tbp2 WHERE tbp2.treasury_bond_id = tbp.treasury_bond_id AND tbp2.user_id = tbp.user_id)
+    OR tbp.id IS NULL)
+GROUP BY o.treasury_bond_id;
+SQL;
+
+        $rows = DB::select($query, [auth()->id()]);
+
+        $data = [];
+        foreach ($rows as $row) {
+            $data[$row->treasury_bond_id] = $row->order_date;
+        }
+
+        return $data;
+    }
+
+    private static function getLastDateOfOutdatedBondPositionsForEachTreasuryBond(): array {
+        $query = <<<SQL
+SELECT treasury_bond_id, last_date
+FROM (SELECT MAX(date) AS last_date, treasury_bond_id
+      FROM treasury_bond_positions rbp
+      WHERE user_id = ?
+      GROUP BY treasury_bond_id) last_positions
+WHERE last_date < ?;
+SQL;
+
+        $rows = DB::select($query, [
+                auth()->id(),
+                Calendar::getLastMarketWorkingDate()->toDateString()
+            ]
+        );
+
+        $data = [];
+        foreach ($rows as $row) {
+            $data[$row->treasury_bond_id] = $row->last_date;
         }
 
         return $data;

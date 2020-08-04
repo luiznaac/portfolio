@@ -7,6 +7,8 @@ use App\Model\Bond\BondIssuer;
 use App\Model\Bond\BondOrder;
 use App\Model\Bond\BondPosition;
 use App\Model\Bond\Treasury\TreasuryBond;
+use App\Model\Bond\Treasury\TreasuryBondOrder;
+use App\Model\Bond\Treasury\TreasuryBondPosition;
 use App\Model\Holiday\Holiday;
 use App\Model\Order\Order;
 use App\Model\Stock\Dividend\StockDividend;
@@ -155,6 +157,42 @@ abstract class TestCase extends BaseTestCase
         return $created_treasury_bonds;
     }
 
+    public function saveTreasuryBondsWithNames(array $data): array {
+        $created_treasury_bonds = [];
+        foreach ($data as $item) {
+            $treasury_bond_name = $item['treasury_bond_name'];
+            unset($item['treasury_bond_name']);
+            $item['index_id'] = array_key_exists('index_id', $item) ? $item['index_id'] : rand(1, 3);
+            $item['interest_rate'] = array_key_exists('interest_rate', $item) ? $item['interest_rate'] : rand(0, 15);
+            $item['maturity_date'] = Carbon::now()->addYears(rand(1, 5));
+
+            $created_treasury_bonds[$treasury_bond_name] = TreasuryBond::query()->create($item);
+        }
+
+        return $created_treasury_bonds;
+    }
+
+    public function saveTreasuryBondPositions(array $data): void {
+        foreach ($data as $item) {
+            $item['user_id'] = $item['user_id'] ?? auth()->id();
+            $item['amount'] = $item['amount'] ?? rand(1000, 100000);
+            $item['contributed_amount'] = $item['contributed_amount'] ?? (rand(1000, 100000) + $item['amount']);
+            $this->setTimestamps($item);
+
+            TreasuryBondPosition::query()->insert($item);
+        }
+    }
+
+    public function saveTreasuryBondOrders(array $data): void {
+        foreach ($data as $item) {
+            $item['user_id'] = $item['user_id'] ?? auth()->id();
+            $item['amount'] = $item['amount'] ?? rand(1000, 100000);
+            $this->setTimestamps($item);
+
+            TreasuryBondOrder::query()->insert($item);
+        }
+    }
+
     public function translateBondNamesToIds(array &$data, array $bonds_names): void {
         foreach ($data as &$item) {
             $bond_name = $item['bond_name'];
@@ -167,6 +205,21 @@ abstract class TestCase extends BaseTestCase
         foreach ($data as $bond_name => $expected_date) {
             unset($data[$bond_name]);
             $data[$bonds_names[$bond_name]->id] = $expected_date;
+        }
+    }
+
+    public function translateTreasuryBondNamesToIdsForKeys(array &$data, array $treasury_bonds_names): void {
+        foreach ($data as $treasury_bond_name => $expected_date) {
+            unset($data[$treasury_bond_name]);
+            $data[$treasury_bonds_names[$treasury_bond_name]->id] = $expected_date;
+        }
+    }
+
+    public function translateTreasuryBondNamesToIds(array &$data, array $treasury_bonds_names): void {
+        foreach ($data as &$item) {
+            $treasury_bond_name = $item['treasury_bond_name'];
+            unset($item['treasury_bond_name']);
+            $item['treasury_bond_id'] = $treasury_bonds_names[$treasury_bond_name]->id;
         }
     }
 

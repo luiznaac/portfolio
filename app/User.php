@@ -57,6 +57,14 @@ class User extends Authenticatable
         return $this->hasMany('App\Model\Bond\BondPosition');
     }
 
+    public function treasuryBondOrders() {
+        return $this->hasMany('App\Model\Bond\Treasury\TreasuryBondOrder');
+    }
+
+    public function treasuryBondPositions() {
+        return $this->hasMany('App\Model\Bond\Treasury\TreasuryBondPosition');
+    }
+
     public function consolidatorStateMachine() {
         return $this->hasOne('App\Portfolio\Consolidator\ConsolidatorStateMachine');
     }

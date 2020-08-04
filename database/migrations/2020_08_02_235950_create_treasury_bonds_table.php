@@ -22,7 +22,7 @@ class CreateTreasuryBondsTable extends Migration
             $table->date('maturity_date');
             $table->timestamps();
 
-            $table->unique(['index_id', 'interest_date', 'maturity_date']);
+            $table->unique(['index_id', 'interest_rate', 'maturity_date']);
         });
     }
 
