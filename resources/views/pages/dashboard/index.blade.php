@@ -98,14 +98,14 @@
                         <td>{{$stock_position['symbol']}}</td>
                         <td>{{'R$' . $stock_position['amount']}}</td>
                         <td>
-                        @if($stock_position['result'] < 0)
-                            <p class="text-danger">{{'R$' . $stock_position['result']}}</p>
-                        @else
-                            <p class="text-success">{{'R$' . $stock_position['result']}}</p>
-                        @endif
+                            @if($stock_position['result'] < 0)
+                                <p class="text-danger">{{'R$' . $stock_position['result']}}</p>
+                            @else
+                                <p class="text-success">{{'R$' . $stock_position['result']}}</p>
+                            @endif
                         </td>
                         <td>
-                            @if($stock_position['amount'] < 0)
+                            @if($stock_position['variation'] < 0)
                                 <p class="text-danger">{{$stock_position['variation'] . '%'}}</p>
                             @else
                                 <p class="text-success">{{$stock_position['variation'] . '%'}}</p>
