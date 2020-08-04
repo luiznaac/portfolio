@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Pages;
 
 use App\Http\Controllers\Controller;
 use App\Model\Bond\Bond;
+use App\Model\Bond\BondType;
 use App\Model\Stock\Stock;
 use App\Model\Stock\StockType;
 use App\Portfolio\Dashboard\Dashboard;
@@ -21,6 +22,7 @@ class DashboardPagesController extends Controller
 
         $data = [
             'stock_types' => StockType::getStockTypesFromCache(),
+            'bond_types' => BondType::getBondTypesFromCache(),
             'bonds' => Bond::getAllBondsFromCache(),
             'contributed_amount' => $dashboard_data['contributed_amount'],
             'updated_amount' => $dashboard_data['updated_amount'],

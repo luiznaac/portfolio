@@ -46,4 +46,19 @@ class BondType extends Model {
     public static function getAll(): array {
         return self::ID_TYPE;
     }
+
+    public static function getBondTypesFromCache(): array {
+        $bond_types = self::query()->get();
+
+        $types = [];
+        /** @var BondType $type */
+        foreach ($bond_types as $type) {
+            $types[$type->id] = [
+                'type' => $type->type,
+                'description' => $type->description,
+            ];
+        }
+
+        return $types;
+    }
 }
