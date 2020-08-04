@@ -56,21 +56,6 @@ class Bond extends Model {
         return "$bond_type $bond_issuer_name - $this->days days";
     }
 
-    public function getReturnRateString(): string {
-        $return_rate = null;
-
-        if ($this->index_id) {
-            $index_abbr = Index::getIndexAbbr($this->index_id);
-            $return_rate = $this->index_rate . '% ' . $index_abbr;
-        }
-
-        if ($this->interest_rate) {
-            $return_rate = ($return_rate ? ($return_rate . ' + ') : '') . $this->interest_rate . '%';
-        }
-
-        return $return_rate;
-    }
-
     public static function getAllBondsFromCache(): array {
         $bonds = self::query()->get();
 

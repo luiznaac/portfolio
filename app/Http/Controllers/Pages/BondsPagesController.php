@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Model\Bond\Bond;
 use App\Model\Bond\BondIssuer;
 use App\Model\Bond\BondType;
+use App\Model\Bond\Treasury\TreasuryBond;
 use App\Model\Index\Index;
+use App\Portfolio\Utils\ReturnRate;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\View\View;
 
@@ -19,10 +21,15 @@ class BondsPagesController extends Controller
     }
 
     public function index(): View {
+        $bonds = Bond::query()
+            ->orderBy('bond_type_id')
+            ->orderBy('bond_issuer_id')->get();
+        $treasury_bonds = TreasuryBond::query()
+            ->orderByDesc('maturity_date')->get();
+
         $data = [
-            'bonds' => Bond::query()
-                ->orderBy('bond_type_id')
-                ->orderBy('bond_issuer_id')->get(),
+            'bonds' => $this->fillRateOfReturn($bonds),
+            'treasury_bonds' => $this->fillRateOfReturn($treasury_bonds),
         ];
 
         return view(self::DEFAULT_DIR . ".index")
@@ -38,6 +45,17 @@ class BondsPagesController extends Controller
 
         return view(self::DEFAULT_DIR . ".create")
             ->with($data);
+    }
+
+    private function fillRateOfReturn(Collection $bonds): array {
+        $filled_bonds = [];
+        foreach ($bonds as $bond) {
+            $return_string = ReturnRate::getReturnRateString($bond['index_id'], $bond['index_rate'], $bond['interest_rate']);
+            $bond['return'] = $return_string;
+            $filled_bonds[] = $bond;
+        }
+
+        return $filled_bonds;
     }
 
     private function buildBondIssuersArray(): array {

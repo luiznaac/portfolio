@@ -16,15 +16,22 @@
             <tbody>
             @foreach($bond_orders as $bond_order)
                 <tr>
-                    <td>{{$bond_order->date}}</td>
-                    <td>{{$bond_order->bond_name}}</td>
-                    <td>{{$bond_order->type}}</td>
-                    <td>{{$bond_order->amount}}</td>
+                    <td>{{$bond_order['date']}}</td>
+                    <td>{{$bond_order['bond_name']}}</td>
+                    <td>{{$bond_order['type']}}</td>
+                    <td>{{$bond_order['amount']}}</td>
                     <td>
+                    @if(array_key_exists('bond_id', $bond_order))
                     {!! Form::open(['action' => 'BondOrdersController@delete']) !!}
-                        {{Form::hidden('id', $bond_order->id)}}
+                        {{Form::hidden('id', $bond_order['id'])}}
                         {{Form::submit('X', ['class' => 'btn btn-danger btn-sm'])}}
                     {!! Form::close() !!}
+                    @else
+                    {!! Form::open(['action' => 'BondOrdersController@deleteTreasury']) !!}
+                        {{Form::hidden('id', $bond_order['id'])}}
+                        {{Form::submit('X', ['class' => 'btn btn-danger btn-sm'])}}
+                    {!! Form::close() !!}
+                    @endif
                     </td>
                 </tr>
             @endforeach

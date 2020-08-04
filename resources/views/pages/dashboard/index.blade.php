@@ -72,6 +72,7 @@
                 </div>
             </div>
         </div>
+        @if(count($stock_positions_list) != 0)
         <div class="row">
             <h2>{{$stock_allocation . '%'}} - Stocks</h2>
         </div>
@@ -116,6 +117,8 @@
                 </tbody>
             </table>
         </div>
+        @endif
+        @if(count($bond_positions_list) != 0)
         <div class="row">
             <h2>{{$bond_allocation . '%'}} - Bonds</h2>
         </div>
@@ -132,9 +135,16 @@
                 </thead>
                 <tbody>
                 @foreach($bond_positions_list as $bond_type_id => $bond_positions)
+                    <tr>
+                        <td colspan="5"><b>{{$bond_types[$bond_type_id]['type']}}</b></td>
+                    </tr>
                     @foreach($bond_positions as $bond_position)
                         <tr>
-                            <td>{{$bond_allocations[$bond_position['bond_id']]. '%'}}</td>
+                            @if($bond_type_id == \App\Model\Bond\BondType::TESOURO_DIRETO_ID)
+                            <td>{{$bond_allocations['treasury_bonds'][$bond_position['treasury_bond_id']]. '%'}}</td>
+                            @else
+                            <td>{{$bond_allocations['bonds'][$bond_position['bond_id']]. '%'}}</td>
+                            @endif
                             <td>{{$bond_position['bond_name']}}</td>
                             <td>{{'R$' . $bond_position['amount']}}</td>
                             <td>
@@ -157,5 +167,6 @@
                 </tbody>
             </table>
         </div>
+        @endif
     </div>
 @endsection

@@ -49,27 +49,43 @@ class IndexValueTest extends TestCase {
         $this->assertIndexValues($expected_data, $index_values);
     }
 
-    public function testGetStockPricesForDateRangeWithoutStoredPrices_ShouldLoadAndReturnValues(): void {
+    public function testGetIndexValueForDateRangeWithoutStoredPrices_ShouldLoadAndReturnValues(): void {
         $index = Index::find(Index::IPCA_ID);
-        $date = Carbon::parse('2020-06-25');
+        $date = Carbon::parse('2020-05-26');
 
         $expected_data = [
-            ['index_id' => $index->id, 'date' => '2020-06-25', 'value' => 0.00738154],
-            ['index_id' => $index->id, 'date' => '2020-06-26', 'value' => 0.00738154],
-            ['index_id' => $index->id, 'date' => '2020-06-29', 'value' => 0.00738154],
-            ['index_id' => $index->id, 'date' => '2020-06-30', 'value' => 0.00738154],
-            ['index_id' => $index->id, 'date' => '2020-07-01', 'value' => 0.00837235],
-            ['index_id' => $index->id, 'date' => '2020-07-02', 'value' => 0.00837235],
-            ['index_id' => $index->id, 'date' => '2020-07-03', 'value' => 0.00837235],
-            ['index_id' => $index->id, 'date' => '2020-07-06', 'value' => 0.00837235],
+            ['index_id' => $index->id, 'date' => '2020-05-26', 'value' => 0.00940806],
+            ['index_id' => $index->id, 'date' => '2020-05-27', 'value' => 0.00940806],
+            ['index_id' => $index->id, 'date' => '2020-05-28', 'value' => 0.00940806],
+            ['index_id' => $index->id, 'date' => '2020-05-29', 'value' => 0.00940806],
+            ['index_id' => $index->id, 'date' => '2020-06-01', 'value' => 0.00738154],
+            ['index_id' => $index->id, 'date' => '2020-06-02', 'value' => 0.00738154],
+            ['index_id' => $index->id, 'date' => '2020-06-03', 'value' => 0.00738154],
+            ['index_id' => $index->id, 'date' => '2020-06-04', 'value' => 0.00738154],
         ];
 
-        $index_values = IndexValue::getValuesForDateRange($index, $date, (clone $date)->addDays(11));
+        $index_values = IndexValue::getValuesForDateRange($index, $date, (clone $date)->addDays(9));
 
         $this->assertIndexValues($expected_data, $index_values);
     }
 
-    public function testGetStockPricesForDateRangeWithStoredPrices_ShouldNotLoadAndReturnStoredValues(): void {
+    public function testGetIndexValueForDateRangeWithStoredPricesAndIPCA_ShouldNotLoadAndReturnValues(): void {
+        $index = Index::find(Index::IPCA_ID);
+        $date = Carbon::parse('2020-06-25');
+
+        $expected_data = [
+            ['index_id' => $index->id, 'date' => '2020-06-25', 'value' => 1.2345],
+            ['index_id' => $index->id, 'date' => '2020-06-26', 'value' => 1.2345],
+        ];
+
+        IndexValue::query()->insert($expected_data);
+
+        $index_values = IndexValue::getValuesForDateRange($index, $date, (clone $date)->addDay());
+
+        $this->assertIndexValues($expected_data, $index_values);
+    }
+
+    public function testGetIndexValueForDateRangeWithStoredPrices_ShouldNotLoadAndReturnStoredValues(): void {
         $index = Index::find(Index::CDI_ID);
         $date = Carbon::parse('2020-06-01');
 

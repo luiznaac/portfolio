@@ -44,7 +44,8 @@ class HolidayTest extends TestCase {
 
     public function testLoadHolidaysWithNewOrder_ShouldLoadMissingYear(): void {
         $this->createHolidays(['2019', '2020']);
-        $this->createOrder(Carbon::parse('2018-05-07'));
+        $this->createOrder(Carbon::parse('2020-05-07'));
+        $this->createTreasuryBondOrder(Carbon::parse('2018-05-07'));
         Carbon::setTestNow('2020-05-07');
         Holiday::loadHolidays();
 
@@ -79,6 +80,13 @@ class HolidayTest extends TestCase {
             $price = 15.22,
             $cost = 7.50
         );
+    }
+
+    private function createTreasuryBondOrder(Carbon $date): void {
+        $treasury_bond_names = $this->saveTreasuryBondsWithNames([['treasury_bond_name' => 'Bond 1']]);
+        $treasury_bond_orders = [['treasury_bond_name' => 'Bond 1', 'date' => $date, 'type' => 'buy', 'amount' => 5000]];
+        $this->translateTreasuryBondNamesToIds($treasury_bond_orders, $treasury_bond_names);
+        $this->saveTreasuryBondOrders($treasury_bond_orders);
     }
 
     private function assertHolidays(int $year, int $count): void {

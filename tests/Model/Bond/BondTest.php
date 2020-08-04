@@ -22,7 +22,6 @@ class BondTest extends TestCase {
                     'days' => '365',
                 ],
                 'expected_name' => 'CDB Banco Maxima - 365 days',
-                'expected_return_rate_string' => '105% CDI',
             ],
             'CDB Banco Semear - JUL/2023 - 99% CDI + 2%' => [
                 'bond_data' => [
@@ -34,7 +33,6 @@ class BondTest extends TestCase {
                     'days' => '730',
                 ],
                 'expected_name' => 'CDB Banco Semear - 730 days',
-                'expected_return_rate_string' => '99% CDI + 2%',
             ],
             'CDB Banco Maxima - JUL/2023 - 12%' => [
                 'bond_data' => [
@@ -46,7 +44,6 @@ class BondTest extends TestCase {
                     'days' => '1095',
                 ],
                 'expected_name' => 'CDB Banco Semear - 1095 days',
-                'expected_return_rate_string' => '12%',
             ],
         ];
     }
@@ -56,8 +53,7 @@ class BondTest extends TestCase {
      */
     public function testGetBondNameAndGetReturnRateString(
         array $bond_data,
-        string $expected_name,
-        string $expected_return_rate_string
+        string $expected_name
     ): void {
         $this->createIssuerAndSetId($bond_data);
 
@@ -65,7 +61,6 @@ class BondTest extends TestCase {
         $bond = $this->saveBonds([$bond_data])[0];
 
         $this->assertEquals($expected_name, $bond->getBondName());
-        $this->assertEquals($expected_return_rate_string, $bond->getReturnRateString());
     }
 
     private function createIssuerAndSetId(array &$bond_data): void {

@@ -60,7 +60,7 @@ class Calendar {
     }
 
     public static function getYearsForRange(Carbon $start_date, Carbon $end_date): array {
-        $date = clone $start_date;
+        $date = (clone $start_date)->startOfYear();
 
         $years = [];
         while ($date->lte($end_date)) {

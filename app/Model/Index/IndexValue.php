@@ -66,7 +66,7 @@ class IndexValue extends Model {
 
     private static function calculateMissingDates(Index $index, array $values_stored_in_range, Carbon $start_date, Carbon $end_date): array {
         $expected_dates = self::getExpectedDatesAccordinglyIndex($index, $start_date, $end_date);
-        $dates_stored = self::extractDatesStoredInRange($values_stored_in_range);
+        $dates_stored = self::extractDatesStoredInRangeAccordinglyIndex($index, $values_stored_in_range);
 
         return array_values(array_diff($expected_dates, $dates_stored));
     }
@@ -134,13 +134,43 @@ class IndexValue extends Model {
 
     private static function getExpectedDatesAccordinglyIndex(Index $index, Carbon $start_date, Carbon $end_date): array {
         if($index->id == Index::IPCA_ID) {
-            return Calendar::getWorkingDaysDatesForRange($start_date, (clone $end_date)->endOfMonth());
+            return Calendar::getWorkingDaysDatesForRange((clone $start_date)->startOfMonth(), (clone $end_date)->endOfMonth());
         }
 
         return Calendar::getWorkingDaysDatesForRange($start_date, $end_date);
     }
 
-    private static function extractDatesStoredInRange(array $values_stored_in_range): array {
+    private static function extractDatesStoredInRangeAccordinglyIndex(Index $index, array $values_stored_in_range): array {
+        if(empty($values_stored_in_range)) {
+            return [];
+        }
+
+        if($index->id == Index::IPCA_ID) {
+            return self::extractWholeMonths($values_stored_in_range);
+        }
+
+        return self::extractEachDay($values_stored_in_range);
+    }
+
+    private static function extractWholeMonths(array $values_stored_in_range): array {
+        $months = [];
+        foreach($values_stored_in_range as $value) {
+            $month = Carbon::parse($value['date'])->month;
+
+            if(!in_array($month, $months)) {
+                $months[] = $month;
+            }
+        }
+
+        sort($months);
+
+        $start_date = Carbon::createFromFormat('m', $months[0])->startOfMonth();
+        $end_date = Carbon::createFromFormat('m', $months[sizeof($months)-1])->endOfMonth();
+
+        return Calendar::getWorkingDaysDatesForRange($start_date, $end_date);
+    }
+
+    private static function extractEachDay(array $values_stored_in_range): array {
         $dates = [];
         foreach ($values_stored_in_range as $value) {
             $dates[] = $value['date'];
