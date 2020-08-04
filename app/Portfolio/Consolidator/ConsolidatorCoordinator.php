@@ -18,6 +18,7 @@ class ConsolidatorCoordinator {
             StockPositionConsolidator::class,
             StockDividendConsolidator::class,
             BondPositionConsolidator::class,
+            TreasuryBondPositionConsolidator::class,
         ];
     }
 }

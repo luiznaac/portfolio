@@ -2,6 +2,7 @@
 
 namespace App\Portfolio\Consolidator;
 
+use App\Model\Holiday\Holiday;
 use App\Model\Stock\Stock;
 use App\User;
 use Illuminate\Support\Facades\Auth;
@@ -24,6 +25,7 @@ class ConsolidatorExecutor {
 
     private static function executeSystemSection() {
         Stock::updateInfosForAllStocks();
+        Holiday::loadHolidays();
     }
 
     private static function executeUserSection() {
