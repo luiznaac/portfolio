@@ -39,7 +39,7 @@ class BondOrder extends Model {
         Bond $bond,
         Carbon $date,
         string $type,
-        int $amount
+        float $amount
     ): void {
         self::query()->create([
             'user_id' => auth()->id(),
