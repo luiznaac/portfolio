@@ -7,6 +7,7 @@ use App\Portfolio\Providers\HolidayProvider;
 use App\Portfolio\Utils\Calendar;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 /**
  * App\Model\Holiday\Holiday
@@ -90,9 +91,22 @@ class Holiday extends Model {
     }
 
     private static function getOldestOrderYear(): ?int {
-        return Order::query()
-            ->selectRaw('YEAR(MIN(date)) AS min_year')
-            ->get()->toArray()[0]['min_year'];
+        $query = <<<SQL
+SELECT MIN(min_date) AS min_date
+FROM (
+         SELECT MIN(date) AS min_date
+         FROM orders
+         UNION
+         SELECT MIN(date) AS min_date
+         FROM bond_orders
+         UNION
+         SELECT MIN(date) AS min_date
+         FROM treasury_bond_orders) min_dates;
+SQL;
+
+        $data = DB::select($query, []);
+
+        return $data ? (int)$data[0]->min_date : null;
     }
 
     private static function getYearsStored(): array {
