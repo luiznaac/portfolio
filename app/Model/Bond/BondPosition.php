@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
  *
  * @property int $id
  * @property int $user_id
- * @property int $bond_id
+ * @property int $bond_order_id
  * @property string $date
  * @property float $amount
  * @property float $contributed_amount
@@ -22,7 +22,7 @@ class BondPosition extends Model {
 
     protected $fillable = [
         'user_id',
-        'bond_id',
+        'bond_order_id',
         'date',
         'amount',
         'contributed_amount',
@@ -42,40 +42,40 @@ class BondPosition extends Model {
     }
 
     public static function getLastBondPositions(): array {
-        $bond_ids = self::getConsolidatedBondIds();
+        $bond_order_ids = self::getConsolidatedBondOrderIds();
 
         $last_bond_positions = [];
-        foreach ($bond_ids as $bond_id) {
-            $last_bond_positions[] = self::getLastPositionForBond($bond_id);
+        foreach ($bond_order_ids as $bond_order_id) {
+            $last_bond_positions[] = self::getLastPositionForBondOrder($bond_order_id);
         }
 
         return $last_bond_positions;
     }
 
-    public static function getPositionsForBond(Bond $bond): Collection {
+    public static function getPositionsForBondOrder(BondOrder $bond_order): Collection {
         return self::getBaseQuery()
-            ->where('bond_id', $bond->id)
+            ->where('bond_order_id', $bond_order->id)
             ->orderByDesc('date')
             ->get();
     }
 
-    private static function getConsolidatedBondIds(): array {
+    private static function getConsolidatedBondOrderIds(): array {
         $cursor = self::getBaseQuery()
-            ->select('bond_id')->distinct()
-            ->leftJoin('bonds', 'bonds.id', '=', 'bond_positions.bond_id')
+            ->select('bond_order_id')->distinct()
+            ->leftJoin('bond_orders', 'bond_orders.id', '=', 'bond_positions.bond_order_id')
             ->get();
 
-        $bond_ids = [];
+        $bond_order_ids = [];
         foreach ($cursor as $data) {
-            $bond_ids[] = $data->bond_id;
+            $bond_order_ids[] = $data->bond_order_id;
         }
 
-        return $bond_ids;
+        return $bond_order_ids;
     }
 
-    private static function getLastPositionForBond(int $bond_id): BondPosition {
+    private static function getLastPositionForBondOrder(int $bond_order_id): BondPosition {
         return self::getBaseQuery()
-            ->where('bond_id', $bond_id)
+            ->where('bond_order_id', $bond_order_id)
             ->orderByDesc('date')
             ->limit(1)
             ->get()->first();

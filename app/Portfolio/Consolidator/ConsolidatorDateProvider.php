@@ -136,42 +136,18 @@ SQL;
     }
 
     private static function calculateBondPositionDatesToBeUpdated(): array {
-        $bond_ids_orders_dates = self::getOldestDateOfLastInsertedOrdersForEachBond();
-        $bond_ids_positions_dates = self::getLastDateOfOutdatedBondPositionsForEachBond();
-
-        return self::mergeDatesConsideringTheOldestOne($bond_ids_orders_dates, $bond_ids_positions_dates);
+        return self::getDatesForEachBondOrder();
     }
 
-    private static function getOldestDateOfLastInsertedOrdersForEachBond(): array {
+    private static function getDatesForEachBondOrder(): array {
         $query = <<<SQL
-SELECT o.bond_id, MIN(o.date) AS order_date
-FROM bond_orders o
-         LEFT JOIN bond_positions bp ON o.bond_id = bp.bond_id AND o.user_id = bp.user_id
-WHERE o.user_id = ?
-  AND (o.updated_at >
-       (SELECT MAX(updated_at) FROM bond_positions bp2 WHERE bp2.bond_id = bp.bond_id AND bp2.user_id = bp.user_id)
-    OR bp.id IS NULL)
-GROUP BY o.bond_id;
-SQL;
-
-        $rows = DB::select($query, [auth()->id()]);
-
-        $data = [];
-        foreach ($rows as $row) {
-            $data[$row->bond_id] = $row->order_date;
-        }
-
-        return $data;
-    }
-
-    private static function getLastDateOfOutdatedBondPositionsForEachBond(): array {
-        $query = <<<SQL
-SELECT bond_id, last_date
-FROM (SELECT MAX(date) AS last_date, bond_id
-      FROM bond_positions bp
-      WHERE user_id = ?
-      GROUP BY bond_id) last_positions
-WHERE last_date < ?;
+SELECT bo.id, IF(bp.id IS NULL, bo.date, bp.date) AS bond_order_date
+FROM bond_orders bo
+         LEFT JOIN bond_positions bp ON bo.id = bp.bond_order_id AND bo.user_id = bp.user_id
+WHERE bo.user_id = ?
+  AND (bp.id IS NULL
+    OR (bp.date = (SELECT MAX(date) FROM bond_positions bp2 WHERE bo.id = bp2.bond_order_id)
+        AND bp.date < ?));
 SQL;
 
         $rows = DB::select($query, [
@@ -182,7 +158,7 @@ SQL;
 
         $data = [];
         foreach ($rows as $row) {
-            $data[$row->bond_id] = $row->last_date;
+            $data[$row->id] = $row->bond_order_date;
         }
 
         return $data;

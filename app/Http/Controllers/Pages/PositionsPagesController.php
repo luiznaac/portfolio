@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Pages;
 
 use App\Http\Controllers\Controller;
 use App\Model\Bond\Bond;
+use App\Model\Bond\BondOrder;
 use App\Model\Bond\BondPosition;
 use App\Model\Order\Order;
 use App\Model\Stock\Position\StockPosition;
@@ -59,8 +60,10 @@ class PositionsPagesController extends Controller
         $bond_positions = BondPosition::getLastBondPositions();
 
         $bonds = [];
-        foreach ($bond_positions as $bond_position) {
-            $bonds[$bond_position->bond_id] = Bond::find($bond_position->bond_id);
+        foreach ($bond_positions as &$bond_position) {
+            $bond_order = BondOrder::find($bond_position->bond_order_id);
+            $bonds[$bond_order->bond_id] = Bond::find($bond_order->bond_id);
+            $bond_position['bond_id'] = $bond_order->bond_id;
         }
 
         $data = [
@@ -72,13 +75,15 @@ class PositionsPagesController extends Controller
             ->with($data);
     }
 
-    public function showBondDetailedPosition(int $id) {
+    public function showBondOrderDetailedPosition(int $id) {
+        /** @var BondOrder $bond_order */
+        $bond_order = BondOrder::find($id);
         /** @var Bond $bond */
-        $bond = Bond::find($id);
+        $bond = Bond::find($bond_order->bond_id);
 
         $data = [
             'bond' => $bond,
-            'bond_positions' => BondPosition::getPositionsForBond($bond),
+            'bond_positions' => BondPosition::getPositionsForBondOrder($bond_order),
         ];
 
         return view(self::DEFAULT_DIR . self::BONDS_SUBDIR . ".detailed")

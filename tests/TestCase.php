@@ -138,14 +138,21 @@ abstract class TestCase extends BaseTestCase
         }
     }
 
-    public function saveBondOrders(array $data): void {
+    public function saveBondOrdersWithNames(array $data): array {
+        $created_bond_orders = [];
         foreach ($data as $item) {
+            $bond_order_name = $item['bond_order_name'];
+            unset($item['bond_name']);
             $item['user_id'] = $item['user_id'] ?? auth()->id();
+            $item['date'] = $item['date'] ?? Carbon::now()->addDays(rand(0,30));
+            $item['type'] = $item['type'] ?? 'buy';
             $item['amount'] = $item['amount'] ?? rand(1000, 100000);
             $this->setTimestamps($item);
 
-            BondOrder::query()->insert($item);
+            $created_bond_orders[$bond_order_name] = BondOrder::query()->create($item);
         }
+
+        return $created_bond_orders;
     }
 
     public function saveTreasuryBonds(array $data): array {
@@ -201,10 +208,18 @@ abstract class TestCase extends BaseTestCase
         }
     }
 
-    public function translateBondNamesToIdsForKeys(array &$data, array $bonds_names): void {
-        foreach ($data as $bond_name => $expected_date) {
-            unset($data[$bond_name]);
-            $data[$bonds_names[$bond_name]->id] = $expected_date;
+    public function translateBondOrderNamesToIds(array &$data, array $bonds_order_names): void {
+        foreach ($data as &$item) {
+            $bonds_order_name = $item['bond_order_name'];
+            unset($item['bond_order_name']);
+            $item['bond_order_id'] = $bonds_order_names[$bonds_order_name]->id;
+        }
+    }
+
+    public function translateBondOrderNamesToIdsForKeys(array &$data, array $bond_orders_names): void {
+        foreach ($data as $bond_order_name => $expected_date) {
+            unset($data[$bond_order_name]);
+            $data[$bond_orders_names[$bond_order_name]->id] = $expected_date;
         }
     }
 
