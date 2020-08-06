@@ -49,7 +49,7 @@ Route::get('/positions/stocks', 'Pages\PositionsPagesController@showStocks');
 Route::get('/positions/stocks/{id}', 'Pages\PositionsPagesController@showStockDetailedPosition');
 
 Route::get('/positions/bonds', 'Pages\PositionsPagesController@showBonds');
-Route::get('/positions/bonds/{id}', 'Pages\PositionsPagesController@showBondDetailedPosition');
+Route::get('/positions/bonds/{id}', 'Pages\PositionsPagesController@showBondOrderDetailedPosition');
 
 // BONDS
 

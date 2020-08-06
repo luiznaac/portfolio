@@ -17,9 +17,9 @@ class DashboardTest extends TestCase {
         $bond_allocations = ['Bond 1' => 19.06, 'Bond 2' => 19.05, 'Bond 3' => 19.07];
         $bond_results = ['Bond 1' => 6.4, 'Bond 2' => 5.3, 'Bond 3' => 7.3];
         $bond_variations = ['Bond 1' => 0.32, 'Bond 2' => 0.26, 'Bond 3' => 0.36];
-        $this->translateBondNamesToIdsForKeys($bond_allocations, $scenario_data['bond_names']);
-        $this->translateBondNamesToIdsForKeys($bond_results, $scenario_data['bond_names']);
-        $this->translateBondNamesToIdsForKeys($bond_variations, $scenario_data['bond_names']);
+        $this->translateBondOrderNamesToIdsForKeys($bond_allocations, $scenario_data['bond_names']);
+        $this->translateBondOrderNamesToIdsForKeys($bond_results, $scenario_data['bond_names']);
+        $this->translateBondOrderNamesToIdsForKeys($bond_variations, $scenario_data['bond_names']);
 
         $treasury_bond_allocations = ['Treasury Bond 1' => 14.28, 'Treasury Bond 2' => 14.27, 'Treasury Bond 3' => 14.26];
         $treasury_bond_results = ['Treasury Bond 1' => 3.4, 'Treasury Bond 2' => 2.3, 'Treasury Bond 3' => 1.3];
@@ -70,12 +70,19 @@ class DashboardTest extends TestCase {
            ['bond_name' => 'Bond 2'],
            ['bond_name' => 'Bond 3'],
         ]);
-        $bond_positions = [
-           ['bond_name' => 'Bond 1', 'date' => '2020-07-01', 'contributed_amount' => 2000, 'amount' => 2006.40],
-           ['bond_name' => 'Bond 2', 'date' => '2020-07-01', 'contributed_amount' => 2000, 'amount' => 2005.30],
-           ['bond_name' => 'Bond 3', 'date' => '2020-07-01', 'contributed_amount' => 2000, 'amount' => 2007.30],
+        $bond_orders = [
+            ['bond_order_name' => 'Bond Order 1', 'bond_name' => 'Bond 1'],
+            ['bond_order_name' => 'Bond Order 2', 'bond_name' => 'Bond 2'],
+            ['bond_order_name' => 'Bond Order 3', 'bond_name' => 'Bond 3'],
         ];
-        $this->translateBondNamesToIds($bond_positions, $bond_names);
+        $this->translateBondNamesToIds($bond_orders, $bond_names);
+        $bond_orders_names = $this->saveBondOrdersWithNames($bond_orders);
+        $bond_positions = [
+           ['bond_order_name' => 'Bond Order 1', 'date' => '2020-07-01', 'contributed_amount' => 2000, 'amount' => 2006.40],
+           ['bond_order_name' => 'Bond Order 2', 'date' => '2020-07-01', 'contributed_amount' => 2000, 'amount' => 2005.30],
+           ['bond_order_name' => 'Bond Order 3', 'date' => '2020-07-01', 'contributed_amount' => 2000, 'amount' => 2007.30],
+        ];
+        $this->translateBondOrderNamesToIds($bond_positions, $bond_orders_names);
         $this->saveBondPositions($bond_positions);
 
         $treasury_bond_names = $this->saveTreasuryBondsWithNames([

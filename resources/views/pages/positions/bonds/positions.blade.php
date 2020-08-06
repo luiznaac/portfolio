@@ -15,7 +15,7 @@
             <tbody>
             @foreach($bond_positions as $position)
                 <tr>
-                    <td><a href="/positions/bonds/{{$position->bond_id}}">{{$bonds[$position->bond_id]->getBondName()}}</a></td>
+                    <td><a href="/positions/bonds/{{$position->bond_order_id}}">{{$bonds[$position->bond_id]->getBondName()}}</a></td>
                     <td>{{$position->date}}</td>
                     <td>{{$position->contributed_amount}}</td>
                     <td>{{$position->amount}}</td>

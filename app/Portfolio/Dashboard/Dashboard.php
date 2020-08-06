@@ -3,6 +3,7 @@
 namespace App\Portfolio\Dashboard;
 
 use App\Model\Bond\Bond;
+use App\Model\Bond\BondOrder;
 use App\Model\Bond\BondPosition;
 use App\Model\Bond\BondType;
 use App\Model\Bond\Treasury\TreasuryBond;
@@ -19,7 +20,7 @@ class Dashboard {
 
     public static function getData(): array {
         $last_stock_positions = StockPosition::getLastStockPositions();
-        $last_bond_positions = BondPosition::getLastBondPositions();
+        $last_bond_positions = self::attachBondIdToBondPositions(BondPosition::getLastBondPositions());
         $last_treasury_bond_positions = TreasuryBondPosition::getLastTreasuryBondPositions();
 
         $contributed_amount = self::calculateContributedAmount(array_merge($last_stock_positions, $last_bond_positions, $last_treasury_bond_positions));
@@ -48,6 +49,17 @@ class Dashboard {
             'stock_positions_list' => $stock_positions_list,
             'bond_positions_list' => $bond_positions_list,
         ];
+    }
+
+    private static function attachBondIdToBondPositions(array $bond_positions): array {
+        /** @var BondPosition $bond_position */
+        foreach ($bond_positions as &$bond_position) {
+            /** @var BondOrder $bond_order */
+            $bond_order = BondOrder::find($bond_position->bond_order_id);
+            $bond_position['bond_id'] = $bond_order->bond_id;
+        }
+
+        return $bond_positions;
     }
 
     private static function calculateContributedAmount(array $positions): float {

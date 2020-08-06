@@ -11,7 +11,6 @@ use App\Model\Log\Log;
 use App\Portfolio\Utils\BatchInsertOrUpdate;
 use App\Portfolio\Utils\Calendar;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class BondPositionConsolidator implements ConsolidatorInterface {
 
@@ -19,15 +18,14 @@ class BondPositionConsolidator implements ConsolidatorInterface {
     private static $positions_buffer = [];
 
     public static function consolidate(): void {
-        self::removePositionsWithoutOrders();
-        $bonds_dates = ConsolidatorDateProvider::getBondPositionDatesToBeUpdated();
+        $bond_orders_dates = ConsolidatorDateProvider::getBondPositionDatesToBeUpdated();
 
-        foreach ($bonds_dates as $bond_id => $date) {
-            $bond = Bond::find($bond_id);
+        foreach ($bond_orders_dates as $bond_order_id => $date) {
+            $bond_order = BondOrder::find($bond_order_id);
             $date = Carbon::parse($date);
 
             try {
-                self::consolidateBondPositions($bond, $date);
+                self::consolidateBondPositions($bond_order, $date);
             } catch(\Throwable $e) {
                 Log::log(Log::EXCEPTION_TYPE, self::ENTITY_NAME.'::'.__FUNCTION__, $e->getMessage());
             }
@@ -37,38 +35,26 @@ class BondPositionConsolidator implements ConsolidatorInterface {
         self::touchLastBondPosition();
     }
 
-    private static function consolidateBondPositions(Bond $bond, Carbon $start_date) {
+    private static function consolidateBondPositions(BondOrder $bond_order, Carbon $start_date) {
         $end_date = Calendar::getLastMarketWorkingDate()->subDay();
         $dates = Calendar::getWorkingDaysDatesForRange($start_date, $end_date);
-        $grouped_orders = self::getOrdersGroupedByDateInRange($bond, $start_date, $end_date);
+        $bond = Bond::find($bond_order->bond_id);
         $index_values = self::getIndexValues($bond, $dates);
 
         foreach ($dates as $date) {
-            $position = $position ?? self::getBondPositionOrEmpty($bond, $start_date);
-            $position['bond_id'] = $bond->id;
-            $position['date'] = Carbon::parse($date);
+            $position = $position ?? self::getBondPositionOrEmpty($bond_order, $start_date);
 
-            if(isset($grouped_orders[$date])) {
-                $orders_in_this_date = $grouped_orders[$date];
-                $position = self::sumOrdersToPosition($orders_in_this_date, $position);
+            if(empty($position)) {
+                $position['bond_order_id'] = $bond_order->id;
+                $position['amount'] = $bond_order->amount;
+                $position['contributed_amount'] = $bond_order->amount;
             }
 
+            $position['date'] = Carbon::parse($date);
             $position = self::calculateAmount(Carbon::parse($date), $position, $bond, $index_values);
 
             self::$positions_buffer[] = $position;
         }
-    }
-
-    private static function getOrdersGroupedByDateInRange(Bond $bond, Carbon $start_date, Carbon $end_date): array {
-        $orders = BondOrder::getAllOrdersForBondInRange($bond, $start_date, $end_date);
-
-        $grouped_orders = [];
-        /** @var BondOrder $order */
-        foreach ($orders as $order) {
-            $grouped_orders[$order->date][] = $order;
-        }
-
-        return $grouped_orders;
     }
 
     private static function getIndexValues(Bond $bond, array $dates): array {
@@ -90,31 +76,13 @@ class BondPositionConsolidator implements ConsolidatorInterface {
         return $values;
     }
 
-    private static function getBondPositionOrEmpty(Bond $bond, Carbon $date): array {
+    private static function getBondPositionOrEmpty(BondOrder $bond_order, Carbon $date): array {
         $date = Calendar::getLastWorkingDayForDate((clone $date)->subDay());
 
         return BondPosition::getBaseQuery()
-            ->where('bond_id', $bond->id)
+            ->where('bond_order_id', $bond_order->id)
             ->where('date', $date->toDateString())
             ->get()->toArray()[0] ?? [];
-    }
-
-    private static function sumOrdersToPosition(array $orders, array $position): array {
-        foreach ($orders as $order) {
-            $position = self::handleCalculationAccordinglyOrderType($order, $position);
-        }
-
-        return $position;
-    }
-
-    private static function handleCalculationAccordinglyOrderType(BondOrder $order, array $position): array {
-        $position['contributed_amount'] =
-            (isset($position['contributed_amount']) ? $position['contributed_amount'] : 0) + $order['amount'];
-
-        $position['amount'] =
-            (isset($position['amount']) ? $position['amount'] : 0) + $order['amount'];
-
-        return $position;
     }
 
     private static function calculateAmount(Carbon $date, array $position, Bond $bond, array $index_values): array {
@@ -138,32 +106,6 @@ class BondPositionConsolidator implements ConsolidatorInterface {
         return $return;
     }
 
-    private static function removePositionsWithoutOrders(): void {
-        $bond_position_ids_to_remove = self::getBondPositionIdsToRemove();
-
-        BondPosition::getBaseQuery()->whereIn('id', $bond_position_ids_to_remove)->delete();
-    }
-
-    private static function getBondPositionIdsToRemove(): array {
-        $query = <<<SQL
-SELECT bp.id AS bond_position_id
-FROM bond_positions bp
-         LEFT JOIN bond_orders o ON bp.bond_id = o.bond_id AND bp.user_id = o.user_id
-WHERE bp.user_id = ?
-  AND (o.id IS NULL
-    OR bp.date <= (SELECT MIN(date) FROM bond_orders o2 WHERE bp.bond_id = o2.bond_id AND bp.user_id = o2.user_id));
-SQL;
-
-        $rows = DB::select($query, [auth()->id()]);
-
-        $data = [];
-        foreach ($rows as $row) {
-            $data[] = $row->bond_position_id;
-        }
-
-        return $data;
-    }
-
     private static function savePositionsBuffer(): void {
         $data = [];
         foreach (self::$positions_buffer as $position) {
@@ -172,9 +114,9 @@ SQL;
             }
 
             $data[] = [
-                'user_id'   => auth()->id(),
-                'bond_id'  => $position['bond_id'],
-                'date'      => $position['date']->toDateString(),
+                'user_id'               => auth()->id(),
+                'bond_order_id'         => $position['bond_order_id'],
+                'date'                  => $position['date']->toDateString(),
                 'amount'                => $position['amount'],
                 'contributed_amount'    => $position['contributed_amount'],
             ];
