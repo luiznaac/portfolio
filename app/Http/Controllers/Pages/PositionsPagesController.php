@@ -6,11 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Model\Bond\Bond;
 use App\Model\Bond\BondOrder;
 use App\Model\Bond\BondPosition;
-use App\Model\Order\Order;
 use App\Model\Stock\Position\StockPosition;
 use App\Model\Stock\Stock;
 use App\Model\Stock\StockPrice;
-use Illuminate\View\View;
 
 class PositionsPagesController extends Controller
 {
@@ -77,7 +75,14 @@ class PositionsPagesController extends Controller
 
     public function showBondOrderDetailedPosition(int $id) {
         /** @var BondOrder $bond_order */
-        $bond_order = BondOrder::find($id);
+        $bond_order = BondOrder::getBaseQuery()
+            ->where('id', $id)->first();
+
+        if(!$bond_order) {
+            return redirect('/')
+                ->with('error', 'Not available.');
+        }
+
         /** @var Bond $bond */
         $bond = Bond::find($bond_order->bond_id);
 
