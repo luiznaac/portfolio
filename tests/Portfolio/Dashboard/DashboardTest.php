@@ -34,6 +34,7 @@ class DashboardTest extends TestCase {
         $this->assertEquals(13533, $data['updated_amount']);
         $this->assertEquals(11.6, $data['dividends_amount']);
         $this->assertEquals(0.24, $data['overall_variation']);
+        $this->assertEquals(150, $data['profit']);
         $this->assertEquals(22.22, $data['stock_allocation']);
         $this->assertEquals(77.78, $data['bond_allocation']);
         $this->assertEquals([1 => 49.93, 2 => 16.71, 3 => 33.37], $data['stock_type_allocations']);
@@ -63,6 +64,12 @@ class DashboardTest extends TestCase {
         $this->saveDividendLines([
            ['stock_dividend_id' => 1, 'quantity' => 10, 'amount_paid' => 5.7],
            ['stock_dividend_id' => 2, 'quantity' => 10, 'amount_paid' => 5.9],
+        ]);
+        $orders_names = $this->saveOrdersWithNames([
+            ['order_name' => 'Order 1', 'stock_symbol' => 'BOVA11', 'type' => 'sell'],
+        ]);
+        $this->saveStockProfits([
+            ['order_id' => $orders_names['Order 1']->id, 'amount' => 150],
         ]);
 
         $bond_names = $this->saveBondsWithNames([

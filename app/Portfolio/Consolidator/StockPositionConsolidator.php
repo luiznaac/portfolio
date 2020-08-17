@@ -4,6 +4,7 @@ namespace App\Portfolio\Consolidator;
 
 use App\Model\Order\Order;
 use App\Model\Stock\Position\StockPosition;
+use App\Model\Stock\StockProfit;
 use App\Model\Stock\Stock;
 use App\Model\Stock\StockPrice;
 use App\Portfolio\Utils\BatchInsertOrUpdate;
@@ -92,10 +93,17 @@ class StockPositionConsolidator implements ConsolidatorInterface {
     }
 
     private static function sumOrdersToPosition(array $orders, array $position): array {
+        /** @var Order $order */
         foreach ($orders as $order) {
             $position = self::handleCalculationAccordinglyOrderType($order, $position);
 
-            $position['average_price'] = $position['contributed_amount']/$position['quantity'];
+            if($position['quantity'] > 0) {
+                $position['average_price'] = $position['contributed_amount']/$position['quantity'];
+            }
+
+            if($order->type == 'sell') {
+                self::calculateProfit($order, $position);
+            }
         }
 
         return $position;
@@ -104,6 +112,12 @@ class StockPositionConsolidator implements ConsolidatorInterface {
     private static function handleCalculationAccordinglyOrderType(Order $order, array $position): array {
         $position['quantity'] =
             (isset($position['quantity']) ? $position['quantity'] : 0) + $order['quantity'] * Order::getTypeModifier($order['type']);
+
+        if($position['quantity'] == 0) {
+            $position['contributed_amount'] = 0;
+
+            return $position;
+        }
 
         if($order->type == 'buy') {
             $position['contributed_amount'] =
@@ -115,6 +129,18 @@ class StockPositionConsolidator implements ConsolidatorInterface {
         $position['contributed_amount'] = $position['contributed_amount'] - $position['average_price'] * $order['quantity'];
 
         return $position;
+    }
+
+    private static function calculateProfit(Order $order, array $position): void {
+        $amount = $order->quantity * ($order->price - $position['average_price']) - $order->cost;
+
+        $data = [
+            'user_id' => auth()->id(),
+            'order_id' => $order->id,
+            'amount' => $amount,
+        ];
+
+        StockProfit::query()->insert($data);
     }
 
     private static function calculateAmountAccordinglyPriceOnDate(Carbon $date, array $position): array {

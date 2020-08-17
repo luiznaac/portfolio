@@ -71,6 +71,18 @@
                     </div>
                 </div>
             </div>
+            <div class="col-sm">
+                <div class="container">
+                    <div class="row d-flex justify-content-center">
+                        <h2>Profit</h2>
+                    </div>
+                    <div class="row d-flex justify-content-center">
+                        <div class="text-center">
+                            <p style="font-size: 1.5rem">{{'R$' . $profit}}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         @if(count($stock_positions_list) != 0)
         <div class="row">

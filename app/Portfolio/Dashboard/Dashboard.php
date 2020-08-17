@@ -11,6 +11,7 @@ use App\Model\Bond\Treasury\TreasuryBondPosition;
 use App\Model\Stock\Dividend\StockDividendStatementLine;
 use App\Model\Stock\Position\StockPosition;
 use App\Model\Stock\Stock;
+use App\Model\Stock\StockProfit;
 use App\Portfolio\Utils\ReturnRate;
 
 class Dashboard {
@@ -27,6 +28,7 @@ class Dashboard {
         $updated_amount = self::calculateUpdatedAmount(array_merge($last_stock_positions, $last_bond_positions, $last_treasury_bond_positions));
         $dividends_amount = self::calculateDividendsAmount();
         $overall_variation = self::calculateOverallVariation($contributed_amount, $updated_amount);
+        $profit = self::calculateProfit();
 
         [$stock_allocation, $bond_allocation] = self::calculateAllocations($last_stock_positions, array_merge($last_bond_positions, $last_treasury_bond_positions));
         $stock_type_allocations = self::calculateStockTypeAllocations($last_stock_positions);
@@ -41,6 +43,7 @@ class Dashboard {
             'updated_amount' => $updated_amount,
             'dividends_amount' => $dividends_amount,
             'overall_variation' => $overall_variation,
+            'profit' => $profit,
             'stock_allocation' => $stock_allocation,
             'bond_allocation' => $bond_allocation,
             'stock_type_allocations' => $stock_type_allocations,
@@ -142,6 +145,12 @@ class Dashboard {
         }
 
         return round((($updated_amount - $contributed_amount)/$contributed_amount)*100, self::PERCENTAGE_PRECISION);
+    }
+
+    private static function calculateProfit(): float {
+        $profit = StockProfit::getBaseQuery()->sum('amount');
+
+        return $profit;
     }
 
     private static function calculateDividendsAmount(): float {
