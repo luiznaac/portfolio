@@ -5,13 +5,12 @@ namespace Tests\Portfolio\Consolidator;
 use App\Model\Order\Order;
 use App\Model\Stock\Position\StockPosition;
 use App\Model\Stock\Stock;
+use App\Model\Stock\StockProfit;
 use App\Portfolio\Consolidator\StockPositionConsolidator;
 use Carbon\Carbon;
 use Tests\TestCase;
 
 class StockPositionConsolidatorTest extends TestCase {
-
-    private $user;
 
     protected function setUp(): void {
         parent::setUp();
@@ -93,16 +92,19 @@ class StockPositionConsolidatorTest extends TestCase {
     /**
      * @dataProvider dataProviderForTestConsolidate
      */
-    public function testConsolidate_StockPositions(string $now, array $stock_positions, array $orders, array $expected_positions): void {
+    public function testConsolidate_StockPositions(string $now, array $stock_positions, array $orders, array $expected_positions, array $expected_profits = []): void {
         $this->setTestNowForB3DateTime($now);
         $this->saveStockPositions($stock_positions);
-        $this->saveOrders($orders);
+        $orders_names = $this->saveOrdersWithNames($orders);
         $this->translateStockSymbolsToIdsForStockPositions($expected_positions);
+        $this->translateOrderNamesToIds($expected_profits, $orders_names);
         $this->fillUserId($expected_positions);
+        $this->fillUserId($expected_profits);
 
         StockPositionConsolidator::consolidate();
 
         $this->assertStockPositions(array_reverse($expected_positions));
+        $this->assertStockProfits(array_reverse($expected_profits));
     }
 
     public function dataProviderForTestConsolidate(): array {
@@ -123,7 +125,7 @@ class StockPositionConsolidatorTest extends TestCase {
                     ['stock_symbol' => 'BOVA11', 'date' => '2020-07-02', 'quantity' => 23, 'amount' => 2131.64],
                 ],
                 'orders' => [
-                    ['stock_symbol' => 'BOVA11', 'date' => '2020-07-02', 'type' => 'buy', 'quantity' => 10, 'price' => 90.22, 'cost' => 7.50, 'updated_at' => '2020-07-02 21:01:01'],
+                    ['order_name' => 'Order 1', 'stock_symbol' => 'BOVA11', 'date' => '2020-07-02', 'type' => 'buy', 'quantity' => 10, 'price' => 90.22, 'cost' => 7.50, 'updated_at' => '2020-07-02 21:01:01'],
                 ],
                 'expected_positions' => [
                     ['stock_symbol' => 'BOVA11', 'date' => '2020-07-02', 'quantity' => 10, 'amount' => 925, 'contributed_amount' => 909.7, 'average_price' => 90.97],
@@ -133,7 +135,7 @@ class StockPositionConsolidatorTest extends TestCase {
                 'now' => '2020-06-30 18:01:00',
                 'stock_positions' => [],
                 'orders' => [
-                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-11', 'type' => 'buy', 'quantity' => 10, 'price' => 90.22, 'cost' => 7.50],
+                    ['order_name' => 'Order 1', 'stock_symbol' => 'BOVA11', 'date' => '2020-06-11', 'type' => 'buy', 'quantity' => 10, 'price' => 90.22, 'cost' => 7.50],
                 ],
                 'expected_positions' => [],
             ],
@@ -141,7 +143,7 @@ class StockPositionConsolidatorTest extends TestCase {
                 'now' => '2020-06-30 18:01:00',
                 'stock_positions' => [],
                 'orders' => [
-                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-11', 'type' => 'buy', 'quantity' => 10, 'price' => 90.22, 'cost' => 7.50],
+                    ['order_name' => 'Order 1', 'stock_symbol' => 'BOVA11', 'date' => '2020-06-11', 'type' => 'buy', 'quantity' => 10, 'price' => 90.22, 'cost' => 7.50],
                 ],
                 'expected_positions' => [],
             ],
@@ -151,9 +153,9 @@ class StockPositionConsolidatorTest extends TestCase {
                     ['stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'quantity' => 15, 'amount' => 1374.3, 'contributed_amount' => 1368.3, 'average_price' => 91.22, 'updated_at' => '2020-06-30 18:00:00'],
                 ],
                 'orders' => [
-                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'type' => 'buy', 'quantity' => 10, 'price' => 90.22, 'cost' => 7.50],
-                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'type' => 'buy', 'quantity' => 5, 'price' => 90.22, 'cost' => 7.50],
-                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'type' => 'buy', 'quantity' => 8, 'price' => 90.22, 'cost' => 7.50],
+                    ['order_name' => 'Order 1', 'stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'type' => 'buy', 'quantity' => 10, 'price' => 90.22, 'cost' => 7.50],
+                    ['order_name' => 'Order 2', 'stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'type' => 'buy', 'quantity' => 5, 'price' => 90.22, 'cost' => 7.50],
+                    ['order_name' => 'Order 3', 'stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'type' => 'buy', 'quantity' => 8, 'price' => 90.22, 'cost' => 7.50],
                 ],
                 'expected_positions' => [
                     ['stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'quantity' => 23, 'amount' => 2107.26, 'contributed_amount' => 2097.56, 'average_price' => 91.20],
@@ -166,8 +168,8 @@ class StockPositionConsolidatorTest extends TestCase {
                     ['stock_symbol' => 'BOVA11', 'date' => '2020-07-01', 'quantity' => 23, 'amount' => 2131.64],
                 ],
                 'orders' => [
-                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'type' => 'buy', 'quantity' => 10, 'price' => 90.22, 'cost' => 7.50],
-                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'type' => 'buy', 'quantity' => 5, 'price' => 90.22, 'cost' => 7.50, 'updated_at' => '2020-07-01 21:01:01'],
+                    ['order_name' => 'Order 1', 'stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'type' => 'buy', 'quantity' => 10, 'price' => 90.22, 'cost' => 7.50],
+                    ['order_name' => 'Order 2', 'stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'type' => 'buy', 'quantity' => 5, 'price' => 90.22, 'cost' => 7.50, 'updated_at' => '2020-07-01 21:01:01'],
                 ],
                 'expected_positions' => [
                     ['stock_symbol' => 'BOVA11', 'date' => '2020-06-30', 'quantity' => 15, 'amount' => 1374.3, 'contributed_amount' => 1368.3, 'average_price' => 91.22],
@@ -178,9 +180,9 @@ class StockPositionConsolidatorTest extends TestCase {
                 'now' => '2020-07-03 15:00:00',
                 'stock_positions' => [],
                 'orders' => [
-                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'type' => 'buy', 'quantity' => 10, 'price' => 90.22, 'cost' => 7.50],
-                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'type' => 'buy', 'quantity' => 5, 'price' => 90.22, 'cost' => 7.50],
-                    ['stock_symbol' => 'BOVA11', 'date' => '2020-07-01', 'type' => 'buy', 'quantity' => 8, 'price' => 90.22, 'cost' => 7.50],
+                    ['order_name' => 'Order 1', 'stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'type' => 'buy', 'quantity' => 10, 'price' => 90.22, 'cost' => 7.50],
+                    ['order_name' => 'Order 2', 'stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'type' => 'buy', 'quantity' => 5, 'price' => 90.22, 'cost' => 7.50],
+                    ['order_name' => 'Order 3', 'stock_symbol' => 'BOVA11', 'date' => '2020-07-01', 'type' => 'buy', 'quantity' => 8, 'price' => 90.22, 'cost' => 7.50],
                 ],
                 'expected_positions' => [
                     ['stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'quantity' => 15, 'amount' => 1353.3, 'contributed_amount' => 1368.3, 'average_price' => 91.22],
@@ -194,9 +196,9 @@ class StockPositionConsolidatorTest extends TestCase {
                 'now' => '2020-06-28 15:00:00',
                 'stock_positions' => [],
                 'orders' => [
-                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'type' => 'buy', 'quantity' => 10, 'price' => 90.22, 'cost' => 7.50],
-                    ['stock_symbol' => 'SQIA3', 'date' => '2020-06-26', 'type' => 'buy', 'quantity' => 10, 'price' => 19.5, 'cost' => 7.50],
-                    ['stock_symbol' => 'XPML11', 'date' => '2020-06-26', 'type' => 'buy', 'quantity' => 10, 'price' => 102.5, 'cost' => 0],
+                    ['order_name' => 'Order 1', 'stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'type' => 'buy', 'quantity' => 10, 'price' => 90.22, 'cost' => 7.50],
+                    ['order_name' => 'Order 2', 'stock_symbol' => 'SQIA3', 'date' => '2020-06-26', 'type' => 'buy', 'quantity' => 10, 'price' => 19.5, 'cost' => 7.50],
+                    ['order_name' => 'Order 3', 'stock_symbol' => 'XPML11', 'date' => '2020-06-26', 'type' => 'buy', 'quantity' => 10, 'price' => 102.5, 'cost' => 0],
                 ],
                 'expected_positions' => [
                     ['stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'quantity' => 10, 'amount' => 902.2, 'contributed_amount' => 909.7, 'average_price' => 90.97],
@@ -208,9 +210,9 @@ class StockPositionConsolidatorTest extends TestCase {
                 'now' => '2020-06-29 15:00:00',
                 'stock_positions' => [],
                 'orders' => [
-                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-25', 'type' => 'buy', 'quantity' => 10, 'price' => 90.22, 'cost' => 7.50],
-                    ['stock_symbol' => 'SQIA3', 'date' => '2020-06-25', 'type' => 'buy', 'quantity' => 10, 'price' => 19.5, 'cost' => 7.50],
-                    ['stock_symbol' => 'XPML11', 'date' => '2020-06-25', 'type' => 'buy', 'quantity' => 10, 'price' => 102.5, 'cost' => 0],
+                    ['order_name' => 'Order 1', 'stock_symbol' => 'BOVA11', 'date' => '2020-06-25', 'type' => 'buy', 'quantity' => 10, 'price' => 90.22, 'cost' => 7.50],
+                    ['order_name' => 'Order 2', 'stock_symbol' => 'SQIA3', 'date' => '2020-06-25', 'type' => 'buy', 'quantity' => 10, 'price' => 19.5, 'cost' => 7.50],
+                    ['order_name' => 'Order 3', 'stock_symbol' => 'XPML11', 'date' => '2020-06-25', 'type' => 'buy', 'quantity' => 10, 'price' => 102.5, 'cost' => 0],
                 ],
                 'expected_positions' => [
                     ['stock_symbol' => 'BOVA11', 'date' => '2020-06-25', 'quantity' => 10, 'amount' => 923.9, 'contributed_amount' => 909.7, 'average_price' => 90.97],
@@ -225,9 +227,9 @@ class StockPositionConsolidatorTest extends TestCase {
                 'now' => '2020-07-03 18:00:00',
                 'stock_positions' => [],
                 'orders' => [
-                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'type' => 'buy', 'quantity' => 10, 'price' => 90.22, 'cost' => 7.50],
-                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'type' => 'buy', 'quantity' => 5, 'price' => 90.22, 'cost' => 7.50],
-                    ['stock_symbol' => 'BOVA11', 'date' => '2020-07-01', 'type' => 'buy', 'quantity' => 8, 'price' => 90.22, 'cost' => 7.50],
+                    ['order_name' => 'Order 1', 'stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'type' => 'buy', 'quantity' => 10, 'price' => 90.22, 'cost' => 7.50],
+                    ['order_name' => 'Order 2', 'stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'type' => 'buy', 'quantity' => 5, 'price' => 90.22, 'cost' => 7.50],
+                    ['order_name' => 'Order 3', 'stock_symbol' => 'BOVA11', 'date' => '2020-07-01', 'type' => 'buy', 'quantity' => 8, 'price' => 90.22, 'cost' => 7.50],
                 ],
                 'expected_positions' => [
                     ['stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'quantity' => 15, 'amount' => 1353.3, 'contributed_amount' => 1368.3, 'average_price' => 91.22],
@@ -242,13 +244,29 @@ class StockPositionConsolidatorTest extends TestCase {
                 'now' => '2020-06-30 15:00:00',
                 'stock_positions' => [],
                 'orders' => [
-                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'type' => 'buy', 'quantity' => 20, 'price' => 90.22, 'cost' => 7.50],
-                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'type' => 'sell', 'quantity' => 5, 'price' => 91.22, 'cost' => 7.50],
-                    ['stock_symbol' => 'BOVA11', 'date' => '2020-06-29', 'type' => 'sell', 'quantity' => 10, 'price' => 92.22, 'cost' => 7.50],
+                    ['order_name' => 'Order 1', 'stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'type' => 'buy', 'quantity' => 20, 'price' => 90.22, 'cost' => 7.50],
+                    ['order_name' => 'Order 2', 'stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'type' => 'sell', 'quantity' => 5, 'price' => 91.22, 'cost' => 7.50],
+                    ['order_name' => 'Order 3', 'stock_symbol' => 'BOVA11', 'date' => '2020-06-29', 'type' => 'sell', 'quantity' => 10, 'price' => 92.22, 'cost' => 7.50],
                 ],
                 'expected_positions' => [
                     ['stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'quantity' => 15, 'amount' => 1353.3, 'contributed_amount' => 1358.92, 'average_price' => 90.59],
                     ['stock_symbol' => 'BOVA11', 'date' => '2020-06-29', 'quantity' => 5, 'amount' => 461.5, 'contributed_amount' => 452.98, 'average_price' => 90.59],
+                ],
+                'expected_profits' => [
+                    ['order_name' => 'Order 2', 'amount' => -4.38],
+                    ['order_name' => 'Order 3', 'amount' => 8.75],
+                ],
+            ],
+            'With sell orders - day trade' => [
+                'now' => '2020-06-30 15:00:00',
+                'stock_positions' => [],
+                'orders' => [
+                    ['order_name' => 'Order 1', 'stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'type' => 'buy', 'quantity' => 20, 'price' => 90.22, 'cost' => 7.50],
+                    ['order_name' => 'Order 2', 'stock_symbol' => 'BOVA11', 'date' => '2020-06-26', 'type' => 'sell', 'quantity' => 20, 'price' => 93.22, 'cost' => 7.50],
+                ],
+                'expected_positions' => [],
+                'expected_profits' => [
+                    ['order_name' => 'Order 2', 'amount' => 45],
                 ],
             ],
         ];
@@ -288,6 +306,21 @@ class StockPositionConsolidatorTest extends TestCase {
             $this->assertEquals($expected_stock_position['amount'], $created_stock_position->amount);
             $this->assertEquals($expected_stock_position['contributed_amount'], $created_stock_position->contributed_amount);
             $this->assertEquals($expected_stock_position['average_price'], $created_stock_position->average_price);
+        }
+    }
+
+    private function assertStockProfits(array $expected_stock_profits): void {
+        $created_stock_profits = StockProfit::getBaseQuery()->get();
+
+        $this->assertCount(sizeof($expected_stock_profits), $created_stock_profits);
+        /** @var StockProfit $expected_stock_profit */
+        foreach ($expected_stock_profits as $expected_stock_profit) {
+            /** @var StockProfit $created_stock_profit */
+            $created_stock_profit = $created_stock_profits->pop();
+
+            $this->assertEquals($expected_stock_profit['user_id'], $created_stock_profit->user_id);
+            $this->assertEquals($expected_stock_profit['order_id'], $created_stock_profit->order_id);
+            $this->assertEquals($expected_stock_profit['amount'], $created_stock_profit->amount);
         }
     }
 }

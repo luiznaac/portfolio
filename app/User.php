@@ -45,6 +45,10 @@ class User extends Authenticatable
         return $this->hasMany('App\Model\Stock\Position\StockPosition');
     }
 
+    public function stockProfits() {
+        return $this->hasMany('App\Model\Stock\StockProfit');
+    }
+
     public function stockDividendStatementLines() {
         return $this->hasMany('App\Model\Stock\Dividend\StockDividendStatementLine');
     }

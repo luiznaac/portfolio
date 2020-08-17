@@ -69,16 +69,20 @@ abstract class TestCase extends BaseTestCase
 
     public function saveOrders(array $data): void {
         foreach ($data as $item) {
-            $this->extractStockAndUnsetStockSymbol($item);
-            $item['user_id'] = $item['user_id'] ?? auth()->id();
-            $item['quantity'] = $item['quantity'] ?? rand(1, 100);
-            $item['price'] = $item['price'] ?? rand(100, 10000);
-            $item['cost'] = $item['cost'] ?? rand(100, 700)/100;
-            $item['average_price'] = $item['average_price'] ?? (($item['price'] * $item['quantity'] + $item['cost']) / $item['quantity']);
-            $this->setTimestamps($item);
-
-            Order::query()->insert($item);
+            $this->saveOrder($item);
         }
+    }
+
+    public function saveOrdersWithNames(array $data): array {
+        $created_orders = [];
+        foreach ($data as $item) {
+            $order_name = $item['order_name'];
+            unset($item['order_name']);
+
+            $created_orders[$order_name] = $this->saveOrder($item);
+        }
+
+        return $created_orders;
     }
 
     public function saveDividendLines(array $data): void {
@@ -200,6 +204,14 @@ abstract class TestCase extends BaseTestCase
         }
     }
 
+    public function translateOrderNamesToIds(array &$data, array $order_names): void {
+        foreach ($data as &$item) {
+            $order_name = $item['order_name'];
+            unset($item['order_name']);
+            $item['order_id'] = $order_names[$order_name]->id;
+        }
+    }
+
     public function translateBondNamesToIds(array &$data, array $bonds_names): void {
         foreach ($data as &$item) {
             $bond_name = $item['bond_name'];
@@ -244,6 +256,18 @@ abstract class TestCase extends BaseTestCase
             unset($expected_dates[$symbol]);
             $expected_dates[$stock->id] = $expected_date;
         }
+    }
+
+    private function saveOrder(array $item): Order {
+        $this->extractStockAndUnsetStockSymbol($item);
+        $item['user_id'] = $item['user_id'] ?? auth()->id();
+        $item['quantity'] = $item['quantity'] ?? rand(1, 100);
+        $item['price'] = $item['price'] ?? rand(100, 10000);
+        $item['cost'] = $item['cost'] ?? rand(100, 700)/100;
+        $item['average_price'] = $item['average_price'] ?? (($item['price'] * $item['quantity'] + $item['cost']) / $item['quantity']);
+        $this->setTimestamps($item);
+
+        return Order::query()->create($item);
     }
 
     private function createBondIssuer(): BondIssuer {
