@@ -357,7 +357,7 @@ class OrderTest extends TestCase {
 
         $stock_1 = Stock::getStockBySymbol($stock_symbol_1);
 
-        $this->assertEquals(5, Order::consolidateQuantityForStock($stock_1));
+        $this->assertEquals(5, Order::consolidateQuantityForStock($stock_1->id));
 
         Order::createOrder(
             $stock_symbol_1,
@@ -379,7 +379,7 @@ class OrderTest extends TestCase {
 
         $stock_2 = Stock::getStockBySymbol($stock_symbol_2);
 
-        $this->assertEquals(85, Order::consolidateQuantityForStock($stock_1));
-        $this->assertEquals(50, Order::consolidateQuantityForStock($stock_2));
+        $this->assertEquals(85, Order::consolidateQuantityForStock($stock_1->id));
+        $this->assertEquals(50, Order::consolidateQuantityForStock($stock_2->id));
     }
 }

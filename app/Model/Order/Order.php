@@ -120,9 +120,9 @@ class Order extends Model {
         return $stocks;
     }
 
-    public static function consolidateQuantityForStock(Stock $stock): int {
+    public static function consolidateQuantityForStock(int $stock_id): int {
         $orders = self::getBaseQuery()
-            ->where('stock_id', $stock->id)->get();
+            ->where('stock_id', $stock_id)->get();
 
         $quantity = 0;
         /** @var Order $order */

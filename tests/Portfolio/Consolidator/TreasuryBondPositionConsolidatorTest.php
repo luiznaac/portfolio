@@ -2,10 +2,8 @@
 
 namespace Tests\Portfolio\Consolidator;
 
-use App\Model\Bond\BondPosition;
 use App\Model\Bond\Treasury\TreasuryBondPosition;
 use App\Model\Index\Index;
-use App\Portfolio\Consolidator\BondPositionConsolidator;
 use App\Portfolio\Consolidator\TreasuryBondPositionConsolidator;
 use Carbon\Carbon;
 use Tests\TestCase;

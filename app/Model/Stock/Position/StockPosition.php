@@ -2,6 +2,7 @@
 
 namespace App\Model\Stock\Position;
 
+use App\Model\Order\Order;
 use App\Model\Stock\Stock;
 use App\User;
 use Carbon\Carbon;
@@ -47,12 +48,14 @@ class StockPosition extends Model {
         return $this->belongsTo('App\User');
     }
 
-    public static function getLastStockPositions(): array {
+    public static function getLastStockPositions(bool $validate_quantity = false): array {
         $stock_ids = self::getConsolidatedStockIds();
 
         $last_stock_positions = [];
         foreach ($stock_ids as $stock_id) {
-            $last_stock_positions[] = self::getLastPositionForStock($stock_id);
+            if(!$validate_quantity || Order::consolidateQuantityForStock($stock_id)) {
+                $last_stock_positions[] = self::getLastPositionForStock($stock_id);
+            }
         }
 
         return $last_stock_positions;

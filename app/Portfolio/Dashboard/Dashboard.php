@@ -20,7 +20,7 @@ class Dashboard {
     private const AMOUNT_PRECISION = 2;
 
     public static function getData(): array {
-        $last_stock_positions = StockPosition::getLastStockPositions();
+        $last_stock_positions = StockPosition::getLastStockPositions($validate_quantity = true);
         $last_bond_positions = self::attachBondIdToBondPositions(BondPosition::getLastBondPositions());
         $last_treasury_bond_positions = TreasuryBondPosition::getLastTreasuryBondPositions();
 

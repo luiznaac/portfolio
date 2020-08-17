@@ -46,6 +46,10 @@ SELECT MIN(last_date) AS oldest_last_date
 FROM (SELECT MAX(date) AS last_date
       FROM stock_positions sp
       WHERE user_id = ?
+        AND (SELECT SUM(IF(o.type = 'sell', -o.quantity, o.quantity))
+             FROM orders o
+             WHERE sp.user_id = o.user_id
+               AND sp.stock_id = o.stock_id) > 0
       GROUP BY stock_id) last_positions;
 SQL;
 

@@ -29,8 +29,8 @@ class AlterStockProfitsTableAddUnique extends Migration
             $table->dropForeign('stock_profits_user_id_foreign');
             $table->dropForeign('stock_profits_order_id_foreign');
             $table->dropUnique(['user_id', 'order_id']);
-            $table->foreign('user_id')->references('id')->on('users');
-            $table->foreign('order_id')->references('id')->on('orders');
+            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
+            $table->foreign('order_id')->references('id')->on('orders')->cascadeOnDelete();
         });
     }
 }
