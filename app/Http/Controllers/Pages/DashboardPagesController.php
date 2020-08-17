@@ -28,6 +28,7 @@ class DashboardPagesController extends Controller
             'updated_amount' => $dashboard_data['updated_amount'],
             'dividends_amount' => $dashboard_data['dividends_amount'],
             'overall_variation' => $dashboard_data['overall_variation'],
+            'profit' => $dashboard_data['profit'],
             'stock_allocation' => $dashboard_data['stock_allocation'],
             'bond_allocation' => $dashboard_data['bond_allocation'],
             'stock_type_allocations' => $dashboard_data['stock_type_allocations'],

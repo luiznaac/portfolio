@@ -15,6 +15,7 @@ use App\Model\Stock\Dividend\StockDividend;
 use App\Model\Stock\Dividend\StockDividendStatementLine;
 use App\Model\Stock\Position\StockPosition;
 use App\Model\Stock\Stock;
+use App\Model\Stock\StockProfit;
 use App\Portfolio\Consolidator\ConsolidatorDateProvider;
 use App\Portfolio\Utils\Calendar;
 use App\User;
@@ -92,6 +93,15 @@ abstract class TestCase extends BaseTestCase
             $this->setTimestamps($item);
 
             StockDividendStatementLine::query()->insert($item);
+        }
+    }
+
+    public function saveStockProfits(array $data): void {
+        foreach ($data as $item) {
+            $item['user_id'] = $item['user_id'] ?? auth()->id();
+            $this->setTimestamps($item);
+
+            StockProfit::query()->insert($item);
         }
     }
 
@@ -261,6 +271,7 @@ abstract class TestCase extends BaseTestCase
     private function saveOrder(array $item): Order {
         $this->extractStockAndUnsetStockSymbol($item);
         $item['user_id'] = $item['user_id'] ?? auth()->id();
+        $item['date'] = $item['date'] ?? Carbon::now()->addDays(rand(0, 365));
         $item['quantity'] = $item['quantity'] ?? rand(1, 100);
         $item['price'] = $item['price'] ?? rand(100, 10000);
         $item['cost'] = $item['cost'] ?? rand(100, 700)/100;
