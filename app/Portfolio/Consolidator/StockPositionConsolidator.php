@@ -140,7 +140,7 @@ class StockPositionConsolidator implements ConsolidatorInterface {
             'amount' => $amount,
         ];
 
-        StockProfit::query()->insert($data);
+        StockProfit::query()->updateOrCreate($data);
     }
 
     private static function calculateAmountAccordinglyPriceOnDate(Carbon $date, array $position): array {
