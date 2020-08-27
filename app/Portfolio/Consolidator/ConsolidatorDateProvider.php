@@ -126,6 +126,11 @@ FROM orders o
 WHERE o.user_id = ?
   AND dl.id IS NULL
   AND sd.date_paid <= ?
+  AND (SELECT SUM(IF(o2.type = 'sell', -o2.quantity, o2.quantity))
+       FROM orders o2
+       WHERE o.user_id = o2.user_id
+         AND o.stock_id = o2.stock_id
+         AND o2.date <= reference_date) > 0
 GROUP BY sd.stock_id;
 SQL;
 
