@@ -2,6 +2,8 @@
 
 namespace App\Portfolio\Consolidator;
 
+use App\Model\Log\Log;
+
 class ConsolidatorCoordinator {
 
     public static function consolidate(): void {
@@ -9,7 +11,11 @@ class ConsolidatorCoordinator {
 
         /** @var ConsolidatorInterface $consolidator */
         foreach ($consolidators as $consolidator) {
-            $consolidator::consolidate();
+            try {
+                $consolidator::consolidate();
+            }  catch (\Exception $e) {
+                Log::log(Log::EXCEPTION_TYPE, $consolidator, $e->getMessage());
+            }
         }
     }
 
