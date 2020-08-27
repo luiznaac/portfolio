@@ -38,6 +38,9 @@ class StockDividendConsolidator implements ConsolidatorInterface {
         $stock_positions = self::getStockPositionsForDates($stock, array_keys($stock_dividends));
 
         foreach ($stock_dividends as $date => $dividend_info) {
+            if(!isset($stock_positions[$date])) {
+                continue;
+            }
             $quantity = $stock_positions[$date]['quantity'];
 
             $dividend_line = [
