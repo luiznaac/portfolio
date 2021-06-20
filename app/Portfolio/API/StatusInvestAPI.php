@@ -72,8 +72,11 @@ class StatusInvestAPI implements PriceAPI, StockTypeAPI, StockExistsAPI, Dividen
             case StockType::ETF_TYPE:
                 $type = 'etf';
                 break;
-            default:
-                $type = 'category';
+            case StockType::ACAO_TYPE:
+                $type = 'acao';
+                break;
+            case StockType::FII_TYPE:
+                $type = 'fii';
                 break;
         }
 
@@ -86,7 +89,7 @@ class StatusInvestAPI implements PriceAPI, StockTypeAPI, StockExistsAPI, Dividen
         $response = Http::timeout(self::TIMEOUT)
             ->withoutVerifying()
             ->get(self::API . $endpoint_path);
-        return $response->json()['data']['prices'];
+        return $response->json()['data'][0]['prices'];
     }
 
     private static function getDividendsForRangeAccordinglyStockType(Stock $stock, Carbon $start_date, Carbon $end_date): array {
