@@ -53,6 +53,7 @@ services:
     volumes:
       - ./:/var/www/html
     working_dir: /var/www/html
+    entrypoint: ['composer', '--ignore-platform-reqs']
     depends_on:
       - php
     networks:

@@ -3,9 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="{{secure_asset('site/style.css')}}">
-    <script src="{{secure_asset('site/jquery.js')}}"></script>
-    <script src="{{secure_asset('site/bootstrap.js')}}"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
     <title>{{config('app.name', 'Portfolio')}}</title>
 </head>
 <body>
