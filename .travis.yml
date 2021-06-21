@@ -1,0 +1,19 @@
+dist: xenial
+
+language: php
+php:
+  - "7.4"
+
+services:
+  - mysql
+
+install:
+  - composer install --ignore-platform-reqs
+  - cp .env.travis .env
+  - mysql -e 'CREATE DATABASE portfolio;'
+  - php artisan key:generate
+  - php artisan migrate
+  - php artisan db:seed
+
+script:
+  - ./vendor/bin/phpunit --colors=always
